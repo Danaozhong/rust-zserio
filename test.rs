@@ -1,0 +1,3 @@
+struct TestTemplatedStructWithTypeParamters {
+    field: V,
+}
