@@ -35,9 +35,9 @@ pub fn generate_enum(zenum: &ZEnum, path: &Path, package_name: &String) {
     
     let mut bitsize_fn = z_impl.new_fn("zserio_bitsize");
     bitsize_fn.vis("pub");
-    bitsize_fn.ret("int");
+    bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
-    bitsize_fn.arg("bit_position", "int");
+    bitsize_fn.arg("bit_position", "u64");
 
     bitsize_fn.line("let mut end_position = bit_position;");
     bitsize_type_reference(bitsize_fn, "this".into(), false, &*zenum.enum_type);

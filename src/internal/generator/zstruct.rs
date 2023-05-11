@@ -31,7 +31,11 @@ pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, pa
     for field in &zstruct.fields {
         let mut field_type = field.field_type.name.clone();
         if field.field_type.is_builtin {
+            // the type is a zserio built-in type, such as int32, string, bool
             field_type = zserio_to_rust_type(&field_type).expect("type mapping failed");
+        } else {
+            // the type is a custom type, defined in some zserio file.
+            field_type = field_type + "::" + field.field_type.name.as_str();
         }
         let field_name = convert_name(&field.name);
         let gen_field = gen_struct.new_field(&field_name, &field_type);
@@ -59,9 +63,9 @@ pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, pa
     
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.vis("pub");
-    bitsize_fn.ret("int");
+    bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
-    bitsize_fn.arg("bit_position", "int");
+    bitsize_fn.arg("bit_position", "u64");
 
     bitsize_fn.line("let mut end_position = bit_position;");
     for field in &zstruct.fields {

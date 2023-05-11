@@ -7,6 +7,8 @@ use crate::internal::generator::{
     types::convert_name,
 };
 
+use super::types::zserio_type_bit_size;
+
 pub fn encode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
     let fund_type = native_type.fundamental_type;
@@ -31,9 +33,21 @@ pub fn encode_field(function: &mut Function, field: &Field) {
             } else {
                 function.line(format!("writer.write_unsigned_bits({}, {});", field_name, fund_type.bits));
             }
+        } else if fund_type.name == "string" {
+            // string types
+            function.line(format!("writer.write_string({});", field_name));
+        } else if fund_type.name == "bool" {
+            // boolean
+            function.line(format!("writer.write_bool({});", field_name));
         } else {
+            // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64 
             let rust_type_name = zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
-            function.line(format!("writer.write_{}({});", rust_type_name, field_name));
+            let zserio_type_bit_size = zserio_type_bit_size(&fund_type.name).expect("failed to identify bit length");
+            function.line(
+                format!("writer.write_{}({}, {});", 
+                rust_type_name, 
+                field_name, 
+                zserio_type_bit_size));
         }
     }
 

@@ -31,7 +31,6 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     }
 
     // finally, generate the mod file
-    /*
     let mut scope = Scope::new();
     for module_name in module_names {
         let module = scope.new_module(module_name);
@@ -43,5 +42,4 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
         &package.name,
         "mod",
     );
-     */
 }

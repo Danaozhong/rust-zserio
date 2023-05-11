@@ -47,18 +47,20 @@ pub fn bitsize_type_reference(function: &mut Function, field_name: &str, is_mars
 pub fn bitsize_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
     let fund_type = native_type.fundamental_type;
-    let mut field_name = format!("self.{}", convert_name(&field.name));
+    let field_name = format!("self.{}", convert_name(&field.name));
     
     if field.is_optional {
         function.line("end_position += 1;");
-        function.line(format!("match self.{} {{", field.name));
+        function.line(format!("match self.{} {{", field_name));
         function.line("None => {}, ");
         function.line("Some(x) => {");
     }
     
-    bitsize_type_reference(function, &field.name, native_type.is_marshaler, &fund_type);
+    bitsize_type_reference(function, &field_name, native_type.is_marshaler, &fund_type);
 
     if field.is_optional {
+        // in case the field is optional, end the if condition which checks
+        // if the field is set.
         function.line("},");
         function.line("};");
     }
