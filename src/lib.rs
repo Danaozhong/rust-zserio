@@ -1,1 +1,1 @@
-mod ztype;
+pub mod ztype;

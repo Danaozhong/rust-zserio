@@ -7,7 +7,7 @@ pub fn write_unsigned_bits(writer: &mut BitWriter, v: u64, bits: u8) {
     writer.write_u64(v, bits).expect("failed to write bits");
 }
 
-pub fn write_signed_bits(writer: &mut BitWriter, v: i64, bits: u8)  {
+pub fn write_signed_bits(writer: &mut BitWriter, v: i64, bits: u8) {
     if bits > 64 {
         panic!{"cannot write more than 64 bits"};
     }
