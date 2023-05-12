@@ -15,11 +15,9 @@ pub fn encode_field(function: &mut Function, field: &Field) {
     let mut field_name = format!("self.{}", convert_name(&field.name));
     
     if field.is_optional {
-        function.line(format!("match self.{} {{", field.name));
-        function.line("None => writer.write_bool(false), ");
+        function.line(format!("match {} {{", field_name));
         function.line("Some(x) => {");
         function.line("writer.write_bool(true);");
-
         field_name = "x".into();
 
     }
@@ -35,24 +33,24 @@ pub fn encode_field(function: &mut Function, field: &Field) {
             }
         } else if fund_type.name == "string" {
             // string types
-            function.line(format!("writer.write_string({});", field_name));
+            function.line(format!("ztype::write_string(writer, {}.as_str());", field_name));
         } else if fund_type.name == "bool" {
             // boolean
-            function.line(format!("writer.write_bool({});", field_name));
+            function.line(format!("writer.write_bool({}).unwrap();", field_name));
         } else {
             // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64 
             let rust_type_name = zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
-            let zserio_type_bit_size = zserio_type_bit_size(&fund_type.name).expect("failed to identify bit length");
             function.line(
-                format!("writer.write_{}({}, {});", 
+                format!("ztype::write_{}(writer, {});", 
                 rust_type_name, 
-                field_name, 
-                zserio_type_bit_size));
+                field_name));
         }
     }
 
     if field.is_optional {
         function.line("},");
+        // write a "0" if the field is not set.
+        function.line("None => writer.write_bool(false).unwrap(), ");
         function.line("};");
     }
 

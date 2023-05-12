@@ -26,18 +26,20 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
 
     // and for zserio enumerations
     for z_enum in &package.enums {
-        generate_enum(&z_enum, package_directory, &package.name);
+        let mut scope = get_default_scope(package);
+        generate_enum(&mut scope, &z_enum, package_directory, &package.name);
         module_names.push(&z_enum.name);
     }
 
     // finally, generate the mod file
-    let mut scope = Scope::new();
+    // for now, this is using raw string concatination, as codegen does not support
+    // module declarations. 
+    let mut mod_file_content = String::from("");
     for module_name in module_names {
-        let module = scope.new_module(module_name);
-        module.vis("pub");
+        mod_file_content += format!("pub mod {};\n", module_name.as_str()).as_str();
     }
     write_to_file(
-        &scope.to_string(), 
+        &mod_file_content, 
         package_directory,
         &package.name,
         "mod",

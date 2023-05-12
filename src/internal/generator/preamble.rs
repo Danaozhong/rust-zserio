@@ -2,6 +2,12 @@
 use codegen::Scope;
 use crate::internal::ast::package::ZPackage;
 
+pub fn add_standard_imports(scope: &mut Scope) {
+    scope.import("rust_bitwriter", "BitWriter");
+    scope.import("bitreader", "BitReader");
+    scope.import( "rust_zserio", "ztype");
+}
+
 pub fn get_default_scope(package: &ZPackage) -> Scope {
     let mut scope = Scope::new();
     // TODO Add a header comment

@@ -11,15 +11,12 @@ use crate::internal::generator::{
     bitsize::bitsize_field,
     types::zserio_to_rust_type,
     types::convert_name,
+    preamble::add_standard_imports,
 };
 use std::path::{Path, PathBuf};
 
 
-pub fn add_standard_imports(scope: &mut Scope) {
-    scope.import("rust_bitwriter", "BitWriter");
-    scope.import("bitreader", "BitReader");
-    scope.import( "rust_zserio", "ztype");
-}
+
 
 pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &String) {
     add_standard_imports(&mut scope);
@@ -37,6 +34,9 @@ pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, pa
             // the type is a custom type, defined in some zserio file.
             field_type = field_type + "::" + field.field_type.name.as_str();
         }
+        if field.is_optional {
+            field_type = format!("Option<{}>", field_type.as_str());
+        }
         let field_name = convert_name(&field.name);
         let gen_field = gen_struct.new_field(&field_name, &field_type);
         gen_field.vis("pub");
@@ -48,15 +48,15 @@ pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, pa
     let marshal_fn = struct_impl.new_fn("marshal_zserio");
     marshal_fn.vis("pub");
     marshal_fn.arg_ref_self();
-    marshal_fn.arg("writer", "BitWriter");
+    marshal_fn.arg("writer", "&mut BitWriter");
     for field in &zstruct.fields {
         encode_field(marshal_fn, field);
     }
 
     let mut unmarshal_fn = struct_impl.new_fn("unmarshal_zserio");
     unmarshal_fn.vis("pub");
-    unmarshal_fn.arg_ref_self();
-    unmarshal_fn.arg("reader", "BitReader");
+    unmarshal_fn.arg_mut_self();
+    unmarshal_fn.arg("reader", "&mut BitReader");
     for field in &zstruct.fields {
         decode_field(unmarshal_fn, field);
     }

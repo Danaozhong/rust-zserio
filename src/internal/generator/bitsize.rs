@@ -29,7 +29,7 @@ pub fn bitsize_type_reference(function: &mut Function, field_name: &str, is_mars
             "float32" => { function.line("end_position += 32;"); },
             "float64" => { function.line("end_position += 64;"); },
             "bool" => { function.line("end_position += 1;"); },
-            "string" => { function.line(format!("end_position += ztype::bitsize_string({});", field_name)); },
+            "string" => { function.line(format!("end_position += ztype::bitsize_string({}.as_str());", field_name)); },
             "varint" => { function.line(format!("end_position += ztype::signed_bit_size({});", field_name)); },
             "varint16" => { function.line(format!("end_position += ztype::signed_bit_size({});", field_name)); },
             "varint32" => { function.line(format!("end_position += ztype::signed_bit_size({});", field_name)); },
@@ -51,7 +51,7 @@ pub fn bitsize_field(function: &mut Function, field: &Field) {
     
     if field.is_optional {
         function.line("end_position += 1;");
-        function.line(format!("match self.{} {{", field_name));
+        function.line(format!("match {} {{", field_name));
         function.line("None => {}, ");
         function.line("Some(x) => {");
     }
