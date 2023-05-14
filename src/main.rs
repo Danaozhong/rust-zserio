@@ -1,5 +1,3 @@
-#![feature(try_blocks)]
-
 mod internal {
     mod parser;
     mod visitor;
