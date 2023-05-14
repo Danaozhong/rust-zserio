@@ -15,10 +15,12 @@ pub use self::bits_encode::write_u32;
 pub use self::bits_encode::write_u16;
 pub use self::bits_encode::write_u8;
 
+pub use self::bits_decode::read_i64;
 pub use self::bits_decode::read_i32;
 pub use self::bits_decode::read_i16;
 pub use self::bits_decode::read_i8;
 
+pub use self::bits_decode::read_u64;
 pub use self::bits_decode::read_u32;
 pub use self::bits_decode::read_u16;
 pub use self::bits_decode::read_u8;
