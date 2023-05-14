@@ -19,7 +19,10 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "-o=H:\\rust_test\\src",
+                "test/reference_modules",
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
