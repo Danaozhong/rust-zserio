@@ -1,0 +1,22 @@
+name: test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Test rust-zserio Build
+      run: cargo build --verbose
+    - name: Run Unit tests
+      run: cargo test --verbose
+    - name: Run E2E tests
+      run: cargo run -p round-trip-tests
