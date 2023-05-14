@@ -1,16 +1,15 @@
 mod internal {
-    mod parser;
-    mod visitor;
-    pub mod model;
     pub mod ast;
     pub mod generator;
+    pub mod model;
+    mod parser;
+    mod visitor;
 }
 mod ztype;
-use clap::Parser;
-use crate::internal::model::model::from_filesystem;
 use crate::internal::generator::model::generate_model;
+use crate::internal::model::model::from_filesystem;
+use clap::Parser;
 use std::path::Path;
-
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -24,7 +23,7 @@ struct Args {
     #[arg(short, long, default_value_t=String::from("test"))]
     root: String,
 
-    /// Input directory where the zserio files are 
+    /// Input directory where the zserio files are
     zserio_path: String,
 }
 

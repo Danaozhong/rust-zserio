@@ -1,11 +1,10 @@
-
-use codegen::Scope;
 use crate::internal::ast::package::ZPackage;
+use codegen::Scope;
 
 pub fn add_standard_imports(scope: &mut Scope) {
     scope.import("rust_bitwriter", "BitWriter");
     scope.import("bitreader", "BitReader");
-    scope.import( "rust_zserio", "ztype");
+    scope.import("rust_zserio", "ztype");
 }
 
 pub fn get_default_scope(package: &ZPackage) -> Scope {
@@ -20,8 +19,10 @@ pub fn get_default_scope(package: &ZPackage) -> Scope {
     }
 
     // Add the import to the current (own) module
-    scope.import((String::from("crate::") + package.name.replace(".", "::").as_str()).as_str(), "*");
+    scope.import(
+        (String::from("crate::") + package.name.replace(".", "::").as_str()).as_str(),
+        "*",
+    );
 
     scope
-
 }

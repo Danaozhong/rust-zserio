@@ -1,5 +1,5 @@
-use std::result::Result;
 use convert_case::{Case, Casing};
+use std::result::Result;
 
 pub fn convert_name(name: &String) -> String {
     name.to_case(Case::Snake)
@@ -24,7 +24,6 @@ pub fn zserio_to_rust_type(name: &String) -> Result<String, &'static str> {
         _ => return Err("not found"),
     }
 }
-
 
 pub fn zserio_type_bit_size(name: &String) -> Result<u8, &'static str> {
     match name.as_str() {

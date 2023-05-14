@@ -1,24 +1,21 @@
-
 use std::io::Write;
 
 use codegen::Scope;
 
 use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::generator::{
-    file_generator::write_to_file,
-    encode::encode_field,
-    decode::decode_field,
-    bitsize::bitsize_field,
+    bitsize::bitsize_field, decode::decode_field, encode::encode_field,
+    file_generator::write_to_file, preamble::add_standard_imports, types::convert_name,
     types::zserio_to_rust_type,
-    types::convert_name,
-    preamble::add_standard_imports,
 };
 use std::path::{Path, PathBuf};
 
-
-
-
-pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &String) {
+pub fn generate_struct(
+    mut scope: &mut Scope,
+    zstruct: &ZStruct,
+    path: &Path,
+    package_name: &String,
+) {
     add_standard_imports(&mut scope);
     // add the imports
     // generate the struct itself
@@ -60,7 +57,7 @@ pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, pa
     for field in &zstruct.fields {
         decode_field(unmarshal_fn, field);
     }
-    
+
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.vis("pub");
     bitsize_fn.ret("u64");
@@ -73,12 +70,5 @@ pub fn generate_struct(mut scope: &mut Scope, zstruct: &ZStruct, path: &Path, pa
     }
     bitsize_fn.line("end_position - bit_position");
 
-
-
-    write_to_file(
-        &scope.to_string(), 
-        path,
-        package_name,
-        &zstruct.name,
-    );
+    write_to_file(&scope.to_string(), path, package_name, &zstruct.name);
 }

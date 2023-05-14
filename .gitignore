@@ -15,3 +15,5 @@ tests/round-trip-tests/src/reference_modules
 # Added by cargo
 /target
 tests/round-trip-tests/target
+
+.devenv

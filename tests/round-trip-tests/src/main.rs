@@ -1,30 +1,27 @@
 pub mod reference_modules {
     pub mod core {
-       pub mod types;
+        pub mod types;
     }
 }
-   
-use crate::reference_modules::core::types::{
-    ValueWrapper,
-    Color,   
-};
 
-use rust_bitwriter::BitWriter;
+use crate::reference_modules::core::types::{Color, ValueWrapper};
+
 use bitreader::BitReader;
+use rust_bitwriter::BitWriter;
 
 fn main() {
     // This test generates a test structure, serializes it, deserializes it, and ensures
     // that the data is still the same.
 
     // Instantiate the data
-    let value_wrapper = ValueWrapper::ValueWrapper{
+    let value_wrapper = ValueWrapper::ValueWrapper {
         value: 1,
         other_value: 3,
         enum_value: Color::Color::BLACK,
         description: String::from("te2222st"),
         opt_int_32: Option::from(12),
     };
-    
+
     // serialize
     let mut bitwriter = BitWriter::new();
     value_wrapper.marshal_zserio(&mut bitwriter);
@@ -32,7 +29,7 @@ fn main() {
     let serialized_byes = bitwriter.data();
 
     // deserialize
-    let mut other_value_wrapper = ValueWrapper::ValueWrapper{
+    let mut other_value_wrapper = ValueWrapper::ValueWrapper {
         value: 0,
         other_value: 0,
         enum_value: Color::Color::BLACK,
@@ -45,7 +42,7 @@ fn main() {
     assert!(other_value_wrapper.value == value_wrapper.value);
     assert!(other_value_wrapper.other_value == value_wrapper.other_value);
     assert!(other_value_wrapper.description == value_wrapper.description);
-    
+
     // serialize the new structure again, and ensure it is binary identical
     let mut other_bitwriter = BitWriter::new();
     other_value_wrapper.marshal_zserio(&mut other_bitwriter);
