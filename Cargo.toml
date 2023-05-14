@@ -9,6 +9,7 @@ edition = "2021"
 antlr-rust = "0.3.0-beta"
 bitreader = "0.3.6"
 bitstream-io = "1.6.0"
+clap = { version="4.2.7", features = [ "derive" ] }
 codegen = "0.2.0"
 convert_case = "0.6.0"
 rstest = "0.16.0"
