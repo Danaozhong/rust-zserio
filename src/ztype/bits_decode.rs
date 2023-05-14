@@ -16,10 +16,12 @@ pub fn read_signed_bits(reader: &mut BitReader, bits: u8) -> i64 {
     reader.read_i64(bits).expect("failed to read bits")
 }
 
-pub fn read_u32(reader: &mut BitReader) -> u32 { read_unsigned_bits(reader, 32) as u32 }
-pub fn read_u16(reader: &mut BitReader) -> u16 { read_unsigned_bits(reader, 16) as u16 }
-pub fn read_u8(reader: &mut BitReader) -> u8 { read_unsigned_bits(reader, 8) as u8 }
+pub fn read_u64(reader: &mut BitReader) -> u64 { reader.read_u64(64).unwrap() }
+pub fn read_u32(reader: &mut BitReader) -> u32 { reader.read_u32(32).unwrap() }
+pub fn read_u16(reader: &mut BitReader) -> u16 { reader.read_u16(16).unwrap() }
+pub fn read_u8(reader: &mut BitReader) -> u8 { reader.read_u8(8).unwrap() }
 
-pub fn read_i32(reader: &mut BitReader) -> i32 { read_signed_bits(reader, 32) as i32 }
-pub fn read_i16(reader: &mut BitReader) -> i16 { read_signed_bits(reader, 16) as i16 }
-pub fn read_i8(reader: &mut BitReader) -> i8 { read_signed_bits(reader, 8) as i8 }
+pub fn read_i64(reader: &mut BitReader) -> i64 { reader.read_i64(64).unwrap() }
+pub fn read_i32(reader: &mut BitReader) -> i32 { reader.read_i32(32).unwrap() }
+pub fn read_i16(reader: &mut BitReader) -> i16 { reader.read_i16(16).unwrap() }
+pub fn read_i8(reader: &mut BitReader) -> i8 { reader.read_i8(8).unwrap() }
