@@ -21,7 +21,26 @@
             },
             "args": [
                 "-o=H:\\rust_test\\src",
-                "test/reference_modules",
+                "tests/reference_modules",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration tests 'round-trip-tests'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=round-trip-tests",
+                    "--package=round-trip-tests",
+                ],
+                "filter": {
+                    "name": "round-trip-tests",
+                    "kind": "bin",
+                },
+            },
+            "args": [
             ],
             "cwd": "${workspaceFolder}"
         },
@@ -31,10 +50,8 @@
             "name": "Debug unit tests in executable 'rust-zserio'",
             "cargo": {
                 "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=rust-zserio",
-                    "--package=rust-zserio"
+                    "-o=H:\\rust_test\\src",
+                    "test/reference_modules",
                 ],
                 "filter": {
                     "name": "rust-zserio",

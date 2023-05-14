@@ -6,8 +6,6 @@ mod internal {
     pub mod model;
     pub mod ast;
     pub mod generator;
-
-
 }
 mod ztype;
 use clap::Parser;

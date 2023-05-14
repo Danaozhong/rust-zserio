@@ -1,3 +1,10 @@
+[workspace]
+
+members = [
+    ".",
+    "tests/round-trip-tests",
+]
+
 [package]
 name = "rust-zserio"
 version = "0.1.0"
