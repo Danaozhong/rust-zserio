@@ -1,3 +1,4 @@
+use crate::internal::parser::gen::zserioparser::FieldArrayRangeContextAll;
 use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitor;
 use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitorCompat;
 use std::any::Any;
@@ -11,6 +12,11 @@ use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::ast::{
     field::Field,
+    field::Array,
+    expression::{
+        Expression,
+        ExpressionType,
+    },
     zenum::{ZEnum, ZEnumItem},
 };
 use crate::internal::parser::gen::zserioparser::{
@@ -22,6 +28,10 @@ use crate::internal::parser::gen::zserioparser::{
     StructureFieldDefinitionContextAttrs, TemplateParametersContext,
     TemplateParametersContextAttrs, TypeInstantiationContext, TypeInstantiationContextAttrs,
     TypeReferenceContext, TypeReferenceContextAttrs, ZserioParserContextType,
+    FieldArrayRangeContext, FieldArrayRangeContextAttrs,
+    DynamicLengthArgumentContext, DynamicLengthArgumentContextAttrs,
+    LiteralExpressionContext, LiteralExpressionContextAttrs,
+    LiteralContextAttrs,
 };
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
@@ -39,6 +49,7 @@ pub enum ZserioTreeReturnType {
     Structure(Box<ZStruct>),
     Enumeration(Box<ZEnum>),
     EnumItem(Box<ZEnumItem>),
+    Expression(Expression),
     Field(Box<Field>),
     TypeReference(Box<TypeReference>),
     Vec(Vec<ZserioTreeReturnType>),
@@ -130,6 +141,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                                 println!("unknown type ref: {0}", z.bits)
                             }
                             ZserioTreeReturnType::Field(z) => print!("field found"),
+                            ZserioTreeReturnType::Expression(e) => print!("expression found"),
                             _ => panic!("should not happen2"),
                         }
                     }
@@ -262,12 +274,14 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_fieldTypeId(&mut self, ctx: &FieldTypeIdContext<'_>) -> Self::Return {
+        // retrieve the name of the field (e.g. member name)
         let mut field_name = "".into();
         match self.visit(&*ctx.id().unwrap()) {
             ZserioTreeReturnType::Str(n) => field_name = n,
             _ => panic!("should not happen"),
         }
 
+        // the field data type
         let type_reference: Box<TypeReference>;
         match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
@@ -276,6 +290,25 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             ZserioTreeReturnType::TypeReference(t) => type_reference = t,
             _ => panic!("should not happen"),
         }
+
+        // check if the field is an array
+        let mut array: Option<Array> = None;
+        if let Some(rc_arr_ctx) = ctx.fieldArrayRange() {
+
+            let mut array_length_exp: Option<Expression> = None;
+            if let Some(array_length_expression_ctx) = rc_arr_ctx.expression() {
+                match self.visit(&*array_length_expression_ctx) {
+                    ZserioTreeReturnType::Expression(expr) => array_length_exp = Option::from(expr),
+                    _ => panic!("wrong type returned from expression"),
+                }
+            }
+            
+            array = Option::from(Array {
+                is_implicit: ctx.IMPLICIT().is_some(),
+                is_packed: ctx.PACKED().is_some(),
+                array_length_expression: array_length_exp,
+            });
+        }
         ZserioTreeReturnType::Field(Box::new(Field {
             name: field_name.clone(),
             zserio_name: field_name,
@@ -283,6 +316,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             is_optional: false,
             alignment: 0,
             field_type: type_reference,
+            array: array,
         }))
     }
 
@@ -460,6 +494,48 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         return ctx.GetText()
     }
     */
+
+
+    fn visit_literalExpression(&mut self, ctx: &LiteralExpressionContext<'_>) -> Self::Return {
+        let literal_ctx = ctx.literal().unwrap();
+        
+        // identify which literal this is
+        let literal_text =literal_ctx.get_text();
+        let mut result_type = ExpressionType::OtherExpression;
+        if literal_ctx.BOOL_LITERAL().is_some() {
+            result_type = ExpressionType::BoolExpression(literal_text.parse::<bool>().expect("failed to parse bool expression"));
+        } else if literal_ctx.DECIMAL_LITERAL().is_some() {
+            result_type = ExpressionType::IntegerExpression(literal_text.parse::<i32>().expect("failed to parse integer expression"));
+        } else if literal_ctx.HEXADECIMAL_LITERAL().is_some() {
+            result_type = ExpressionType::IntegerExpression(i32::from_str_radix(literal_text.trim_start_matches("0x"), 16).expect("Not a hex number!"));
+        } else if literal_ctx.OCTAL_LITERAL().is_some() {
+            result_type = ExpressionType::IntegerExpression(i32::from_str_radix(literal_text.as_str(), 8).expect("Not an octal number!"));
+        } else if literal_ctx.BINARY_LITERAL().is_some() {
+            result_type = ExpressionType::IntegerExpression(i32::from_str_radix(literal_text.as_str(), 2).expect("Not a binary number!"));
+        } else {
+            panic!("expression not found");
+        }
+
+        let _tokens = literal_ctx.get_tokens(1);
+        ZserioTreeReturnType::Expression(Expression { 
+            text: literal_ctx.get_text(), // ctx.literal().unwrap().get_text(), 
+            operand1: None, 
+            operand2: None, operand3: None, 
+            result_type: result_type, 
+            fully_resolved: true, 
+        })
+    }
+
+
+    fn visit_dynamicLengthArgument(&mut self, ctx: &DynamicLengthArgumentContext<'_>) -> Self::Return {
+        ZserioTreeReturnType::Expression(Expression { 
+            text: "".into(), 
+            operand1: None, 
+            operand2: None, operand3: None, 
+            result_type: ExpressionType::BoolExpression(true), 
+            fully_resolved: false, 
+        })
+    }
 
     fn visit_typeInstantiation(&mut self, ctx: &TypeInstantiationContext<'_>) -> Self::Return {
         let type_reference: Box<TypeReference>;
