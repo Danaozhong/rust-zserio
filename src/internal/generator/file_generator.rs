@@ -1,12 +1,12 @@
-
-use std::path::Path;
+use rust_format::{Formatter, RustFmt};
 use std::fs;
 use std::io::Write;
-use rust_format::{Formatter, RustFmt};
+use std::path::Path;
 
 pub fn write_to_file(content: &String, root_path: &Path, zserio_pkg_name: &str, file_name: &str) {
-
-    let formatted_code = RustFmt::default().format_str(content).expect("code formatting failed");
+    let formatted_code = RustFmt::default()
+        .format_str(content)
+        .expect("code formatting failed");
     let file_bytes = formatted_code.as_bytes();
 
     let mut file_path = root_path.to_owned();

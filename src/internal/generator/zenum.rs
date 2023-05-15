@@ -1,18 +1,12 @@
-
 use std::io::Write;
 
 use codegen::Scope;
 
 use crate::internal::ast::zenum::ZEnum;
 use crate::internal::generator::{
-    file_generator::write_to_file,
-    encode::encode_field,
-    decode::decode_field,
-    bitsize::bitsize_field,
-    bitsize::bitsize_type_reference,
-    types::zserio_to_rust_type,
-    types::convert_name,
-    preamble::add_standard_imports,
+    bitsize::bitsize_field, bitsize::bitsize_type_reference, decode::decode_field,
+    encode::encode_field, file_generator::write_to_file, preamble::add_standard_imports,
+    types::convert_name, types::zserio_to_rust_type,
 };
 use std::path::{Path, PathBuf};
 
@@ -22,7 +16,7 @@ pub fn generate_enum(mut scope: &mut Scope, zenum: &ZEnum, path: &Path, package_
     // generate the struct itself
     let gen_enum = scope.new_enum(&zenum.name);
     gen_enum.vis("pub");
-    
+
     for item in &zenum.items {
         gen_enum.new_variant(&item.name);
     }
@@ -39,7 +33,7 @@ pub fn generate_enum(mut scope: &mut Scope, zenum: &ZEnum, path: &Path, package_
     unmarshal_fn.vis("pub");
     unmarshal_fn.arg_mut_self();
     unmarshal_fn.arg("reader", "&mut BitReader");
-    
+
     let mut bitsize_fn = z_impl.new_fn("zserio_bitsize");
     bitsize_fn.vis("pub");
     bitsize_fn.ret("u64");
@@ -49,11 +43,6 @@ pub fn generate_enum(mut scope: &mut Scope, zenum: &ZEnum, path: &Path, package_
     bitsize_fn.line("let mut end_position = bit_position;");
     bitsize_type_reference(bitsize_fn, "this".into(), false, &*zenum.enum_type);
     bitsize_fn.line("end_position - bit_position");
-    
-    write_to_file(
-        &scope.to_string(), 
-        path,
-        package_name,
-        &zenum.name,
-    );
+
+    write_to_file(&scope.to_string(), path, package_name, &zenum.name);
 }

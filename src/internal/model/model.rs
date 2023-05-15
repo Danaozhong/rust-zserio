@@ -8,11 +8,10 @@ pub struct Model {
     pub packages: Vec<Box<ZPackage>>,
 }
 
-
 /// Loads a complete zserio model from a directory.
 pub fn from_filesystem(directory: &Path) -> Box<Model> {
-    let mut packages  = Vec::new();
-    
+    let mut packages = Vec::new();
+
     for entry in WalkDir::new(directory) {
         let path = entry.unwrap().path().to_owned();
         if path.is_dir() {
@@ -24,9 +23,6 @@ pub fn from_filesystem(directory: &Path) -> Box<Model> {
             let package = package_from_file(&path);
             packages.push(package);
         }
-        
     }
-    Box::new(Model {
-        packages: packages,
-    })
+    Box::new(Model { packages: packages })
 }
