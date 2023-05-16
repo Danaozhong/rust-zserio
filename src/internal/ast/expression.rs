@@ -1,6 +1,5 @@
 use std::string::String;
 
-
 pub enum ExpressionType {
     IntegerExpression(i32),
     FloatExpression(f64),
@@ -11,7 +10,6 @@ pub enum ExpressionType {
     CompoundExpression,
     OtherExpression,
 }
-
 
 pub struct Expression {
     pub text: String,

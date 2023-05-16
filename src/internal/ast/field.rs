@@ -1,14 +1,10 @@
-use crate::internal::ast::{
-    type_reference::TypeReference,
-    expression::Expression,
-};
+use crate::internal::ast::{expression::Expression, type_reference::TypeReference};
 use std::string::String;
-
 
 pub struct Array {
     pub is_packed: bool,
     pub is_implicit: bool,
-    pub array_length_expression: Option<Expression>
+    pub array_length_expression: Option<Expression>,
 }
 
 pub struct Field {

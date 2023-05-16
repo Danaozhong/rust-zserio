@@ -20,3 +20,10 @@ jobs:
       run: cargo test --verbose
     - name: Run E2E tests
       run: cargo run -p round-trip-tests
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run fmt check
+      run: cargo fmt --check
+    - name: Run lint check
+      run: cargo clippy
