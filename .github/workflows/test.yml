@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Test rust-zserio Build
-      run: cargo build --verbose
+      run: cargo build --release --verbose
   test-unit:
     runs-on: ubuntu-latest
     steps:
