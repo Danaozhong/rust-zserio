@@ -589,32 +589,22 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_typeReference(&mut self, ctx: &TypeReferenceContext<'_>) -> Self::Return {
         if ctx.builtinType().is_some() {
-            // This is a built-in type,
-            let name = ctx.get_text();
+            // This is a built-in type, e.g. string, uint32, bit:x, ....
+            let mut name = ctx.get_text();
             let mut bits: i8 = 0;
 
+            // check if the type is template, e.g. bit<expression>
+            if let Some(template_arguments) = ctx.templateArguments() {
+                // TODO use the template arguments
+                let _template_argument = ZserioParserVisitorCompat::visit_templateArguments(self, &*template_arguments);
+            }
+
             if name.contains(":") {
-                // todo
-                bits = 8;
+                let bits_subst: Vec<&str> = name.split(":").collect();
+                bits = i8::from_str_radix(bits_subst[1], 10).expect("failed to convert to i8");
+                name = bits_subst[0].into();
             }
-            /*
-            if ix := strings.Index(typ.Name, ":"); ix != -1 {
-                bits, _ := strconv.ParseUint(typ.Name[ix+1:], 10, 8)
-                typ.Name = typ.Name[:ix]
-                typ.Bits = int(bits)
-                if typ.Bits == 8 || typ.Bits == 16 || typ.Bits == 32 || typ.Bits == 64 {
-                    switch typ.Name {
-                    case "bit":
-                        typ.Name = fmt.Sprintf("uint%d", typ.Bits)
-                        typ.Bits = 0
-                    case "uint", "int":
-                        typ.Name = fmt.Sprintf("%s%d", typ.Name, typ.Bits)
-                        typ.Bits = 0
-                    }
-                }
-            }
-            return typ
-             */
+            
             return ZserioTreeReturnType::TypeReference(Box::new(TypeReference {
                 is_builtin: true,
                 package: "".into(),
