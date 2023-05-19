@@ -21,6 +21,8 @@ pub fn zserio_to_rust_type(name: &String) -> Result<String, &'static str> {
         "float32" => return Ok("f32".into()),
         "float64" => return Ok("f64".into()),
         "bool" => return Ok("bool".into()),
+        "bit" => return Ok("u64".into()),
+        "int" => return Ok("i64".into()),
         _ => return Err("not found"),
     }
 }
