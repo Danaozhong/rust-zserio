@@ -1,11 +1,6 @@
 use crate::internal::parser::gen::zserioparser::FieldArrayRangeContextAll;
 use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitor;
 use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitorCompat;
-use std::any::Any;
-use std::borrow::BorrowMut;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::vec;
 
 use crate::internal::ast::package::{ZImport, ZPackage};
 use crate::internal::ast::type_reference::TypeReference;
@@ -28,6 +23,8 @@ use crate::internal::parser::gen::zserioparser::{
     StructureFieldDefinitionContextAttrs, TemplateParametersContext,
     TemplateParametersContextAttrs, TypeInstantiationContext, TypeInstantiationContextAttrs,
     TypeReferenceContext, TypeReferenceContextAttrs, ZserioParserContextType,
+    TemplateArgumentsContext, TemplateArgumentsContextAttrs,
+    TemplateArgumentContext, TemplateArgumentContextAttrs,
 };
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
@@ -48,6 +45,7 @@ pub enum ZserioTreeReturnType {
     Expression(Expression),
     Field(Box<Field>),
     TypeReference(Box<TypeReference>),
+    TypeReferences(Vec<Box<TypeReference>>),
     Vec(Vec<ZserioTreeReturnType>),
     Import(Box<ZImport>),
 }
@@ -468,6 +466,26 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
 
         ZserioTreeReturnType::StrVec(ids)
+    }
+
+    fn visit_templateArguments(&mut self, ctx: &TemplateArgumentsContext<'_>) -> Self::Return {
+        // retrieves the template arguments to a type. A template argument is basically just a collection
+        // of types.
+        let mut template_aguments = Vec::new();
+        for template_argument in ctx.templateArgument_all() {
+            match ZserioParserVisitorCompat::visit_templateArgument(self, &*template_argument) {
+                ZserioTreeReturnType::TypeReference(t) => template_aguments.push(t),
+                _ => panic!("unexpected return type"),
+
+            }
+        }
+        ZserioTreeReturnType::TypeReferences(template_aguments)
+    }
+
+
+    fn visit_templateArgument(&mut self, ctx: &TemplateArgumentContext<'_>) -> Self::Return {
+        // a template argument is basically just a type reference
+        ZserioParserVisitorCompat::visit_typeReference(self, &*ctx.typeReference().unwrap())
     }
 
     fn visit_id(&mut self, ctx: &IdContext<'_>) -> Self::Return {
