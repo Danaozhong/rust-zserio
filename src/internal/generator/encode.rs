@@ -24,12 +24,12 @@ pub fn encode_field(function: &mut Function, field: &Field) {
         if fund_type.bits != 0 {
             if fund_type.name == "int" {
                 function.line(format!(
-                    "writer.write_signed_bits({}, {});",
+                    "ztype::write_signed_bits(writer, {}, {});",
                     field_name, fund_type.bits
                 ));
             } else {
                 function.line(format!(
-                    "writer.write_unsigned_bits({}, {});",
+                    "ztype::write_unsigned_bits(writer, {}, {});",
                     field_name, fund_type.bits
                 ));
             }
