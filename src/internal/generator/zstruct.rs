@@ -31,6 +31,9 @@ pub fn generate_struct(
             // the type is a custom type, defined in some zserio file.
             field_type = field_type + "::" + field.field_type.name.as_str();
         }
+        if field.array.is_some() {
+            field_type = format!("Vec<{}>", field_type.as_str());
+        }
         if field.is_optional {
             field_type = format!("Option<{}>", field_type.as_str());
         }
