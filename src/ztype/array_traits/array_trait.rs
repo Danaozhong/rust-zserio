@@ -1,10 +1,12 @@
-trait ArrayTrait {
+use bitreader::BitReader;
+
+pub trait ArrayTrait {
 
     fn is_bitsizeof_constract(&self) -> bool;
     fn needs_bitsizeof_position(&self) -> bool;
     fn bitsize_of(&self) -> u8;
-    fn initialize_offsets(&self, bit_position: unsigned) -> unsigned;
-    fn read<T>(&self, mut reader: &BitReader) -> T;
+    fn initialize_offsets(&self, bit_position: u64) -> u64;
+    //fn read<T>(&self, reader: &mut BitReader) -> T;
 
 /*
 

@@ -23,9 +23,13 @@ pub use self::bits_decode::read_u32;
 pub use self::bits_decode::read_u64;
 pub use self::bits_decode::read_u8;
 
+pub use self::array::Array;
+
 pub mod bits_decode;
 pub mod bits_encode;
 mod string_decode;
 mod string_encode;
 pub mod varuint_decode;
 pub mod varuint_encode;
+mod array;
+pub mod array_traits;

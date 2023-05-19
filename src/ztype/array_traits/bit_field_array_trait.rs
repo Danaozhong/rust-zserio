@@ -1,11 +1,12 @@
 
 use bitreader::BitReader;
+use crate::ztype::array_traits::array_trait;
 
 pub struct BitFieldArrayTrait {
 	pub num_bits: u8,
 }
 
-impl BitFieldArrayTrait {
+impl array_trait::ArrayTrait for BitFieldArrayTrait {
     fn is_bitsizeof_constract(&self) -> bool {
         true
     }
@@ -18,14 +19,16 @@ impl BitFieldArrayTrait {
         self.num_bits
     }
 
-    fn initialize_offsets(&self, bit_position: unsigned) -> unsigned {
-        bit_position + self.bitsize_of()
+    fn initialize_offsets(&self, bit_position: u64) -> u64 {
+        bit_position + self.bitsize_of() as u64
     }
     
-    fn read<T>(&self, mut reader: &BitReader) -> T {
-        reader.read_signed_bits(self.num_bits)
+    /*
+    fn read<T>(&self, reader: &mut BitReader) -> T {
+        //reader.read_signed_bits(self.num_bits)
         //reader.
     }
+    */
 /*
     func (trait BitFieldArrayTraits[T]) InitializeOffsets(bitPosition int, value T) int {
         return bitPosition + trait.BitSizeOf(value, 0) // endBitPosition is ignored
