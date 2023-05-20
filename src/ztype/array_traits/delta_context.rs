@@ -1,8 +1,10 @@
 
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::bits_decode::read_signed_bits;
+use crate::ztype::read_unsigned_bits;
 
 use bitreader::BitReader;
+use rust_bitwriter::BitWriter;
 
 const MAX_BIT_NUMBER_LIMIT: u8 =  62;
 const MAX_BIT_NUMBER_BITS: u8 = 6;
@@ -10,22 +12,36 @@ const MAX_BIT_NUMBER_BITS: u8 = 6;
 pub struct DeltaContext {
 	is_packed: bool,
     max_bit_number: u8,
-    unpacked_size: unsigned,
+    unpacked_size: u64,
     first_element_size: u64,
-    num_elements: unsigned,
+    num_elements: u64,
     previous_element: u64,
     init_started: bool,
 	processing_started: bool,
 }
 
 impl DeltaContext {
-    fn init<T>(&self, array_traits: &ArrayTrait, element: T) {
+
+	pub fn new() -> DeltaContext {
+		DeltaContext { 
+			is_packed: false, 
+			max_bit_number: 0, 
+			unpacked_size: 0, 
+			first_element_size: 0, 
+			num_elements: 0, 
+			previous_element: 0, 
+			init_started: false,
+			processing_started: false,
+		}
+	}
+
+    pub fn init<T>(&mut self, array_trait: &dyn ArrayTrait<T>, element: &T) {
         self.num_elements += 1;
-        self.unpacked_size += array_trait.bitsize_of();
+        self.unpacked_size += array_trait.bitsize_of() as u64;
 
         if !self.init_started {
             self.init_started = true;
-            self.previous_element = element as u64;
+            self.previous_element = array_trait.to_u64(&element);
 			self.first_element_size = self.unpacked_size;
 
         } else if self.max_bit_number <= MAX_BIT_NUMBER_LIMIT {
@@ -64,40 +80,43 @@ impl DeltaContext {
 	return 0, nil
 }
  */
-	fn bitsize_of<T>(&self,  array_traits: &ArrayTrait, bit_position: unsigned, element: T) -> unsigned {
+	pub fn bitsize_of<T>(&mut self, array_traits: &dyn ArrayTrait<T>, bit_position: u64, element: &T) -> u64 {
 		if !self.processing_started {
 			self.processing_started = true;
 
 			// self.finish_init();
-			return self.bitsize_of_descriptor() + self.bitsize_of_unpacked(array_traits, element);
+			return self.bitsize_of_descriptor::<T>() + self.bitsize_of_unpacked(array_traits, element);
 		}
 		if !self.is_packed {
 			return self.bitsize_of_unpacked(array_traits, element);
 		}
 		if self.max_bit_number > 0 {
-			return self.max_bit_number + 1
+			return self.max_bit_number as u64 + 1
 		}
 		0
 	}
 
 
-	fn read<T>(&self, array_traits: &ArrayTrait, reader: BitReader) -> T {
+	pub fn read<T>(&mut self, array_traits: &dyn ArrayTrait<T>, reader: &mut BitReader) -> T {
 		if !self.processing_started {
 			self.processing_started = true;
-			self.read_descriptor(reader);
+			self.read_descriptor::<T>(reader);
 			return self.read_unpacked(array_traits, reader);
 		}
 		if !self.is_packed {
-			return self.read_unpacked(array_trait, reader);
+			return self.read_unpacked(array_traits, reader);
 		}
 		if self.max_bit_number > 0 {
-			delta = read_signed_bits(reader, self.max_bit_number + 1);
-			self.previous_element = self.previous_element + delta;
+			let delta = read_signed_bits(reader, self.max_bit_number + 1);
+			self.previous_element = self.previous_element + delta as u64;
 		}
-		self.previous_element as T
+		array_traits.from_u64(self.previous_element)
 	}
 
-}
+
+	pub fn write<T>(&mut self, array_traits: &dyn ArrayTrait<T>, writer: &mut BitWriter, element: &T) {
+	// TODO
+	}
 
 
 /*
@@ -180,41 +199,32 @@ func (context *DeltaContext[T]) finishInit() {
 		}
 	}
 }
+*/
 
-// BitSizeOfDescriptor returns the bit size of a delta context array descriptor.
-func (context *DeltaContext[T]) BitSizeOfDescriptor() int {
-	context.finishInit()
-	if context.isPacked {
-		return 1 + maxBitNumberBits
+	// BitSizeOfDescriptor returns the bit size of a delta context array descriptor.
+	fn bitsize_of_descriptor<T>(&self) -> u64 {
+		if self.is_packed {
+			return (1 + MAX_BIT_NUMBER_BITS) as u64;
+		}
+		1
 	}
-	return 1
-}
 
-// ReadDescriptor reads the descriptor of a delta packed context.
-func (context *DeltaContext[T]) ReadDescriptor(reader zserio.Reader) error {
-	var err error
-	if context.isPacked, err = reader.ReadBool(); err != nil {
-		return err
-	}
-	if context.isPacked {
-		// read how many bits are used for the delta encoding of each element
-		var maxBitNumber uint64
-		maxBitNumber, err = reader.ReadBits(maxBitNumberBits)
-		context.maxBitNumber = int(maxBitNumber)
-	}
-	return err
-}
+	fn read_descriptor<T>(&mut self, reader: &mut BitReader) {
+		self.is_packed = reader.read_bool().expect("failed to read if the context is packed");
+		if self.is_packed {
+			// read how many bits are used for the delta encoding of each element
+			self.max_bit_number = read_unsigned_bits(reader, MAX_BIT_NUMBER_BITS) as u8;
 
-// readUnpacked reads an unpacked array element from a delta context.
-func (context *DeltaContext[T]) readUnpacked(arrayTraits IArrayTraits[T], reader zserio.Reader) (T, error) {
-	element, err := arrayTraits.Read(reader, 0)
-	if err != nil {
-		return arrayTraits.FromUint64(0), err
+		}
 	}
-	elementAsUint64 := arrayTraits.AsUint64(element)
-	context.previousElement = &elementAsUint64
-	return element, nil
-}
+
+	fn read_unpacked<T>(&mut self, array_traits: &dyn ArrayTrait<T>, reader: &mut BitReader) -> T {
+		let element = array_traits.read(reader);
+		self.previous_element = array_traits.to_u64(&element);
+		element
+	}
+/*
+
 
 // WriteDescriptor writes the descriptor of a delta packed context.
 func (context *DeltaContext[T]) WriteDescriptor(writer zserio.Writer) error {
@@ -239,3 +249,8 @@ func bitsizeOfUnpacked[T any](arrayTraits IArrayTraits[T], element T) int {
 	return arrayTraits.BitSizeOf(element, 0)
 }
  */
+
+	fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, element: &T) -> u64 {
+		array_trait.bitsize_of() as u64
+	}
+}

@@ -13,6 +13,9 @@ pub use self::bits_encode::write_u32;
 pub use self::bits_encode::write_u64;
 pub use self::bits_encode::write_u8;
 
+pub use self::bits_encode::write_unsigned_bits;
+pub use self::bits_encode::write_signed_bits;
+
 pub use self::bits_decode::read_i16;
 pub use self::bits_decode::read_i32;
 pub use self::bits_decode::read_i64;
@@ -23,6 +26,9 @@ pub use self::bits_decode::read_u32;
 pub use self::bits_decode::read_u64;
 pub use self::bits_decode::read_u8;
 
+pub use self::bits_decode::read_unsigned_bits;
+pub use self::bits_decode::read_signed_bits;
+
 pub use self::array::Array;
 
 pub mod bits_decode;
@@ -31,5 +37,8 @@ mod string_decode;
 mod string_encode;
 pub mod varuint_decode;
 pub mod varuint_encode;
+
+
+// all the modules required for arrays
 mod array;
 pub mod array_traits;
