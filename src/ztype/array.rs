@@ -11,8 +11,8 @@ pub struct Array<T> {
     pub array_trait: Box<dyn ArrayTrait<T>>,
     pub is_packed: bool,
     pub fixed_size: Option<u64>,
-    packing_context_node: Option<PackingContextNode>,
-    is_aligned: bool,
+    pub is_aligned: bool,
+    pub packing_context_node: Option<PackingContextNode>,
 }
 
 impl<T> Array<T> {

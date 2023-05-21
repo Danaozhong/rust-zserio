@@ -284,7 +284,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             ZserioTreeReturnType::TypeReference(t) => type_reference = t,
             _ => panic!("should not happen"),
         }
-
+        // TODO check if alignment is set
+        
         // check if the field is an array
         let mut array: Option<Array> = None;
         if let Some(rc_arr_ctx) = ctx.fieldArrayRange() {

@@ -5,8 +5,8 @@ use codegen::Scope;
 use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::generator::types::{array_type_name, zserio_to_rust_type};
 use crate::internal::generator::{
-    bitsize::bitsize_field, decode::decode_field, encode::encode_field,
-    file_generator::write_to_file, preamble::add_standard_imports, types::convert_name,
+    bitsize::bitsize_field, decode::decode_field, encode::encode_field, new::new_field,
+    file_generator::write_to_file, preamble::add_standard_imports, types::convert_name, types::field_to_rust_type,
 };
 
 use std::path::{Path};
@@ -24,14 +24,7 @@ pub fn generate_struct(
     gen_struct.vis("pub");
 
     for field in &zstruct.fields {
-        let mut field_type = field.field_type.name.clone();
-        if field.field_type.is_builtin {
-            // the type is a zserio built-in type, such as int32, string, bool
-            field_type = zserio_to_rust_type(&field_type).expect("type mapping failed");
-        } else {
-            // the type is a custom type, defined in some zserio file.
-            field_type = field_type + "::" + field.field_type.name.as_str();
-        }
+        let mut field_type = field_to_rust_type(field);
 
         // if the field is an array, add an additional member to store the array type details.
         // This must happen before wrapping the type in Vec<>, or Optional<>, as this is
@@ -55,6 +48,17 @@ pub fn generate_struct(
 
     // generate the functions to serialize/deserialize
     let struct_impl = scope.new_impl(&zstruct.name);
+
+    // Create a function to ge
+    let new_fn = struct_impl.new_fn("new");
+    new_fn.vis("pub");
+    new_fn.ret(&zstruct.name);
+    new_fn.line(format!("return {} {{", &zstruct.name));
+
+    for field in &zstruct.fields {
+        new_field(new_fn, field);
+    }
+    new_fn.line("};");
 
     let marshal_fn = struct_impl.new_fn("marshal_zserio");
     marshal_fn.vis("pub");

@@ -14,13 +14,7 @@ fn main() {
     // that the data is still the same.
 
     // Instantiate the data
-    let value_wrapper = ValueWrapper::ValueWrapper {
-        value: 1,
-        other_value: 3,
-        enum_value: Color::Color::BLACK,
-        description: String::from("test"),
-        opt_int_32: Option::from(12),
-    };
+    let value_wrapper = ValueWrapper::new();
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -29,13 +23,7 @@ fn main() {
     let serialized_byes = bitwriter.data();
 
     // deserialize
-    let mut other_value_wrapper = ValueWrapper::ValueWrapper {
-        value: 0,
-        other_value: 0,
-        enum_value: Color::Color::BLACK,
-        description: String::from(""),
-        opt_int_32: Option::None,
-    };
+    let mut other_value_wrapper = ValueWrapper::new();
     let mut bitreader = BitReader::new(&serialized_byes);
     other_value_wrapper.unmarshal_zserio(&mut bitreader);
 
