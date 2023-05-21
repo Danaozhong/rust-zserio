@@ -5,6 +5,10 @@ pub fn convert_name(name: &String) -> String {
     name.to_case(Case::Snake)
 }
 
+pub fn array_type_name(name: &String) -> String {
+    String::from("zs_array_") + name
+}
+
 pub fn zserio_to_rust_type(name: &String) -> Result<String, &'static str> {
     match name.as_str() {
         "int8" => return Ok("i8".into()),

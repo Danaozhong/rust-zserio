@@ -2,7 +2,11 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::{types::convert_name, types::zserio_to_rust_type};
+use crate::internal::generator::types::{
+    convert_name, 
+    zserio_to_rust_type,
+    array_type_name,
+};
 
 pub fn decode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
@@ -20,9 +24,19 @@ pub fn decode_field(function: &mut Function, field: &Field) {
         lvalue_field_name = String::from("let optional_value");
     }
 
-    if native_type.is_marshaler {
+    if field.array.is_some() {
+        // Array fields need to be serialized using the array class, which takes
+        // care of the array delta compression.
+
+        // TODO support @index operator
+
+        function.line(format!("{} = self.{}.unmarshal_zserio(reader);", lvalue_field_name, array_type_name(&field.name)));
+
+    } else if native_type.is_marshaler {
+        // the field is a marshable type (struct, choice, enum)
         function.line(format!("{}.unmarshal_zserio(reader);", rvalue_field_name));
-    } else {
+    } else if fund_type.is_builtin {
+        // The type should be a native type
         if fund_type.bits != 0 {
             if fund_type.name == "int" {
                 function.line(format!(
@@ -52,6 +66,8 @@ pub fn decode_field(function: &mut Function, field: &Field) {
                 lvalue_field_name, rust_type_name
             ));
         }
+    } else {
+        panic!("unexpected zserio data type")
     }
 
     if field.is_optional {

@@ -6,8 +6,14 @@ use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, preamble::add_standard_imports, types::convert_name,
-    types::zserio_to_rust_type,
 };
+use crate::internal::generator::types::{
+    array_type_name,
+    zserio_to_rust_type,
+};
+
+
+
 use std::path::{Path, PathBuf};
 
 pub fn generate_struct(
@@ -31,14 +37,23 @@ pub fn generate_struct(
             // the type is a custom type, defined in some zserio file.
             field_type = field_type + "::" + field.field_type.name.as_str();
         }
+
+        // if the field is an array, add an additional member to store the array type details.
+        // This must happen before wrapping the type in Vec<>, or Optional<>, as this is
+        // used as a template argument.
+        if field.array.is_some() {
+            gen_struct.new_field(
+                &array_type_name(&field.name), 
+                format!("ztype::Array<{}>", field_type));
+        }
+
         if field.array.is_some() {
             field_type = format!("Vec<{}>", field_type.as_str());
         }
         if field.is_optional {
             field_type = format!("Option<{}>", field_type.as_str());
         }
-        let field_name = convert_name(&field.name);
-        let gen_field = gen_struct.new_field(&field_name, &field_type);
+        let gen_field = gen_struct.new_field(&convert_name(&field.name), &field_type);
         gen_field.vis("pub");
     }
 
