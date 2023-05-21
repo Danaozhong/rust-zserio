@@ -3,16 +3,11 @@ use std::io::Write;
 use codegen::Scope;
 
 use crate::internal::ast::zstruct::ZStruct;
+use crate::internal::generator::types::{array_type_name, zserio_to_rust_type};
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, preamble::add_standard_imports, types::convert_name,
 };
-use crate::internal::generator::types::{
-    array_type_name,
-    zserio_to_rust_type,
-};
-
-
 
 use std::path::{Path, PathBuf};
 
@@ -43,8 +38,9 @@ pub fn generate_struct(
         // used as a template argument.
         if field.array.is_some() {
             gen_struct.new_field(
-                &array_type_name(&field.name), 
-                format!("ztype::Array<{}>", field_type));
+                &array_type_name(&field.name),
+                format!("ztype::Array<{}>", field_type),
+            );
         }
 
         if field.array.is_some() {

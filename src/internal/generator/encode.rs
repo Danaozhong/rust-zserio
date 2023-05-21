@@ -3,9 +3,8 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
 use crate::internal::generator::types::{
-    convert_name, zserio_to_rust_type, zserio_type_bit_size, array_type_name
+    array_type_name, convert_name, zserio_to_rust_type, zserio_type_bit_size,
 };
-
 
 pub fn encode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
@@ -25,8 +24,11 @@ pub fn encode_field(function: &mut Function, field: &Field) {
 
         // TODO support @index operator
 
-        function.line(format!("self.{}.marshal_zserio(writer, &{});", array_type_name(&field.name), field_name));
-
+        function.line(format!(
+            "self.{}.marshal_zserio(writer, &{});",
+            array_type_name(&field.name),
+            field_name
+        ));
     } else if native_type.is_marshaler {
         function.line(format!("{}.marshal_zserio(writer);", field_name));
     } else {

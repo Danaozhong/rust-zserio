@@ -1,5 +1,5 @@
-use rust_bitwriter::BitWriter;
 use crate::ztype::unsigned_bitsize;
+use rust_bitwriter::BitWriter;
 
 const MAX_VARSIZE: u64 = (1 << (2 + 7 + 7 + 7 + 8)) - 1;
 

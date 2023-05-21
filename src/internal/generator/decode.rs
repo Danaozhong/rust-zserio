@@ -2,11 +2,7 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{
-    convert_name, 
-    zserio_to_rust_type,
-    array_type_name,
-};
+use crate::internal::generator::types::{array_type_name, convert_name, zserio_to_rust_type};
 
 pub fn decode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
@@ -30,8 +26,11 @@ pub fn decode_field(function: &mut Function, field: &Field) {
 
         // TODO support @index operator
 
-        function.line(format!("{} = self.{}.unmarshal_zserio(reader);", lvalue_field_name, array_type_name(&field.name)));
-
+        function.line(format!(
+            "{} = self.{}.unmarshal_zserio(reader);",
+            lvalue_field_name,
+            array_type_name(&field.name)
+        ));
     } else if native_type.is_marshaler {
         // the field is a marshable type (struct, choice, enum)
         function.line(format!("{}.unmarshal_zserio(reader);", rvalue_field_name));

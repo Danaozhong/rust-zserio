@@ -3,10 +3,7 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{
-    convert_name, zserio_to_rust_type, array_type_name
-
-};
+use crate::internal::generator::types::{array_type_name, convert_name, zserio_to_rust_type};
 
 pub fn bitsize_type_reference(
     function: &mut Function,
@@ -137,7 +134,11 @@ pub fn bitsize_field(function: &mut Function, field: &Field) {
         //if field.array.unwrap().is_packed {
         //    function.line(format!("end_position += self.{}.bitsizeof_packed();", array_type_name(&field_name) ));
         //} else {
-            function.line(format!("end_position += self.{}.bitsizeof({}, end_position);", field_name, array_type_name(&field.name)));
+        function.line(format!(
+            "end_position += self.{}.bitsizeof({}, end_position);",
+            field_name,
+            array_type_name(&field.name)
+        ));
         //}
     } else {
         bitsize_type_reference(function, &field_name, native_type.is_marshaler, &fund_type);

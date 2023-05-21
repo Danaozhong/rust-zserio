@@ -1,4 +1,3 @@
-
 pub fn varsize_bitsize(v: u64) -> u8 {
     unsigned_bitsize(v, 5)
 }

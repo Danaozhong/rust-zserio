@@ -12,21 +12,19 @@ use crate::internal::ast::{
     zenum::{ZEnum, ZEnumItem},
 };
 use crate::internal::parser::gen::zserioparser::{
-    DynamicLengthArgumentContext, DynamicLengthArgumentContextAttrs, EnumDeclarationContext,
-    EnumDeclarationContextAttrs, EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContext,
-    FieldArrayRangeContextAttrs, FieldTypeIdContext, FieldTypeIdContextAttrs, IdContext,
-    ImportDeclarationContext, ImportDeclarationContextAttrs, LiteralContextAttrs,
-    LiteralExpressionContext, LiteralExpressionContextAttrs, PackageDeclarationContext,
-    PackageDeclarationContextAttrs, PackageNameDefinitionContext,
+    DotExpressionContext, DotExpressionContextAttrs, DynamicLengthArgumentContext,
+    DynamicLengthArgumentContextAttrs, EnumDeclarationContext, EnumDeclarationContextAttrs,
+    EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContext, FieldArrayRangeContextAttrs,
+    FieldTypeIdContext, FieldTypeIdContextAttrs, IdContext, IdentifierExpressionContext,
+    IdentifierExpressionContextAttrs, ImportDeclarationContext, ImportDeclarationContextAttrs,
+    LiteralContextAttrs, LiteralExpressionContext, LiteralExpressionContextAttrs,
+    PackageDeclarationContext, PackageDeclarationContextAttrs, PackageNameDefinitionContext,
     PackageNameDefinitionContextAttrs, QualifiedNameContext, StructureDeclarationContext,
     StructureDeclarationContextAttrs, StructureFieldDefinitionContext,
-    StructureFieldDefinitionContextAttrs, TemplateParametersContext,
+    StructureFieldDefinitionContextAttrs, TemplateArgumentContext, TemplateArgumentContextAttrs,
+    TemplateArgumentsContext, TemplateArgumentsContextAttrs, TemplateParametersContext,
     TemplateParametersContextAttrs, TypeInstantiationContext, TypeInstantiationContextAttrs,
     TypeReferenceContext, TypeReferenceContextAttrs, ZserioParserContextType,
-    TemplateArgumentsContext, TemplateArgumentsContextAttrs,
-    TemplateArgumentContext, TemplateArgumentContextAttrs,
-    IdentifierExpressionContext, IdentifierExpressionContextAttrs,
-    DotExpressionContext, DotExpressionContextAttrs,
 };
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
@@ -478,12 +476,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             match ZserioParserVisitorCompat::visit_templateArgument(self, &*template_argument) {
                 ZserioTreeReturnType::TypeReference(t) => template_aguments.push(t),
                 _ => panic!("unexpected return type"),
-
             }
         }
         ZserioTreeReturnType::TypeReferences(template_aguments)
     }
-
 
     fn visit_templateArgument(&mut self, ctx: &TemplateArgumentContext<'_>) -> Self::Return {
         // a template argument is basically just a type reference
@@ -512,35 +508,34 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_dotExpression(&mut self, ctx: &DotExpressionContext<'_>) -> Self::Return {
         let expression_ctx = ctx.expression();
-        
+
         let op1;
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(exp) => op1 = exp,
             _ => panic!("unexpected first dot operand"),
         }
 
-
         /*
-        	return &ast.Expression{
-		Operand1: v.Visit(ctx.Expression()).(*ast.Expression),
-		Operand2: &ast.Expression{
-			Type: parser.UnevaluatableExpressionType,
-			Text: ctx.Id().GetText(),
-		},
-		Type: ctx.GetOperator().GetTokenType(),
-		Text: ctx.GetOperator().GetText(),
-	}
-     */
+                return &ast.Expression{
+            Operand1: v.Visit(ctx.Expression()).(*ast.Expression),
+            Operand2: &ast.Expression{
+                Type: parser.UnevaluatableExpressionType,
+                Text: ctx.Id().GetText(),
+            },
+            Type: ctx.GetOperator().GetTokenType(),
+            Text: ctx.GetOperator().GetText(),
+        }
+         */
         ZserioTreeReturnType::Expression(Box::new(Expression {
             text: ctx.DOT().unwrap().get_text(),
             operand1: Option::from(op1),
-            operand2: Option::from(Box::new(Expression{
-                text:ctx.id().unwrap().get_text(),
-                operand1:None,
-                operand2:None,
-                operand3:None,
-                result_type:ExpressionType::OtherExpression,
-                fully_resolved:true,
+            operand2: Option::from(Box::new(Expression {
+                text: ctx.id().unwrap().get_text(),
+                operand1: None,
+                operand2: None,
+                operand3: None,
+                result_type: ExpressionType::OtherExpression,
+                fully_resolved: true,
             })),
             operand3: None,
             result_type: ExpressionType::OtherExpression,
@@ -549,19 +544,18 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_identifierExpression(
-            &mut self,
-            ctx: &IdentifierExpressionContext<'_>,
-        ) -> Self::Return {
-            let id_context =ctx.id().unwrap();
-            return ZserioTreeReturnType::Expression(Box::new(Expression {
-                text: id_context.get_text(),
-                operand1: None,
-                operand2: None,
-                operand3: None,
-                result_type: ExpressionType::OtherExpression,
-                fully_resolved: false,
-            }));
-
+        &mut self,
+        ctx: &IdentifierExpressionContext<'_>,
+    ) -> Self::Return {
+        let id_context = ctx.id().unwrap();
+        return ZserioTreeReturnType::Expression(Box::new(Expression {
+            text: id_context.get_text(),
+            operand1: None,
+            operand2: None,
+            operand3: None,
+            result_type: ExpressionType::OtherExpression,
+            fully_resolved: false,
+        }));
     }
 
     fn visit_literalExpression(&mut self, ctx: &LiteralExpressionContext<'_>) -> Self::Return {
@@ -652,7 +646,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             // check if the type is template, e.g. bit<expression>
             if let Some(template_arguments) = ctx.templateArguments() {
                 // TODO use the template arguments
-                let _template_argument = ZserioParserVisitorCompat::visit_templateArguments(self, &*template_arguments);
+                let _template_argument =
+                    ZserioParserVisitorCompat::visit_templateArguments(self, &*template_arguments);
             }
 
             if name.contains(":") {
@@ -660,7 +655,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 bits = i8::from_str_radix(bits_subst[1], 10).expect("failed to convert to i8");
                 name = bits_subst[0].into();
             }
-            
+
             return ZserioTreeReturnType::TypeReference(Box::new(TypeReference {
                 is_builtin: true,
                 package: "".into(),
