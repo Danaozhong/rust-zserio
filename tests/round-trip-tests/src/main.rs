@@ -18,7 +18,7 @@ fn main() {
         value: 1,
         other_value: 3,
         enum_value: Color::Color::BLACK,
-        description: String::from("te2222st"),
+        description: String::from("test"),
         opt_int_32: Option::from(12),
     };
 

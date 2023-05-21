@@ -13,9 +13,3 @@ pub struct ZPackage {
     pub structs: Vec<Box<ZStruct>>,
     pub enums: Vec<Box<ZEnum>>,
 }
-
-impl ZPackage {
-    fn dummy(&self) {
-        // TODO
-    }
-}

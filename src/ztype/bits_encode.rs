@@ -20,10 +20,10 @@ pub fn write_u64(writer: &mut BitWriter, v: u64) {
 pub fn write_u32(writer: &mut BitWriter, v: u32) {
     write_unsigned_bits(writer, v as u64, 32);
 }
-pub fn write_u16(writer: &mut BitWriter, v: u32) {
+pub fn write_u16(writer: &mut BitWriter, v: u16) {
     write_unsigned_bits(writer, v as u64, 16);
 }
-pub fn write_u8(writer: &mut BitWriter, v: u32) {
+pub fn write_u8(writer: &mut BitWriter, v: u8) {
     write_unsigned_bits(writer, v as u64, 8);
 }
 

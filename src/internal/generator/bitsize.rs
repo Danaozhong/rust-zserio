@@ -135,9 +135,9 @@ pub fn bitsize_field(function: &mut Function, field: &Field) {
         //    function.line(format!("end_position += self.{}.bitsizeof_packed();", array_type_name(&field_name) ));
         //} else {
         function.line(format!(
-            "end_position += self.{}.bitsizeof({}, end_position);",
+            "end_position += self.{}.zserio_bitsize(&{}, end_position);",
+            array_type_name(&field.name),
             field_name,
-            array_type_name(&field.name)
         ));
         //}
     } else {
