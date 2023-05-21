@@ -29,6 +29,12 @@ struct ValueWrapper(int32 parameter)
     string description;
     optional int32 optInt32;
     
+    bit:10 fixed_array[128];
+
+    string str_array[];
+
+    packed uint16 packed_array;
+
     function int32 getValue()
     {
         return value + parameter;
@@ -63,4 +69,25 @@ choice BasicChoice(SomeEnum type) on type
 
     // the purpose of this structure is this field - HAS_A must be resolved from SomeOtherEnum
     case HAS_A: int8 hasA;
+};
+
+
+// This example tests the @index operator.
+struct IndexTest
+{
+    uint16                  numBlocks;
+    BlockHeader             headers[numBlocks];
+    Block(headers[@index])  blocks[numBlocks];
+};
+
+struct BlockHeader
+{
+    uint16 numItems;
+    uint32 offset;
+};
+
+struct Block(BlockHeader header)
+{
+    header.offset:
+    int64 items[header.numItems];
 };
