@@ -29,7 +29,12 @@ pub use self::bits_decode::read_u8;
 pub use self::bits_decode::read_unsigned_bits;
 pub use self::bits_decode::read_signed_bits;
 
+pub use self::varuint_bitsize::varsize_bitsize;
+pub use self::varuint_bitsize::unsigned_bitsize;
+
 pub use self::array::Array;
+
+pub use self::bit_alignment::align_to;
 
 pub mod bits_decode;
 pub mod bits_encode;
@@ -37,8 +42,9 @@ mod string_decode;
 mod string_encode;
 pub mod varuint_decode;
 pub mod varuint_encode;
-
+mod varuint_bitsize;
 
 // all the modules required for arrays
 mod array;
 pub mod array_traits;
+mod bit_alignment;
