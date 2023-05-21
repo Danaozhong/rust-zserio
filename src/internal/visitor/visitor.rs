@@ -25,6 +25,8 @@ use crate::internal::parser::gen::zserioparser::{
     TypeReferenceContext, TypeReferenceContextAttrs, ZserioParserContextType,
     TemplateArgumentsContext, TemplateArgumentsContextAttrs,
     TemplateArgumentContext, TemplateArgumentContextAttrs,
+    IdentifierExpressionContext, IdentifierExpressionContextAttrs,
+    DotExpressionContext, DotExpressionContextAttrs,
 };
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
@@ -42,7 +44,7 @@ pub enum ZserioTreeReturnType {
     Structure(Box<ZStruct>),
     Enumeration(Box<ZEnum>),
     EnumItem(Box<ZEnumItem>),
-    Expression(Expression),
+    Expression(Box<Expression>),
     Field(Box<Field>),
     TypeReference(Box<TypeReference>),
     TypeReferences(Vec<Box<TypeReference>>),
@@ -288,7 +290,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         // check if the field is an array
         let mut array: Option<Array> = None;
         if let Some(rc_arr_ctx) = ctx.fieldArrayRange() {
-            let mut array_length_exp: Option<Expression> = None;
+            let mut array_length_exp: Option<Box<Expression>> = None;
             if let Some(array_length_expression_ctx) = rc_arr_ctx.expression() {
                 match self.visit(&*array_length_expression_ctx) {
                     ZserioTreeReturnType::Expression(expr) => array_length_exp = Option::from(expr),
@@ -508,6 +510,60 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
     */
 
+    fn visit_dotExpression(&mut self, ctx: &DotExpressionContext<'_>) -> Self::Return {
+        let expression_ctx = ctx.expression();
+        
+        let op1;
+        match self.visit(&*ctx.expression().unwrap()) {
+            ZserioTreeReturnType::Expression(exp) => op1 = exp,
+            _ => panic!("unexpected first dot operand"),
+        }
+
+
+        /*
+        	return &ast.Expression{
+		Operand1: v.Visit(ctx.Expression()).(*ast.Expression),
+		Operand2: &ast.Expression{
+			Type: parser.UnevaluatableExpressionType,
+			Text: ctx.Id().GetText(),
+		},
+		Type: ctx.GetOperator().GetTokenType(),
+		Text: ctx.GetOperator().GetText(),
+	}
+     */
+        ZserioTreeReturnType::Expression(Box::new(Expression {
+            text: ctx.DOT().unwrap().get_text(),
+            operand1: Option::from(op1),
+            operand2: Option::from(Box::new(Expression{
+                text:ctx.id().unwrap().get_text(),
+                operand1:None,
+                operand2:None,
+                operand3:None,
+                result_type:ExpressionType::OtherExpression,
+                fully_resolved:true,
+            })),
+            operand3: None,
+            result_type: ExpressionType::OtherExpression,
+            fully_resolved: false,
+        }))
+    }
+
+    fn visit_identifierExpression(
+            &mut self,
+            ctx: &IdentifierExpressionContext<'_>,
+        ) -> Self::Return {
+            let id_context =ctx.id().unwrap();
+            return ZserioTreeReturnType::Expression(Box::new(Expression {
+                text: id_context.get_text(),
+                operand1: None,
+                operand2: None,
+                operand3: None,
+                result_type: ExpressionType::OtherExpression,
+                fully_resolved: false,
+            }));
+
+    }
+
     fn visit_literalExpression(&mut self, ctx: &LiteralExpressionContext<'_>) -> Self::Return {
         let literal_ctx = ctx.literal().unwrap();
 
@@ -544,28 +600,28 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
 
         let _tokens = literal_ctx.get_tokens(1);
-        ZserioTreeReturnType::Expression(Expression {
+        ZserioTreeReturnType::Expression(Box::new(Expression {
             text: literal_ctx.get_text(), // ctx.literal().unwrap().get_text(),
             operand1: None,
             operand2: None,
             operand3: None,
             result_type: result_type,
             fully_resolved: true,
-        })
+        }))
     }
 
     fn visit_dynamicLengthArgument(
         &mut self,
         ctx: &DynamicLengthArgumentContext<'_>,
     ) -> Self::Return {
-        ZserioTreeReturnType::Expression(Expression {
+        ZserioTreeReturnType::Expression(Box::new(Expression {
             text: "".into(),
             operand1: None,
             operand2: None,
             operand3: None,
             result_type: ExpressionType::BoolExpression(true),
             fully_resolved: false,
-        })
+        }))
     }
 
     fn visit_typeInstantiation(&mut self, ctx: &TypeInstantiationContext<'_>) -> Self::Return {

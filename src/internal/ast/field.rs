@@ -4,7 +4,7 @@ use std::string::String;
 pub struct Array {
     pub is_packed: bool,
     pub is_implicit: bool,
-    pub array_length_expression: Option<Expression>,
+    pub array_length_expression: Option<Box<Expression>>,
 }
 
 pub struct Field {
