@@ -3,7 +3,7 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
 use crate::internal::generator::types::{
-    array_type_name, convert_name, zserio_to_rust_type, zserio_type_bit_size,
+    array_type_name, convert_name, zserio_to_rust_type,
 };
 
 pub fn encode_field(function: &mut Function, field: &Field) {

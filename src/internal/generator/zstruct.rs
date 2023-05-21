@@ -1,4 +1,4 @@
-use std::io::Write;
+
 
 use codegen::Scope;
 
@@ -9,7 +9,7 @@ use crate::internal::generator::{
     file_generator::write_to_file, preamble::add_standard_imports, types::convert_name,
 };
 
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 pub fn generate_struct(
     mut scope: &mut Scope,
@@ -54,7 +54,7 @@ pub fn generate_struct(
     }
 
     // generate the functions to serialize/deserialize
-    let mut struct_impl = scope.new_impl(&zstruct.name);
+    let struct_impl = scope.new_impl(&zstruct.name);
 
     let marshal_fn = struct_impl.new_fn("marshal_zserio");
     marshal_fn.vis("pub");
@@ -64,7 +64,7 @@ pub fn generate_struct(
         encode_field(marshal_fn, field);
     }
 
-    let mut unmarshal_fn = struct_impl.new_fn("unmarshal_zserio");
+    let unmarshal_fn = struct_impl.new_fn("unmarshal_zserio");
     unmarshal_fn.vis("pub");
     unmarshal_fn.arg_mut_self();
     unmarshal_fn.arg("reader", "&mut BitReader");

@@ -1,5 +1,5 @@
-use crate::internal::parser::gen::zserioparser::FieldArrayRangeContextAll;
-use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitor;
+
+
 use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitorCompat;
 
 use crate::internal::ast::package::{ZImport, ZPackage};
@@ -14,7 +14,7 @@ use crate::internal::ast::{
 use crate::internal::parser::gen::zserioparser::{
     DotExpressionContext, DotExpressionContextAttrs, DynamicLengthArgumentContext,
     DynamicLengthArgumentContextAttrs, EnumDeclarationContext, EnumDeclarationContextAttrs,
-    EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContext, FieldArrayRangeContextAttrs,
+    EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContextAttrs,
     FieldTypeIdContext, FieldTypeIdContextAttrs, IdContext, IdentifierExpressionContext,
     IdentifierExpressionContextAttrs, ImportDeclarationContext, ImportDeclarationContextAttrs,
     LiteralContextAttrs, LiteralExpressionContext, LiteralExpressionContextAttrs,
@@ -29,7 +29,7 @@ use crate::internal::parser::gen::zserioparser::{
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
 use antlr_rust::tree::{
-    ErrorNode, ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree, Visitable,
+    ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree,
 };
 // the antlr implementation for Rust requires to use one single return type,
 // but depending on the node, the types returned while parsing the tree may
@@ -100,7 +100,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         let mut imports = Vec::new();
         for import in ctx.importDeclaration_all() {
-            let mut import_node: Box<ZImport>;
+            let import_node: Box<ZImport>;
             match self.visit(&*import) {
                 ZserioTreeReturnType::Import(n) => import_node = n,
                 _ => panic!("should not happen"),
@@ -134,8 +134,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                             ZserioTreeReturnType::TypeReference(z) => {
                                 println!("unknown type ref: {0}", z.bits)
                             }
-                            ZserioTreeReturnType::Field(z) => print!("field found"),
-                            ZserioTreeReturnType::Expression(e) => print!("expression found"),
+                            ZserioTreeReturnType::Field(_z) => print!("field found"),
+                            ZserioTreeReturnType::Expression(_e) => print!("expression found"),
                             _ => panic!("should not happen2"),
                         }
                     }
@@ -163,7 +163,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         let mut symbol_name = String::from("");
         match ctx.MULTIPLY() {
-            is_set => {
+            _is_set => {
                 symbol_name = String::from("*");
             }
             None => {
@@ -507,7 +507,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     */
 
     fn visit_dotExpression(&mut self, ctx: &DotExpressionContext<'_>) -> Self::Return {
-        let expression_ctx = ctx.expression();
+        let _expression_ctx = ctx.expression();
 
         let op1;
         match self.visit(&*ctx.expression().unwrap()) {
@@ -606,7 +606,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_dynamicLengthArgument(
         &mut self,
-        ctx: &DynamicLengthArgumentContext<'_>,
+        _ctx: &DynamicLengthArgumentContext<'_>,
     ) -> Self::Return {
         ZserioTreeReturnType::Expression(Box::new(Expression {
             text: "".into(),

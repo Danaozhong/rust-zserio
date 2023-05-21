@@ -53,7 +53,7 @@ impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
     ) -> u8 {
         context_node.context.bitsize_of(self, bit_position, element) as u8
     }
-    fn initialize_offsets_packed(&self, bit_position: u64, element: &i64) -> u64 {
+    fn initialize_offsets_packed(&self, _bit_position: u64, _element: &i64) -> u64 {
         0
     }
 

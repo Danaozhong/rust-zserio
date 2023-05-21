@@ -7686,12 +7686,12 @@ where
                 recog.base.set_state(523);
                 recog.err_handler.sync(&mut recog.base)?;
                 _la = recog.base.input.la(1);
-                while (((_la - 64) & !0x3f) == 0
+                while ((_la - 64) & !0x3f) == 0
                     && ((1usize << (_la - 64))
                         & ((1usize << (PUBLISH - 64))
                             | (1usize << (SUBSCRIBE - 64))
                             | (1usize << (TOPIC - 64))))
-                        != 0)
+                        != 0
                 {
                     {
                         {

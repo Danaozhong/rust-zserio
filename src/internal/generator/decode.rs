@@ -7,7 +7,7 @@ use crate::internal::generator::types::{array_type_name, convert_name, zserio_to
 pub fn decode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
     let fund_type = native_type.fundamental_type;
-    let mut rvalue_field_name = format!("self.{}", convert_name(&field.name));
+    let rvalue_field_name = format!("self.{}", convert_name(&field.name));
     let mut lvalue_field_name = rvalue_field_name.clone();
 
     // TODO optional clause

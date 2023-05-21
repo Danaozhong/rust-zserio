@@ -1,7 +1,7 @@
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-use crate::ztype::{align_to, bits_encode, varsize_bitsize};
+use crate::ztype::{align_to, varsize_bitsize};
 
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
@@ -42,7 +42,7 @@ impl<T> Array<T> {
                     .init_context(self.packing_context_node.as_mut().unwrap(), &element);
             }
         }
-        for (index, element) in data.iter().enumerate() {
+        for (_index, element) in data.iter().enumerate() {
             if self.is_aligned {
                 writer.align(1);
             }
@@ -58,7 +58,7 @@ impl<T> Array<T> {
         }
     }
 
-    pub fn unmarshal_zserio(&mut self, reader: &mut BitReader) -> Vec<T> {
+    pub fn unmarshal_zserio(&mut self, _reader: &mut BitReader) -> Vec<T> {
         vec![]
     }
 
@@ -83,7 +83,7 @@ impl<T> Array<T> {
             } else {
                 // the bitsize of each array element may differ, as such, each element need to be
                 // added individually.
-                for element in data {
+                for _element in data {
                     if self.is_aligned {
                         end_position = align_to(8, end_position);
                     }

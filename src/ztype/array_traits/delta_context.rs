@@ -80,7 +80,7 @@ impl DeltaContext {
     pub fn bitsize_of<T>(
         &mut self,
         array_traits: &dyn ArrayTrait<T>,
-        bit_position: u64,
+        _bit_position: u64,
         element: &T,
     ) -> u64 {
         if !self.processing_started {
@@ -117,9 +117,9 @@ impl DeltaContext {
 
     pub fn write<T>(
         &mut self,
-        array_traits: &dyn ArrayTrait<T>,
-        writer: &mut BitWriter,
-        element: &T,
+        _array_traits: &dyn ArrayTrait<T>,
+        _writer: &mut BitWriter,
+        _element: &T,
     ) {
         // TODO
     }
@@ -256,7 +256,7 @@ impl DeltaContext {
     }
      */
 
-    fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, element: &T) -> u64 {
+    fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, _element: &T) -> u64 {
         array_trait.bitsize_of() as u64
     }
 }

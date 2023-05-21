@@ -3,7 +3,7 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{array_type_name, convert_name, zserio_to_rust_type};
+use crate::internal::generator::types::{array_type_name, convert_name};
 
 pub fn bitsize_type_reference(
     function: &mut Function,
