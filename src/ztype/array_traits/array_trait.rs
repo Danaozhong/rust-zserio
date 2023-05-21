@@ -3,7 +3,7 @@ use rust_bitwriter::BitWriter;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 pub trait ArrayTrait<T> {
 
-    fn is_bitsizeof_constract(&self) -> bool;
+    fn is_bitsizeof_constant(&self) -> bool;
     fn needs_bitsizeof_position(&self) -> bool;
     fn bitsize_of(&self) -> u8;
     fn initialize_offsets(&self, bit_position: u64) -> u64;

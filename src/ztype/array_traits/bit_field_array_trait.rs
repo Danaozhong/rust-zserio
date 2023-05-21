@@ -11,7 +11,7 @@ pub struct BitFieldArrayTrait {
 }
 
 impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
-    fn is_bitsizeof_constract(&self) -> bool {
+    fn is_bitsizeof_constant(&self) -> bool {
         true
     }
 
