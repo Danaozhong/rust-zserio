@@ -1,5 +1,4 @@
 use crate::internal::generator::file_generator::write_to_file;
-use codegen::Scope;
 
 use crate::internal::ast::package::ZPackage;
 use crate::internal::generator::{

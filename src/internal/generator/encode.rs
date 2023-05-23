@@ -2,9 +2,9 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::{types::convert_name, types::zserio_to_rust_type};
+use crate::internal::generator::types::{convert_name, zserio_to_rust_type};
 
-use super::types::zserio_type_bit_size;
+use crate::internal::generator::array::array_type_name;
 
 pub fn encode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
@@ -18,18 +18,29 @@ pub fn encode_field(function: &mut Function, field: &Field) {
         field_name = "x".into();
     }
 
-    if native_type.is_marshaler {
+    if field.array.is_some() {
+        // Array fields need to be deserialized using the array class, which takes
+        // care of the array delta compression.
+
+        // TODO support @index operator
+
+        function.line(format!(
+            "{}.marshal_zserio(writer, &{});",
+            array_type_name(&field.name),
+            field_name
+        ));
+    } else if native_type.is_marshaler {
         function.line(format!("{}.marshal_zserio(writer);", field_name));
     } else {
         if fund_type.bits != 0 {
             if fund_type.name == "int" {
                 function.line(format!(
-                    "writer.write_signed_bits({}, {});",
+                    "ztype::write_signed_bits(writer, {}, {});",
                     field_name, fund_type.bits
                 ));
             } else {
                 function.line(format!(
-                    "writer.write_unsigned_bits({}, {});",
+                    "ztype::write_unsigned_bits(writer, {}, {});",
                     field_name, fund_type.bits
                 ));
             }

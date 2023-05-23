@@ -1,7 +1,6 @@
 use rust_bitwriter::BitWriter;
 
-use crate::ztype::bits_encode;
-use crate::ztype::varuint_encode::unsigned_bitsize;
+use crate::ztype::unsigned_bitsize;
 
 use super::varuint_encode::write_varsize;
 

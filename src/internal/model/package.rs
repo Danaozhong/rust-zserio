@@ -7,17 +7,17 @@ use antlr_rust::common_token_stream::CommonTokenStream;
 use antlr_rust::tree::ParseTreeVisitorCompat;
 use antlr_rust::InputStream;
 use std::path::Path;
-use std::string::String;
-use std::{fs, result};
+
+use std::fs;
 
 /// Loads a zserio package from a file.
 pub fn package_from_file(path: &Path) -> Box<ZPackage> {
     let contents = fs::read_to_string(path).expect("failed to read file");
-    let mut lexer = ZserioLexer::new(InputStream::new(&*contents));
+    let lexer = ZserioLexer::new(InputStream::new(&*contents));
     let mut parser = ZserioParser::new(CommonTokenStream::new(lexer));
 
     let root = parser.packageDeclaration().unwrap(); //.expect("package declaration failed");
-    let mut x = ZserioTreeReturnType::Str("".into());
+    let x = ZserioTreeReturnType::Str("".into());
     let result = Visitor(x).visit(&*root);
 
     match result {

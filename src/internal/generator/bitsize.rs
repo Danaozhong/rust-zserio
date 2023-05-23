@@ -3,7 +3,9 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::{types::convert_name, types::zserio_to_rust_type};
+use crate::internal::generator::types::convert_name;
+
+use crate::internal::generator::array::array_type_name;
 
 pub fn bitsize_type_reference(
     function: &mut Function,
@@ -129,8 +131,20 @@ pub fn bitsize_field(function: &mut Function, field: &Field) {
         function.line("Some(x) => {");
     }
 
-    bitsize_type_reference(function, &field_name, native_type.is_marshaler, &fund_type);
-
+    if field.array.is_some() {
+        // TODO count packed arrays correctly
+        //if field.array.unwrap().is_packed {
+        //    function.line(format!("end_position += self.{}.bitsizeof_packed();", array_type_name(&field_name) ));
+        //} else {
+        function.line(format!(
+            "end_position += {}.zserio_bitsize(&{}, end_position);",
+            array_type_name(&field.name),
+            field_name,
+        ));
+        //}
+    } else {
+        bitsize_type_reference(function, &field_name, native_type.is_marshaler, &fund_type);
+    }
     if field.is_optional {
         // in case the field is optional, end the if condition which checks
         // if the field is set.

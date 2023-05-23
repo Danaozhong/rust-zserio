@@ -1,4 +1,4 @@
-name: test
+name: PR Checks
 
 on:
   push:
@@ -10,13 +10,33 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Test rust-zserio Build
-      run: cargo build --verbose
+      run: cargo build --release --verbose
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
     - name: Run Unit tests
       run: cargo test --verbose
+  test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
     - name: Run E2E tests
       run: cargo run -p round-trip-tests
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run lint check
+      run: cargo clippy
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run fmt check
+      run: cargo fmt --check

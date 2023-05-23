@@ -1,4 +1,3 @@
-use crate::internal::ast::field::Field;
 use std::string::String;
 
 use super::type_reference::TypeReference;
