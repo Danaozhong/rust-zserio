@@ -69,7 +69,8 @@ impl<T> Array<T> {
         }
         if data.len() > 0 {
             if self.array_trait.is_bitsizeof_constant() {
-                let element_size = self.array_trait.bitsize_of();
+                // Since the bitsize is anyway constant, just pass the first element
+                let element_size = self.array_trait.bitsize_of(end_position, &data[0]);
                 if self.is_aligned {
                     // make sure the first element is aligned
                     end_position = align_to(8, end_position);
@@ -83,11 +84,11 @@ impl<T> Array<T> {
             } else {
                 // the bitsize of each array element may differ, as such, each element need to be
                 // added individually.
-                for _element in data {
+                for element in data {
                     if self.is_aligned {
                         end_position = align_to(8, end_position);
                     }
-                    end_position += self.array_trait.bitsize_of() as u64;
+                    end_position += self.array_trait.bitsize_of(end_position, element) as u64;
                 }
             }
         }

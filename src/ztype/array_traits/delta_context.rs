@@ -35,7 +35,7 @@ impl DeltaContext {
 
     pub fn init<T>(&mut self, array_trait: &dyn ArrayTrait<T>, element: &T) {
         self.num_elements += 1;
-        self.unpacked_size += array_trait.bitsize_of() as u64;
+        self.unpacked_size += array_trait.bitsize_of(0, element) as u64;
 
         if !self.init_started {
             self.init_started = true;
@@ -256,7 +256,7 @@ impl DeltaContext {
     }
      */
 
-    fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, _element: &T) -> u64 {
-        array_trait.bitsize_of() as u64
+    fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, element: &T) -> u64 {
+        array_trait.bitsize_of(0, element)
     }
 }

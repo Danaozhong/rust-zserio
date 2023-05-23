@@ -35,6 +35,7 @@ pub use self::varuint_bitsize::varsize_bitsize;
 pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
+pub use self::traits::ZserioPackableOject;
 
 pub mod bits_decode;
 pub mod bits_encode;
@@ -48,3 +49,5 @@ pub mod varuint_encode;
 mod array;
 pub mod array_traits;
 mod bit_alignment;
+
+mod traits;

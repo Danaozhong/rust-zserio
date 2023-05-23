@@ -3,7 +3,9 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{array_type_name, convert_name};
+use crate::internal::generator::types::convert_name;
+
+use crate::internal::generator::array::array_type_name;
 
 pub fn bitsize_type_reference(
     function: &mut Function,
@@ -135,7 +137,7 @@ pub fn bitsize_field(function: &mut Function, field: &Field) {
         //    function.line(format!("end_position += self.{}.bitsizeof_packed();", array_type_name(&field_name) ));
         //} else {
         function.line(format!(
-            "end_position += self.{}.zserio_bitsize(&{}, end_position);",
+            "end_position += {}.zserio_bitsize(&{}, end_position);",
             array_type_name(&field.name),
             field_name,
         ));

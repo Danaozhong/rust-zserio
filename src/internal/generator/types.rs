@@ -1,50 +1,18 @@
+use crate::internal::ast::type_reference::TypeReference;
 use convert_case::{Case, Casing};
 use std::result::Result;
-use crate::internal::ast::field::Field;
-use crate::internal::ast::type_reference::TypeReference;
 
 pub fn convert_name(name: &String) -> String {
     name.to_case(Case::Snake)
 }
 
-pub fn array_type_name(name: &String) -> String {
-    String::from("zs_array_") + name
-}
-
-pub fn field_to_rust_type(field: &Field) -> String {
-    if field.field_type.is_builtin {
+pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
+    if ztype.is_builtin {
         // the type is a zserio built-in type, such as int32, string, bool
-        return zserio_to_rust_type(&field.field_type.name).expect("type mapping failed");
+        return zserio_to_rust_type(&ztype.name).expect("type mapping failed");
     }
     // the type is a custom type, defined in some zserio file.
-    field.field_type.name.clone() + "::" + field.field_type.name.as_str()
-}
-
-pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
-    if !zserio_type.is_builtin {
-        return format!("object_array_traits::<{}>", zserio_type.name).into();
-    } else {
-        match zserio_type.name.as_str() {
-            "int8" => return "signed_bit_field_array_traits".into(),
-            "int16" => return "signed_bit_field_array_traits".into(),
-            "int32" => return "signed_bit_field_array_traits".into(),
-            "int64" => return "signed_bit_field_array_traits".into(),
-            "varint32" => return "var_uint_array_traits".into(),
-            "uint8" => return "bit_field_array_traits".into(),
-            "uint16" => return "bit_field_array_traits".into(),
-            "uint32" => return "bit_field_array_traits".into(),
-            "varuint32" => return "varuint32_array_traits".into(),
-            "string" => return "string_array_traits".into(),
-            "float16" => return "f16_array_traits".into(),
-            "float32" => return "f32_array_traits".into(),
-            "float64" => return "f64_array_traits".into(),
-            "bool" => return "boolean_array_traits".into(),
-            "bit" => return "bit_field_array_traits".into(),
-            "int" => return "signed_bit_field_array_traits".into(),
-            "extern" => return "object_array_traits::<ztype::extern_type>".into(),
-            _ => panic!("failed to identify array trait")
-        }
-    }
+    ztype.name.clone() + "::" + ztype.name.as_str()
 }
 
 pub fn zserio_to_rust_type(name: &String) -> Result<String, &'static str> {

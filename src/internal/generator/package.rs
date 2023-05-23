@@ -1,6 +1,5 @@
 use crate::internal::generator::file_generator::write_to_file;
 
-
 use crate::internal::ast::package::ZPackage;
 use crate::internal::generator::{
     preamble::get_default_scope, zenum::generate_enum, zstruct::generate_struct,

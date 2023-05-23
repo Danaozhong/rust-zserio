@@ -8,7 +8,7 @@ use antlr_rust::tree::ParseTreeVisitorCompat;
 use antlr_rust::InputStream;
 use std::path::Path;
 
-use std::{fs};
+use std::fs;
 
 /// Loads a zserio package from a file.
 pub fn package_from_file(path: &Path) -> Box<ZPackage> {

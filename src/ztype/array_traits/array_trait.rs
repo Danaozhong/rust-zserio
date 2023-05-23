@@ -4,8 +4,8 @@ use rust_bitwriter::BitWriter;
 pub trait ArrayTrait<T> {
     fn is_bitsizeof_constant(&self) -> bool;
     fn needs_bitsizeof_position(&self) -> bool;
-    fn bitsize_of(&self) -> u8;
-    fn initialize_offsets(&self, bit_position: u64) -> u64;
+    fn bitsize_of(&self, bit_position: u64, value: &T) -> u64;
+    fn initialize_offsets(&self, bit_position: u64, value: &T) -> u64;
     fn read(&self, reader: &mut BitReader) -> T;
     fn write(&self, writer: &mut BitWriter, value: &T);
     fn to_u64(&self, value: &T) -> u64;
@@ -23,8 +23,13 @@ pub trait ArrayTrait<T> {
         context_node: &mut PackingContextNode,
         bit_position: u64,
         element: &T,
-    ) -> u8;
-    fn initialize_offsets_packed(&self, bit_position: u64, element: &T) -> u64;
+    ) -> u64;
+    fn initialize_offsets_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        bit_position: u64,
+        element: &T,
+    ) -> u64;
     fn write_packed(
         &self,
         context_node: &mut PackingContextNode,

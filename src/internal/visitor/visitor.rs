@@ -1,5 +1,3 @@
-
-
 use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitorCompat;
 
 use crate::internal::ast::package::{ZImport, ZPackage};
@@ -14,8 +12,8 @@ use crate::internal::ast::{
 use crate::internal::parser::gen::zserioparser::{
     DotExpressionContext, DotExpressionContextAttrs, DynamicLengthArgumentContext,
     DynamicLengthArgumentContextAttrs, EnumDeclarationContext, EnumDeclarationContextAttrs,
-    EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContextAttrs,
-    FieldTypeIdContext, FieldTypeIdContextAttrs, IdContext, IdentifierExpressionContext,
+    EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContextAttrs, FieldTypeIdContext,
+    FieldTypeIdContextAttrs, IdContext, IdentifierExpressionContext,
     IdentifierExpressionContextAttrs, ImportDeclarationContext, ImportDeclarationContextAttrs,
     LiteralContextAttrs, LiteralExpressionContext, LiteralExpressionContextAttrs,
     PackageDeclarationContext, PackageDeclarationContextAttrs, PackageNameDefinitionContext,
@@ -28,9 +26,7 @@ use crate::internal::parser::gen::zserioparser::{
 };
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
-use antlr_rust::tree::{
-    ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree,
-};
+use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree};
 // the antlr implementation for Rust requires to use one single return type,
 // but depending on the node, the types returned while parsing the tree may
 // vary. As such, this wrapper enum was introduced, which contains all possible
@@ -285,7 +281,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             _ => panic!("should not happen"),
         }
         // TODO check if alignment is set
-        
+
         // check if the field is an array
         let mut array: Option<Array> = None;
         if let Some(rc_arr_ctx) = ctx.fieldArrayRange() {
