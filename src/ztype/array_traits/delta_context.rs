@@ -35,11 +35,11 @@ impl DeltaContext {
 
     pub fn init<T>(&mut self, array_trait: &dyn ArrayTrait<T>, element: &T) {
         self.num_elements += 1;
-        self.unpacked_size += array_trait.bitsize_of(0, element) as u64;
+        self.unpacked_size += array_trait.bitsize_of(0, element);
 
         if !self.init_started {
             self.init_started = true;
-            self.previous_element = array_trait.to_u64(&element);
+            self.previous_element = array_trait.to_u64(element);
             self.first_element_size = self.unpacked_size;
         } else if self.max_bit_number <= MAX_BIT_NUMBER_LIMIT {
             self.is_packed = true;
@@ -110,7 +110,7 @@ impl DeltaContext {
         }
         if self.max_bit_number > 0 {
             let delta = read_signed_bits(reader, self.max_bit_number + 1);
-            self.previous_element = self.previous_element + delta as u64;
+            self.previous_element += delta as u64;
         }
         array_traits.from_u64(self.previous_element)
     }

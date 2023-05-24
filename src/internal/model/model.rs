@@ -24,5 +24,5 @@ pub fn from_filesystem(directory: &Path) -> Box<Model> {
             packages.push(package);
         }
     }
-    Box::new(Model { packages: packages })
+    Box::new(Model { packages })
 }

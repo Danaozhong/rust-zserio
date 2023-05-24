@@ -18,9 +18,9 @@ pub fn get_fundamental_type(type_ref: &TypeReference) -> Box<FundamentalZserioTy
         break;
     }
 
-    return Box::new(FundamentalZserioTypeReference {
+    Box::new(FundamentalZserioTypeReference {
         fundamental_type: Box::new(type_ref.clone()),
         requires_cast: false,
         is_marshaler: true,
-    });
+    })
 }

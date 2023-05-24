@@ -23,7 +23,7 @@ impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
     }
 
     fn initialize_offsets(&self, bit_position: u64, _: &i64) -> u64 {
-        bit_position + self.bitsize_of(bit_position, &0) as u64
+        bit_position + self.bitsize_of(bit_position, &0)
     }
 
     fn read(&self, reader: &mut BitReader) -> i64 {

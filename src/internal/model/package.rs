@@ -21,7 +21,7 @@ pub fn package_from_file(path: &Path) -> Box<ZPackage> {
     let result = Visitor(x).visit(&*root);
 
     match result {
-        ZserioTreeReturnType::Package(p) => return p,
+        ZserioTreeReturnType::Package(p) => p,
         _ => panic!("should not happen"),
     }
 }

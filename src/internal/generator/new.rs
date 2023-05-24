@@ -6,7 +6,7 @@ use crate::internal::generator::native_type::get_fundamental_type;
 use crate::internal::generator::types::{convert_name, ztype_to_rust_type};
 
 pub fn new_field(function: &mut Function, field: &Field) {
-    let native_type = get_fundamental_type(&*field.field_type);
+    let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
     let field_name = convert_name(&field.name);
     let rust_type = ztype_to_rust_type(field.field_type.as_ref());

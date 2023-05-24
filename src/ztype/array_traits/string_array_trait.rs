@@ -34,10 +34,10 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
     }
 
     fn to_u64(&self, _value: &String) -> u64 {
-        return 0; // not supported for strings
+        0 // not supported for strings
     }
     fn from_u64(&self, _value: u64) -> String {
-        return "".into(); // not supported for strings
+        "".into() // not supported for strings
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &String) {

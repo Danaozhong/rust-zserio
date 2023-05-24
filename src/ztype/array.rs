@@ -67,7 +67,7 @@ impl<T> Array<T> {
         if self.fixed_size.is_none() {
             end_position += varsize_bitsize(data.len() as u64) as u64;
         }
-        if data.len() > 0 {
+        if !data.is_empty() {
             if self.array_trait.is_bitsizeof_constant() {
                 // Since the bitsize is anyway constant, just pass the first element
                 let element_size = self.array_trait.bitsize_of(end_position, &data[0]);
@@ -76,11 +76,11 @@ impl<T> Array<T> {
                     end_position = align_to(8, end_position);
 
                     // count all array elements alignment positions
-                    end_position += (data.len() - 1) as u64 * align_to(8, element_size as u64);
+                    end_position += (data.len() - 1) as u64 * align_to(8, element_size);
                 }
 
                 // count the actual payload
-                end_position += data.len() as u64 * element_size as u64;
+                end_position += data.len() as u64 * element_size;
             } else {
                 // the bitsize of each array element may differ, as such, each element need to be
                 // added individually.
@@ -88,7 +88,7 @@ impl<T> Array<T> {
                     if self.is_aligned {
                         end_position = align_to(8, end_position);
                     }
-                    end_position += self.array_trait.bitsize_of(end_position, element) as u64;
+                    end_position += self.array_trait.bitsize_of(end_position, element);
                 }
             }
         }
@@ -100,12 +100,12 @@ impl<T> Array<T> {
         if self.fixed_size.is_none() {
             end_position += varsize_bitsize(data.len() as u64) as u64;
         }
-        if data.len() > 0 {
+        if !data.is_empty() {
             self.create_packing_context_node_if_not_exists();
 
             for element in data {
                 self.array_trait
-                    .init_context(self.packing_context_node.as_mut().unwrap(), &element);
+                    .init_context(self.packing_context_node.as_mut().unwrap(), element);
             }
 
             for element in data {
@@ -115,7 +115,7 @@ impl<T> Array<T> {
                 end_position += self.array_trait.bitsize_of_packed(
                     self.packing_context_node.as_mut().unwrap(),
                     end_position,
-                    &element,
+                    element,
                 ) as u64;
             }
         }

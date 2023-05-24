@@ -17,7 +17,7 @@ pub fn generate_struct(
     path: &Path,
     package_name: &String,
 ) {
-    add_standard_imports(&mut scope);
+    add_standard_imports(scope);
     // add the imports
     // generate the struct itself
     let gen_struct = scope.new_struct(&zstruct.name);

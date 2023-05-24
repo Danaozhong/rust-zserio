@@ -18,109 +18,107 @@ pub fn bitsize_type_reference(
             "end_position += {}.zserio_bitsize(end_position);",
             field_name
         ));
+    } else if type_reference.bits != 0 {
+        function.line(format!("end_position += {};", type_reference.bits));
     } else {
-        if type_reference.bits != 0 {
-            function.line(format!("end_position += {};", type_reference.bits));
-        } else {
-            match type_reference.name.as_str() {
-                "uint8" => {
-                    function.line("end_position += 8;");
-                }
-                "uint16" => {
-                    function.line("end_position += 16;");
-                }
-                "uint32" => {
-                    function.line("end_position += 32;");
-                }
-                "uint64" => {
-                    function.line("end_position += 64;");
-                }
-                "int8" => {
-                    function.line("end_position += 8;");
-                }
-                "int16" => {
-                    function.line("end_position += 16;");
-                }
-                "int32" => {
-                    function.line("end_position += 32;");
-                }
-                "int64" => {
-                    function.line("end_position += 64;");
-                }
-                "float16" => {
-                    function.line("end_position += 16;");
-                }
-                "float32" => {
-                    function.line("end_position += 32;");
-                }
-                "float64" => {
-                    function.line("end_position += 64;");
-                }
-                "bool" => {
-                    function.line("end_position += 1;");
-                }
-                "string" => {
-                    function.line(format!(
-                        "end_position += ztype::bitsize_string({}.as_str());",
-                        field_name
-                    ));
-                }
-                "varint" => {
-                    function.line(format!(
-                        "end_position += ztype::signed_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varint16" => {
-                    function.line(format!(
-                        "end_position += ztype::signed_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varint32" => {
-                    function.line(format!(
-                        "end_position += ztype::signed_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varint64" => {
-                    function.line(format!(
-                        "end_position += ztype::signed_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varuint" => {
-                    function.line(format!(
-                        "end_position += ztype::unsigned_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varuint16" => {
-                    function.line(format!(
-                        "end_position += ztype::unsigned_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varuint32" => {
-                    function.line(format!(
-                        "end_position += ztype::unsigned_bit_size({});",
-                        field_name
-                    ));
-                }
-                "varuint64" => {
-                    function.line(format!(
-                        "end_position += ztype::unsigned_bit_size({});",
-                        field_name
-                    ));
-                }
-                _ => panic!("failed"),
+        match type_reference.name.as_str() {
+            "uint8" => {
+                function.line("end_position += 8;");
             }
+            "uint16" => {
+                function.line("end_position += 16;");
+            }
+            "uint32" => {
+                function.line("end_position += 32;");
+            }
+            "uint64" => {
+                function.line("end_position += 64;");
+            }
+            "int8" => {
+                function.line("end_position += 8;");
+            }
+            "int16" => {
+                function.line("end_position += 16;");
+            }
+            "int32" => {
+                function.line("end_position += 32;");
+            }
+            "int64" => {
+                function.line("end_position += 64;");
+            }
+            "float16" => {
+                function.line("end_position += 16;");
+            }
+            "float32" => {
+                function.line("end_position += 32;");
+            }
+            "float64" => {
+                function.line("end_position += 64;");
+            }
+            "bool" => {
+                function.line("end_position += 1;");
+            }
+            "string" => {
+                function.line(format!(
+                    "end_position += ztype::bitsize_string({}.as_str());",
+                    field_name
+                ));
+            }
+            "varint" => {
+                function.line(format!(
+                    "end_position += ztype::signed_bit_size({});",
+                    field_name
+                ));
+            }
+            "varint16" => {
+                function.line(format!(
+                    "end_position += ztype::signed_bit_size({});",
+                    field_name
+                ));
+            }
+            "varint32" => {
+                function.line(format!(
+                    "end_position += ztype::signed_bit_size({});",
+                    field_name
+                ));
+            }
+            "varint64" => {
+                function.line(format!(
+                    "end_position += ztype::signed_bit_size({});",
+                    field_name
+                ));
+            }
+            "varuint" => {
+                function.line(format!(
+                    "end_position += ztype::unsigned_bit_size({});",
+                    field_name
+                ));
+            }
+            "varuint16" => {
+                function.line(format!(
+                    "end_position += ztype::unsigned_bit_size({});",
+                    field_name
+                ));
+            }
+            "varuint32" => {
+                function.line(format!(
+                    "end_position += ztype::unsigned_bit_size({});",
+                    field_name
+                ));
+            }
+            "varuint64" => {
+                function.line(format!(
+                    "end_position += ztype::unsigned_bit_size({});",
+                    field_name
+                ));
+            }
+            _ => panic!("failed"),
         }
     }
 }
 
 pub fn bitsize_field(function: &mut Function, field: &Field) {
-    let native_type = get_fundamental_type(&*field.field_type);
+    let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
     let field_name = format!("self.{}", convert_name(&field.name));
 

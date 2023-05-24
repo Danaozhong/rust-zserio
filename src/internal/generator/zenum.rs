@@ -7,7 +7,7 @@ use crate::internal::generator::{
 use std::path::Path;
 
 pub fn generate_enum(mut scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name: &String) {
-    add_standard_imports(&mut scope);
+    add_standard_imports(scope);
 
     // generate the struct itself
     let gen_enum = scope.new_enum(&zenum.name);
@@ -40,7 +40,7 @@ pub fn generate_enum(mut scope: &mut Scope, zenum: &ZEnum, path: &Path, package_
     bitsize_fn.arg("bit_position", "u64");
 
     bitsize_fn.line("let mut end_position = bit_position;");
-    bitsize_type_reference(bitsize_fn, "this".into(), false, &*zenum.enum_type);
+    bitsize_type_reference(bitsize_fn, "this", false, &zenum.enum_type);
     bitsize_fn.line("end_position - bit_position");
 
     write_to_file(&scope.to_string(), path, package_name, &zenum.name);

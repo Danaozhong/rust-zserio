@@ -41,7 +41,7 @@ pub enum ZserioTreeReturnType {
     Expression(Box<Expression>),
     Field(Box<Field>),
     TypeReference(Box<TypeReference>),
-    TypeReferences(Vec<Box<TypeReference>>),
+    TypeReferences(Vec<TypeReference>),
     Vec(Vec<ZserioTreeReturnType>),
     Import(Box<ZImport>),
 }
@@ -180,7 +180,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut ids = Vec::new();
 
         for id_ctx in ctx.id_all() {
-            match ZserioParserVisitorCompat::visit_id(self, &*id_ctx) {
+            match ZserioParserVisitorCompat::visit_id(self, &id_ctx) {
                 ZserioTreeReturnType::Str(id) => ids.push(id),
                 _ => panic!(),
             }
@@ -203,7 +203,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         let mut template_params = Vec::new();
         match ctx.templateParameters() {
-            Some(x) => match ZserioParserVisitorCompat::visit_templateParameters(self, &*x) {
+            Some(x) => match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
                 ZserioTreeReturnType::StrVec(n) => template_params = n,
                 _ => println!("should not happen"),
             },
@@ -253,12 +253,12 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     ) -> Self::Return {
         // Clemens TODO
         let mut field: Box<Field>;
-        match ZserioParserVisitorCompat::visit_fieldTypeId(self, &*ctx.fieldTypeId().unwrap()) {
+        match ZserioParserVisitorCompat::visit_fieldTypeId(self, &ctx.fieldTypeId().unwrap()) {
             ZserioTreeReturnType::Field(f) => field = f,
             _ => panic!("should not happen"),
         }
 
-        field.is_optional = !ctx.OPTIONAL().is_none();
+        field.is_optional = ctx.OPTIONAL().is_some();
 
         ZserioTreeReturnType::Field(field)
     }
@@ -275,7 +275,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let type_reference: Box<TypeReference>;
         match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
-            &*ctx.typeInstantiation().unwrap(),
+            &ctx.typeInstantiation().unwrap(),
         ) {
             ZserioTreeReturnType::TypeReference(t) => type_reference = t,
             _ => panic!("should not happen"),
@@ -306,7 +306,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             is_optional: false,
             alignment: 0,
             field_type: type_reference,
-            array: array,
+            array,
         }))
     }
 
@@ -401,7 +401,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_enumDeclaration(&mut self, ctx: &EnumDeclarationContext<'_>) -> Self::Return {
         // Retrieve the name of the Enum
         let name: String;
-        match ZserioParserVisitorCompat::visit_id(self, &*ctx.id().unwrap()) {
+        match ZserioParserVisitorCompat::visit_id(self, &ctx.id().unwrap()) {
             ZserioTreeReturnType::Str(n) => name = n,
             _ => panic!(),
         };
@@ -410,7 +410,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let enum_type: Box<TypeReference>;
         match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
-            &*ctx.typeInstantiation().unwrap(),
+            &ctx.typeInstantiation().unwrap(),
         ) {
             ZserioTreeReturnType::TypeReference(t) => enum_type = t,
             _ => panic!(),
@@ -419,14 +419,14 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         // parse all enum items
         let mut items = Vec::new();
         for enum_item_ctx in ctx.enumItem_all() {
-            match ZserioParserVisitorCompat::visit_enumItem(self, &*enum_item_ctx) {
+            match ZserioParserVisitorCompat::visit_enumItem(self, &enum_item_ctx) {
                 ZserioTreeReturnType::EnumItem(item) => items.push(*item),
                 _ => panic!(),
             }
         }
 
         ZserioTreeReturnType::Enumeration(Box::new(ZEnum {
-            name: name,
+            name,
             comment: "".into(),
             enum_type,
             items,
@@ -435,7 +435,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_enumItem(&mut self, ctx: &EnumItemContext<'_>) -> Self::Return {
         let name: String;
-        match ZserioParserVisitorCompat::visit_id(self, &*ctx.id().unwrap()) {
+        match ZserioParserVisitorCompat::visit_id(self, &ctx.id().unwrap()) {
             ZserioTreeReturnType::Str(n) => name = n,
             _ => panic!(),
         }
@@ -448,10 +448,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         */
 
-        return ZserioTreeReturnType::EnumItem(Box::new(ZEnumItem {
+        ZserioTreeReturnType::EnumItem(Box::new(ZEnumItem {
             name: name,
             comment: "".into(),
-        }));
+        }))
     }
 
     fn visit_templateParameters(&mut self, ctx: &TemplateParametersContext<'_>) -> Self::Return {
@@ -470,8 +470,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         // of types.
         let mut template_aguments = Vec::new();
         for template_argument in ctx.templateArgument_all() {
-            match ZserioParserVisitorCompat::visit_templateArgument(self, &*template_argument) {
-                ZserioTreeReturnType::TypeReference(t) => template_aguments.push(t),
+            match ZserioParserVisitorCompat::visit_templateArgument(self, &template_argument) {
+                ZserioTreeReturnType::TypeReference(t) => template_aguments.push(*t),
                 _ => panic!("unexpected return type"),
             }
         }
@@ -480,7 +480,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_templateArgument(&mut self, ctx: &TemplateArgumentContext<'_>) -> Self::Return {
         // a template argument is basically just a type reference
-        ZserioParserVisitorCompat::visit_typeReference(self, &*ctx.typeReference().unwrap())
+        ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap())
     }
 
     fn visit_id(&mut self, ctx: &IdContext<'_>) -> Self::Return {
@@ -545,14 +545,14 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         ctx: &IdentifierExpressionContext<'_>,
     ) -> Self::Return {
         let id_context = ctx.id().unwrap();
-        return ZserioTreeReturnType::Expression(Box::new(Expression {
+        ZserioTreeReturnType::Expression(Box::new(Expression {
             text: id_context.get_text(),
             operand1: None,
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
-        }));
+        }))
     }
 
     fn visit_literalExpression(&mut self, ctx: &LiteralExpressionContext<'_>) -> Self::Return {
@@ -596,7 +596,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand1: None,
             operand2: None,
             operand3: None,
-            result_type: result_type,
+            result_type,
             fully_resolved: true,
         }))
     }
@@ -617,7 +617,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_typeInstantiation(&mut self, ctx: &TypeInstantiationContext<'_>) -> Self::Return {
         let type_reference: Box<TypeReference>;
-        match ZserioParserVisitorCompat::visit_typeReference(self, &*ctx.typeReference().unwrap()) {
+        match ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap()) {
             ZserioTreeReturnType::TypeReference(t) => type_reference = t,
             _ => panic!("should not happen"),
         }
@@ -644,11 +644,11 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             if let Some(template_arguments) = ctx.templateArguments() {
                 // TODO use the template arguments
                 let _template_argument =
-                    ZserioParserVisitorCompat::visit_templateArguments(self, &*template_arguments);
+                    ZserioParserVisitorCompat::visit_templateArguments(self, &template_arguments);
             }
 
-            if name.contains(":") {
-                let bits_subst: Vec<&str> = name.split(":").collect();
+            if name.contains(':') {
+                let bits_subst: Vec<&str> = name.split(':').collect();
                 bits = i8::from_str_radix(bits_subst[1], 10).expect("failed to convert to i8");
                 name = bits_subst[0].into();
             }
@@ -662,13 +662,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
 
         let mut name = "".into();
-        match ZserioParserVisitorCompat::visit_qualifiedName(self, &*ctx.qualifiedName().unwrap()) {
+        match ZserioParserVisitorCompat::visit_qualifiedName(self, &ctx.qualifiedName().unwrap()) {
             ZserioTreeReturnType::Str(s) => name = s,
             _ => panic!("error"),
         }
         let mut package: String = "".into();
-        if name.contains(".") {
-            let (new_name, new_package) = name.rsplit_once(".").unwrap();
+        if name.contains('.') {
+            let (new_name, new_package) = name.rsplit_once('.').unwrap();
             package = new_package.into();
             name = new_name.into();
         }
