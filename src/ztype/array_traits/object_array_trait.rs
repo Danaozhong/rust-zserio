@@ -1,12 +1,9 @@
 use crate::ztype::array_traits::array_trait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 
-
-
 use crate::ztype::ZserioPackableOject;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-
 
 pub struct ObjectArrayTrait {}
 

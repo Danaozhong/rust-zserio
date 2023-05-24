@@ -1,7 +1,7 @@
 use codegen::Scope;
 
 use crate::internal::ast::zstruct::ZStruct;
-use crate::internal::generator::array::{instantiate_zserio_arrays};
+use crate::internal::generator::array::instantiate_zserio_arrays;
 
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,

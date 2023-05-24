@@ -35,7 +35,6 @@ pub use self::varuint_decode::read_varsize;
 pub use self::varuint_decode::read_varuint;
 pub use self::varuint_decode::read_varuint32;
 
-
 pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
