@@ -1,9 +1,9 @@
 use codegen::Function;
 
 use crate::internal::ast::field::Field;
-use crate::internal::generator::array::{array_type_name, initialize_array_trait};
+
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{convert_name, zserio_to_rust_type, ztype_to_rust_type};
+use crate::internal::generator::types::{convert_name, ztype_to_rust_type};
 
 pub fn new_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&*field.field_type);
@@ -13,7 +13,7 @@ pub fn new_field(function: &mut Function, field: &Field) {
 
     if field.is_optional {
         function.line(format!("{}: None,", field_name));
-    } else if let Some(array) = &field.array {
+    } else if let Some(_array) = &field.array {
         function.line(format!("{}: vec![],", field_name));
     } else if native_type.is_marshaler {
         function.line(format!("{}: {}::new(),", field_name, rust_type));

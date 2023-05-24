@@ -18,7 +18,7 @@ impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
         true
     }
 
-    fn bitsize_of(&self, bit_position: u64, value: &i64) -> u64 {
+    fn bitsize_of(&self, _bit_position: u64, _value: &i64) -> u64 {
         self.num_bits as u64
     }
 

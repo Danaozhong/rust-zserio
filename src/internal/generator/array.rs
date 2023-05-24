@@ -1,7 +1,7 @@
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{convert_name, zserio_to_rust_type, ztype_to_rust_type};
+use crate::internal::generator::types::{ztype_to_rust_type};
 use codegen::Function;
 
 pub fn array_type_name(name: &String) -> String {

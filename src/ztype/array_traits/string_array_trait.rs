@@ -17,7 +17,7 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         false
     }
 
-    fn bitsize_of(&self, bit_position: u64, value: &String) -> u64 {
+    fn bitsize_of(&self, _bit_position: u64, value: &String) -> u64 {
         value.len() as u64 + varsize_bitsize(value.len() as u64) as u64
     }
 
@@ -33,10 +33,10 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         write_string(writer, value);
     }
 
-    fn to_u64(&self, value: &String) -> u64 {
+    fn to_u64(&self, _value: &String) -> u64 {
         return 0; // not supported for strings
     }
-    fn from_u64(&self, value: u64) -> String {
+    fn from_u64(&self, _value: u64) -> String {
         return "".into(); // not supported for strings
     }
 
