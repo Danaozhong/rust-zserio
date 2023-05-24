@@ -11,6 +11,6 @@ pub struct ZEnumItem {
 pub struct ZEnum {
     pub name: String,
     pub comment: String,
-    pub items: Vec<Box<ZEnumItem>>,
+    pub items: Vec<ZEnumItem>,
     pub enum_type: Box<TypeReference>,
 }

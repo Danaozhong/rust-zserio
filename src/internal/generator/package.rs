@@ -12,7 +12,7 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // Generate  the rust code for structures, ...
     for z_struct in &package.structs {
         // ignore templates, only generate code for instantiated structs
-        if z_struct.template_params.len() > 0 {
+        if !z_struct.template_params.is_empty() {
             continue;
         }
         let mut scope = get_default_scope(package);
@@ -23,7 +23,7 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // and for zserio enumerations
     for z_enum in &package.enums {
         let mut scope = get_default_scope(package);
-        generate_enum(&mut scope, &z_enum, package_directory, &package.name);
+        generate_enum(&mut scope, z_enum, package_directory, &package.name);
         module_names.push(&z_enum.name);
     }
 

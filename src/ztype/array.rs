@@ -31,7 +31,7 @@ impl<T> Array<T> {
             write_varsize(writer, data.len() as u64);
         }
 
-        if data.len() == 0 {
+        if data.is_empty() {
             return;
         }
         if self.is_packed {
@@ -39,7 +39,7 @@ impl<T> Array<T> {
 
             for element in data {
                 self.array_trait
-                    .init_context(self.packing_context_node.as_mut().unwrap(), &element);
+                    .init_context(self.packing_context_node.as_mut().unwrap(), element);
             }
         }
         for (_index, element) in data.iter().enumerate() {

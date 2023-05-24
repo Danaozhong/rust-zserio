@@ -101,7 +101,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 ZserioTreeReturnType::Import(n) => import_node = n,
                 _ => panic!("should not happen"),
             }
-            imports.push(import_node);
+            imports.push(*import_node);
         }
 
         // store globally (sorry, don't know how to do this better)
@@ -121,8 +121,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 ZserioTreeReturnType::Vec(v) => {
                     for ve in v {
                         match ve {
-                            ZserioTreeReturnType::Structure(s) => structs.push(s),
-                            ZserioTreeReturnType::Enumeration(e) => enums.push(e),
+                            ZserioTreeReturnType::Structure(s) => structs.push(*s),
+                            ZserioTreeReturnType::Enumeration(e) => enums.push(*e),
                             ZserioTreeReturnType::Str(s) => println!("unknown str: {0}", s),
                             ZserioTreeReturnType::StrVec(s) => {
                                 println!("unknown str vec: {0}", s[0])
@@ -228,7 +228,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut fields = Vec::new();
         for field_context in ctx.structureFieldDefinition_all() {
             match self.visit(&*field_context) {
-                ZserioTreeReturnType::Field(f) => fields.push(f),
+                ZserioTreeReturnType::Field(f) => fields.push(*f),
                 _ => println!("should not happen"),
             }
         }
@@ -420,7 +420,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut items = Vec::new();
         for enum_item_ctx in ctx.enumItem_all() {
             match ZserioParserVisitorCompat::visit_enumItem(self, &*enum_item_ctx) {
-                ZserioTreeReturnType::EnumItem(item) => items.push(item),
+                ZserioTreeReturnType::EnumItem(item) => items.push(*item),
                 _ => panic!(),
             }
         }
@@ -531,11 +531,11 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 operand1: None,
                 operand2: None,
                 operand3: None,
-                result_type: ExpressionType::OtherExpression,
+                result_type: ExpressionType::Other,
                 fully_resolved: true,
             })),
             operand3: None,
-            result_type: ExpressionType::OtherExpression,
+            result_type: ExpressionType::Other,
             fully_resolved: false,
         }))
     }
@@ -550,7 +550,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand1: None,
             operand2: None,
             operand3: None,
-            result_type: ExpressionType::OtherExpression,
+            result_type: ExpressionType::Other,
             fully_resolved: false,
         }));
     }
@@ -560,30 +560,30 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         // identify which literal this is
         let literal_text = literal_ctx.get_text();
-        let mut result_type = ExpressionType::OtherExpression;
+        let mut result_type = ExpressionType::Other;
         if literal_ctx.BOOL_LITERAL().is_some() {
-            result_type = ExpressionType::BoolExpression(
+            result_type = ExpressionType::Bool(
                 literal_text
                     .parse::<bool>()
                     .expect("failed to parse bool expression"),
             );
         } else if literal_ctx.DECIMAL_LITERAL().is_some() {
-            result_type = ExpressionType::IntegerExpression(
+            result_type = ExpressionType::Integer(
                 literal_text
                     .parse::<i32>()
                     .expect("failed to parse integer expression"),
             );
         } else if literal_ctx.HEXADECIMAL_LITERAL().is_some() {
-            result_type = ExpressionType::IntegerExpression(
+            result_type = ExpressionType::Integer(
                 i32::from_str_radix(literal_text.trim_start_matches("0x"), 16)
                     .expect("Not a hex number!"),
             );
         } else if literal_ctx.OCTAL_LITERAL().is_some() {
-            result_type = ExpressionType::IntegerExpression(
+            result_type = ExpressionType::Integer(
                 i32::from_str_radix(literal_text.as_str(), 8).expect("Not an octal number!"),
             );
         } else if literal_ctx.BINARY_LITERAL().is_some() {
-            result_type = ExpressionType::IntegerExpression(
+            result_type = ExpressionType::Integer(
                 i32::from_str_radix(literal_text.as_str(), 2).expect("Not a binary number!"),
             );
         } else {
@@ -610,7 +610,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand1: None,
             operand2: None,
             operand3: None,
-            result_type: ExpressionType::BoolExpression(true),
+            result_type: ExpressionType::Bool(true),
             fully_resolved: false,
         }))
     }

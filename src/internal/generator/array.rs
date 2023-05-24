@@ -10,7 +10,7 @@ pub fn array_type_name(name: &String) -> String {
 
 pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
     if !zserio_type.is_builtin {
-        return "ObjectArrayTrait".into();
+        "ObjectArrayTrait".into()
     } else {
         match zserio_type.name.as_str() {
             "int8" => return "BitFieldArrayTrait".into(),
@@ -94,7 +94,7 @@ pub fn instantiate_zserio_array(function: &mut Function, field: &Field) {
     function.line("};");
 }
 
-pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Box<Field>>) {
+pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Field>) {
     for field in fields {
         if field.array.is_some() {
             instantiate_zserio_array(function, field);

@@ -35,10 +35,10 @@ impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
     }
 
     fn to_u64(&self, value: &i64) -> u64 {
-        return *value as u64;
+        *value as u64
     }
     fn from_u64(&self, value: u64) -> i64 {
-        return value as i64;
+        value as i64
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &i64) {

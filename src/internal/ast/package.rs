@@ -9,7 +9,7 @@ pub struct ZPackage {
     pub name: String,
     pub comment: String,
 
-    pub imports: Vec<Box<ZImport>>,
-    pub structs: Vec<Box<ZStruct>>,
-    pub enums: Vec<Box<ZEnum>>,
+    pub imports: Vec<ZImport>,
+    pub structs: Vec<ZStruct>,
+    pub enums: Vec<ZEnum>,
 }
