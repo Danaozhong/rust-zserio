@@ -1,3 +1,5 @@
+#![allow(unknown_lints)]
+#![allow(clippy)]
 pub mod gen {
     pub mod zseriolexer;
     pub mod zserioparser;
