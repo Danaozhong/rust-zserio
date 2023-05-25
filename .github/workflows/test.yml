@@ -41,4 +41,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run fmt check
-      run: cargo fmt --check
+      run: |
+        cargo run -p round-trip-tests
+        cargo fmt --check
