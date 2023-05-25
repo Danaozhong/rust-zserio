@@ -7,15 +7,12 @@ pub struct FundamentalZserioTypeReference {
 }
 
 pub fn get_fundamental_type(type_ref: &TypeReference) -> Box<FundamentalZserioTypeReference> {
-    loop {
-        if type_ref.is_builtin {
-            return Box::new(FundamentalZserioTypeReference {
-                fundamental_type: Box::new(type_ref.clone()),
-                requires_cast: false,
-                is_marshaler: false,
-            });
-        }
-        break;
+    if type_ref.is_builtin {
+        return Box::new(FundamentalZserioTypeReference {
+            fundamental_type: Box::new(type_ref.clone()),
+            requires_cast: false,
+            is_marshaler: false,
+        });
     }
 
     Box::new(FundamentalZserioTypeReference {
