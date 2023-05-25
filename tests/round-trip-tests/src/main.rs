@@ -4,7 +4,7 @@ pub mod reference_modules {
     }
 }
 
-use crate::reference_modules::core::types::{Color, ValueWrapper};
+use crate::reference_modules::core::types::ValueWrapper;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;

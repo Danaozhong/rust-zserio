@@ -16,6 +16,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Test rust-zserio Build
       run: cargo build --release --verbose
+    - name: Test round-trip-tests Build
+      run: cargo build --release -p round-trip-tests --verbose
   test-unit:
     runs-on: ubuntu-latest
     steps:
