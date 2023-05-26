@@ -35,6 +35,7 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        override: true
         components: rustfmt, clippy
     - name: Run lint check
       run: cargo clippy --all --all-targets -- -D warnings
@@ -42,14 +43,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@main
+    - uses: actions-rs/toolchain@v1
       with:
-        github-token: ${{ github.token }}
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
     - name: Run fmt check
       run: |
         # The E2E test works by generating the rust interface files to read/write zserio.
         # Since these files are referenced in the E2E test code, if these files are missing,
         # the linter checker will not be able to find them, and throw an error.
-        nix develop --impure . -c cargo run -p round-trip-tests
-        nix develop --impure . -c cargo fmt --all -- --check
+        cargo run -p round-trip-tests
+        cargo fmt --all -- --check
