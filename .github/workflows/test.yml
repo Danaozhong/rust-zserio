@@ -47,7 +47,7 @@ jobs:
       with:
         github-token: ${{ github.token }}
     - name: Run fmt check
-      shell: nix develop .# -c bash -e {0}
+      shell: nix develop --impure .# -c bash -e {0}
       run: |
         # The E2E test works by generating the rust interface files to read/write zserio.
         # Since these files are referenced in the E2E test code, if these files are missing,
