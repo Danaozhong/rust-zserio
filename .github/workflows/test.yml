@@ -42,11 +42,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
       with:
-        toolchain: nightly
-        components: rustfmt, clippy
+        github-token: ${{ github.token }}
+        init: none
+        planner: linux
     - name: Run fmt check
+      shell: sudo nix develop .# -c bash -e {0}
       run: |
         # The E2E test works by generating the rust interface files to read/write zserio.
         # Since these files are referenced in the E2E test code, if these files are missing,
