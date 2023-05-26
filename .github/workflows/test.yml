@@ -49,7 +49,7 @@ jobs:
         init: none
         planner: linux
     - name: Run fmt check
-      shell: sudo nix develop .# -c bash -e {0}
+      shell: sudo -E /nix/var/nix/profiles/default/bin/nix develop .# -c bash -e {0}
       run: |
         # The E2E test works by generating the rust interface files to read/write zserio.
         # Since these files are referenced in the E2E test code, if these files are missing,
