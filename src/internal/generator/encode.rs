@@ -14,7 +14,7 @@ pub fn encode_field(function: &mut Function, field: &Field) {
     if field.is_optional {
         function.line(format!("match {} {{", field_name));
         function.line("Some(x) => {");
-        function.line("writer.write_bool(true);");
+        function.line("let _ = writer.write_bool(true);");
         field_name = "x".into();
     }
 
@@ -51,7 +51,10 @@ pub fn encode_field(function: &mut Function, field: &Field) {
         ));
     } else if fund_type.name == "bool" {
         // boolean
-        function.line(format!("writer.write_bool({}).unwrap();", field_name));
+        function.line(format!(
+            "let _ = writer.write_bool({}).unwrap();",
+            field_name
+        ));
     } else {
         // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64
         let rust_type_name =

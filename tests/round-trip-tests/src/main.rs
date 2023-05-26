@@ -25,7 +25,7 @@ fn main() {
 
     // deserialize
     let mut other_value_wrapper = ValueWrapper::ValueWrapper::new();
-    let mut bitreader = BitReader::new(&serialized_byes);
+    let mut bitreader = BitReader::new(serialized_byes);
     other_value_wrapper.unmarshal_zserio(&mut bitreader);
 
     assert!(other_value_wrapper.value == value_wrapper.value);
