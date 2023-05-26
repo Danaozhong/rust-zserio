@@ -20,7 +20,7 @@
                 }
             },
             "args": [
-                "-o=H:\\rust_test\\src",
+                "-o=tests/round-trip-tests/src",
                 "tests/reference_modules",
             ],
             "cwd": "${workspaceFolder}"
@@ -50,7 +50,7 @@
             "name": "Debug unit tests in executable 'rust-zserio'",
             "cargo": {
                 "args": [
-                    "-o=H:\\rust_test\\src",
+                    "-o=tests/round-trip-tests/src",
                     "test/reference_modules",
                 ],
                 "filter": {
