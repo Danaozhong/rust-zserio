@@ -47,10 +47,9 @@ jobs:
       with:
         github-token: ${{ github.token }}
     - name: Run fmt check
-      shell: nix develop --impure . -c bash -e {0}
       run: |
         # The E2E test works by generating the rust interface files to read/write zserio.
         # Since these files are referenced in the E2E test code, if these files are missing,
         # the linter checker will not be able to find them, and throw an error.
-        cargo run -p round-trip-tests
-        cargo fmt --all -- --check
+        nix develop --impure . -c cargo run -p round-trip-tests
+        nix develop --impure . -c cargo fmt --all -- --check
