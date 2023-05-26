@@ -7,5 +7,5 @@ use std::path::Path;
 fn main() {
     // Use rust-zserio to generate the new code
     let model = model::from_filesystem(Path::new("../reference_modules"));
-    generate_model(&model, &Path::new("src"), "dummy");
+    generate_model(&model, Path::new("src"), "dummy");
 }
