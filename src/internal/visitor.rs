@@ -26,6 +26,7 @@ use crate::internal::parser::gen::zserioparser::{
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
 use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree};
+
 // the antlr implementation for Rust requires to use one single return type,
 // but depending on the node, the types returned while parsing the tree may
 // vary. As such, this wrapper enum was introduced, which contains all possible
@@ -155,15 +156,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             import_paths.push(id.get_text());
         }
 
-        let mut symbol_name = String::from("");
-        match ctx.MULTIPLY() {
-            _is_set => {
-                symbol_name = String::from("*");
-            }
-            None => {
-                symbol_name = import_paths.pop().unwrap();
-            }
-        }
+        let symbol_name = match ctx.MULTIPLY() {
+            None => import_paths.pop().unwrap(),
+            _is_set => "*".into(),
+        };
 
         ZserioTreeReturnType::Import(Box::new(ZImport {
             package_dir: import_paths,
@@ -263,11 +259,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_fieldTypeId(&mut self, ctx: &FieldTypeIdContext<'_>) -> Self::Return {
         // retrieve the name of the field (e.g. member name)
-        let mut field_name = "".into();
-        match self.visit(&*ctx.id().unwrap()) {
-            ZserioTreeReturnType::Str(n) => field_name = n,
+        let field_name = match self.visit(&*ctx.id().unwrap()) {
+            ZserioTreeReturnType::Str(n) => n,
             _ => panic!("should not happen"),
-        }
+        };
 
         // the field data type
 
@@ -557,35 +552,29 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         // identify which literal this is
         let literal_text = literal_ctx.get_text();
-        let mut result_type = ExpressionType::Other;
-        if literal_ctx.BOOL_LITERAL().is_some() {
-            result_type = ExpressionType::Bool(
+        let result_type = match literal_ctx {
+            _ if literal_ctx.BOOL_LITERAL().is_some() => ExpressionType::Bool(
                 literal_text
                     .parse::<bool>()
                     .expect("failed to parse bool expression"),
-            );
-        } else if literal_ctx.DECIMAL_LITERAL().is_some() {
-            result_type = ExpressionType::Integer(
+            ),
+            _ if literal_ctx.DECIMAL_LITERAL().is_some() => ExpressionType::Integer(
                 literal_text
                     .parse::<i32>()
                     .expect("failed to parse integer expression"),
-            );
-        } else if literal_ctx.HEXADECIMAL_LITERAL().is_some() {
-            result_type = ExpressionType::Integer(
+            ),
+            _ if literal_ctx.HEXADECIMAL_LITERAL().is_some() => ExpressionType::Integer(
                 i32::from_str_radix(literal_text.trim_start_matches("0x"), 16)
                     .expect("Not a hex number!"),
-            );
-        } else if literal_ctx.OCTAL_LITERAL().is_some() {
-            result_type = ExpressionType::Integer(
+            ),
+            _ if literal_ctx.OCTAL_LITERAL().is_some() => ExpressionType::Integer(
                 i32::from_str_radix(literal_text.as_str(), 8).expect("Not an octal number!"),
-            );
-        } else if literal_ctx.BINARY_LITERAL().is_some() {
-            result_type = ExpressionType::Integer(
+            ),
+            _ if literal_ctx.BINARY_LITERAL().is_some() => ExpressionType::Integer(
                 i32::from_str_radix(literal_text.as_str(), 2).expect("Not a binary number!"),
-            );
-        } else {
-            panic!("expression not found");
-        }
+            ),
+            _ => ExpressionType::Other,
+        };
 
         let _tokens = literal_ctx.get_tokens(1);
         ZserioTreeReturnType::Expression(Box::new(Expression {
@@ -649,7 +638,9 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
             if name.contains(':') {
                 let bits_subst: Vec<&str> = name.split(':').collect();
-                bits = i8::from_str_radix(bits_subst[1], 10).expect("failed to convert to i8");
+                bits = bits_subst[1]
+                    .parse::<i8>()
+                    .expect("failed to convert to i8");
                 name = bits_subst[0].into();
             }
 
@@ -661,12 +652,14 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             }));
         }
 
-        let mut name = "".into();
-        match ZserioParserVisitorCompat::visit_qualifiedName(self, &ctx.qualifiedName().unwrap()) {
-            ZserioTreeReturnType::Str(s) => name = s,
+        let mut name = match ZserioParserVisitorCompat::visit_qualifiedName(
+            self,
+            &ctx.qualifiedName().unwrap(),
+        ) {
+            ZserioTreeReturnType::Str(s) => s,
             _ => panic!("error"),
-        }
-        let mut package: String = "".into();
+        };
+        let mut package = "".into();
         if name.contains('.') {
             let (new_name, new_package) = name.rsplit_once('.').unwrap();
             package = new_package.into();

@@ -11,7 +11,7 @@ use crate::internal::generator::{
 
 use std::path::Path;
 
-pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &String) {
+pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &str) {
     add_standard_imports(scope);
     // add the imports
     // generate the struct itself

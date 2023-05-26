@@ -15,8 +15,8 @@ pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
     ztype.name.clone() + "::" + ztype.name.as_str()
 }
 
-pub fn zserio_to_rust_type(name: &String) -> Result<String, &'static str> {
-    match name.as_str() {
+pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
+    match name {
         "int8" => Ok("i8".into()),
         "int16" => Ok("i16".into()),
         "int32" => Ok("i32".into()),
@@ -37,8 +37,8 @@ pub fn zserio_to_rust_type(name: &String) -> Result<String, &'static str> {
     }
 }
 
-pub fn zserio_type_bit_size(name: &String) -> Result<u8, &'static str> {
-    match name.as_str() {
+pub fn zserio_type_bit_size(name: &str) -> Result<u8, &'static str> {
+    match name {
         "int8" => Ok(8),
         "int16" => Ok(16),
         "int32" => Ok(32),

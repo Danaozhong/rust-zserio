@@ -6,7 +6,7 @@ use crate::internal::generator::{
 };
 use std::path::Path;
 
-pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name: &String) {
+pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name: &str) {
     add_standard_imports(scope);
 
     // generate the struct itself

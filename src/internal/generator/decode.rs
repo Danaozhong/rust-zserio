@@ -9,7 +9,7 @@ pub fn decode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
     let rvalue_field_name = format!("self.{}", convert_name(&field.name));
-    let mut lvalue_field_name = rvalue_field_name.clone();
+    let mut lvalue_field_name = rvalue_field_name.as_str();
 
     // TODO optional clause
 
@@ -18,7 +18,7 @@ pub fn decode_field(function: &mut Function, field: &Field) {
     if field.is_optional {
         function.line("let present = reader.read_bool().unwrap();");
         function.line("if present {");
-        lvalue_field_name = String::from("let optional_value");
+        lvalue_field_name = "let optional_value";
     }
 
     if field.array.is_some() {
@@ -34,7 +34,10 @@ pub fn decode_field(function: &mut Function, field: &Field) {
         ));
     } else if native_type.is_marshaler {
         // the field is a marshable type (struct, choice, enum)
-        function.line(format!("{}.unmarshal_zserio(reader);", rvalue_field_name));
+        function.line(format!(
+            "{}.unmarshal_zserio(reader);",
+            rvalue_field_name.as_str()
+        ));
     } else if fund_type.is_builtin {
         // The type should be a native type
         if fund_type.bits != 0 {

@@ -14,10 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Test rust-zserio Build
-      run: cargo build --release --verbose
-    - name: Test round-trip-tests Build
-      run: cargo build --release -p round-trip-tests --verbose
+    - name: Run Build test
+      run: cargo build --release --verbose --all-targets
   test-unit:
     runs-on: ubuntu-latest
     steps:
@@ -35,14 +33,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run lint check
-      run: cargo clippy
+      run: cargo clippy --all-targets -- -D warnings
   format:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Run fmt check
       run: |
-        # somehow fmt check only work after running e2e test
-        # it looks like e2e test will generate some files which is missing for fmt
+        # The E2E test works by generating the rust interface files to read/write zserio.
+        # Since these files are referenced in the E2E test code, if these files are missing,
+        # the linter checker will not be able to find them, and throw an error.
         cargo run -p round-trip-tests
-        cargo fmt --check
+        cargo fmt --all -- --check

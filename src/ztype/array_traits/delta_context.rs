@@ -19,6 +19,12 @@ pub struct DeltaContext {
     processing_started: bool,
 }
 
+impl Default for DeltaContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DeltaContext {
     pub fn new() -> DeltaContext {
         DeltaContext {
@@ -87,8 +93,7 @@ impl DeltaContext {
             self.processing_started = true;
 
             // self.finish_init();
-            return self.bitsize_of_descriptor::<T>()
-                + self.bitsize_of_unpacked(array_traits, element);
+            return self.bitsize_of_descriptor() + self.bitsize_of_unpacked(array_traits, element);
         }
         if !self.is_packed {
             return self.bitsize_of_unpacked(array_traits, element);
@@ -102,7 +107,7 @@ impl DeltaContext {
     pub fn read<T>(&mut self, array_traits: &dyn ArrayTrait<T>, reader: &mut BitReader) -> T {
         if !self.processing_started {
             self.processing_started = true;
-            self.read_descriptor::<T>(reader);
+            self.read_descriptor(reader);
             return self.read_unpacked(array_traits, reader);
         }
         if !self.is_packed {
@@ -207,14 +212,14 @@ impl DeltaContext {
     */
 
     // BitSizeOfDescriptor returns the bit size of a delta context array descriptor.
-    fn bitsize_of_descriptor<T>(&self) -> u64 {
+    fn bitsize_of_descriptor(&self) -> u64 {
         if self.is_packed {
             return (1 + MAX_BIT_NUMBER_BITS) as u64;
         }
         1
     }
 
-    fn read_descriptor<T>(&mut self, reader: &mut BitReader) {
+    fn read_descriptor(&mut self, reader: &mut BitReader) {
         self.is_packed = reader
             .read_bool()
             .expect("failed to read if the context is packed");

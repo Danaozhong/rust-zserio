@@ -44,7 +44,7 @@ impl<T> Array<T> {
         }
         for (_index, element) in data.iter().enumerate() {
             if self.is_aligned {
-                writer.align(1);
+                let _ = writer.align(1);
             }
             if self.is_packed {
                 self.array_trait.write_packed(

@@ -4,12 +4,14 @@ use crate::internal::model::package::package_from_file;
 use std::path::Path;
 use walkdir::WalkDir;
 
+pub mod package;
+
 pub struct Model {
-    pub packages: Vec<Box<ZPackage>>,
+    pub packages: Vec<ZPackage>,
 }
 
 /// Loads a complete zserio model from a directory.
-pub fn from_filesystem(directory: &Path) -> Box<Model> {
+pub fn from_filesystem(directory: &Path) -> Model {
     let mut packages = Vec::new();
 
     for entry in WalkDir::new(directory) {
@@ -24,5 +26,5 @@ pub fn from_filesystem(directory: &Path) -> Box<Model> {
             packages.push(package);
         }
     }
-    Box::new(Model { packages })
+    Model { packages }
 }

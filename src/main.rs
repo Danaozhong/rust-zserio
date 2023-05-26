@@ -1,15 +1,10 @@
-mod internal {
-    pub mod ast;
-    pub mod generator;
-    pub mod model;
-    mod parser;
-    mod visitor;
-}
-mod ztype;
 use crate::internal::generator::model::generate_model;
-use crate::internal::model::model::from_filesystem;
+use crate::internal::model::from_filesystem;
 use clap::Parser;
 use std::path::Path;
+
+pub mod internal;
+pub mod ztype;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]

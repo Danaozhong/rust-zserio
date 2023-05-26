@@ -9,6 +9,7 @@ pub trait ArrayTrait<T> {
     fn read(&self, reader: &mut BitReader) -> T;
     fn write(&self, writer: &mut BitWriter, value: &T);
     fn to_u64(&self, value: &T) -> u64;
+    #[allow(clippy::wrong_self_convention)]
     fn from_u64(&self, value: u64) -> T;
 
     // all functions below are for using packed contexts. They provide a default implementation
