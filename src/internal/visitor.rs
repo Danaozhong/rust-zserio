@@ -578,7 +578,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         let _tokens = literal_ctx.get_tokens(1);
         ZserioTreeReturnType::Expression(Box::new(Expression {
-            text: literal_ctx.get_text(), // ctx.literal().unwrap().get_text(),
+            text: literal_text,
             operand1: None,
             operand2: None,
             operand3: None,
