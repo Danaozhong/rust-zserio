@@ -15,13 +15,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run Build test
-      run: cargo build --release --verbose --all-targets
+      run: cargo build --release --verbose --all --all-targets
   test-unit:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Run Unit tests
-      run: cargo test --verbose
+      run: cargo test --all --verbose
   test-e2e:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +33,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run lint check
-      run: cargo clippy --all-targets -- -D warnings
+      run: cargo clippy --all --all-targets -- -D warnings
   format:
     runs-on: ubuntu-latest
     steps:
