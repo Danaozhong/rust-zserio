@@ -11,14 +11,13 @@ use crate::internal::ast::{
 };
 use crate::internal::parser::gen::zserioparser::{
     DotExpressionContext, DotExpressionContextAttrs, DynamicLengthArgumentContext,
-    DynamicLengthArgumentContextAttrs, EnumDeclarationContext, EnumDeclarationContextAttrs,
-    EnumItemContext, EnumItemContextAttrs, FieldArrayRangeContextAttrs, FieldTypeIdContext,
-    FieldTypeIdContextAttrs, IdContext, IdentifierExpressionContext,
-    IdentifierExpressionContextAttrs, ImportDeclarationContext, ImportDeclarationContextAttrs,
-    LiteralContextAttrs, LiteralExpressionContext, LiteralExpressionContextAttrs,
-    PackageDeclarationContext, PackageDeclarationContextAttrs, PackageNameDefinitionContext,
-    PackageNameDefinitionContextAttrs, QualifiedNameContext, StructureDeclarationContext,
-    StructureDeclarationContextAttrs, StructureFieldDefinitionContext,
+    EnumDeclarationContext, EnumDeclarationContextAttrs, EnumItemContext, EnumItemContextAttrs,
+    FieldArrayRangeContextAttrs, FieldTypeIdContext, FieldTypeIdContextAttrs, IdContext,
+    IdentifierExpressionContext, IdentifierExpressionContextAttrs, ImportDeclarationContext,
+    ImportDeclarationContextAttrs, LiteralContextAttrs, LiteralExpressionContext,
+    LiteralExpressionContextAttrs, PackageDeclarationContext, PackageDeclarationContextAttrs,
+    PackageNameDefinitionContext, PackageNameDefinitionContextAttrs, QualifiedNameContext,
+    StructureDeclarationContext, StructureDeclarationContextAttrs, StructureFieldDefinitionContext,
     StructureFieldDefinitionContextAttrs, TemplateArgumentContext, TemplateArgumentContextAttrs,
     TemplateArgumentsContext, TemplateArgumentsContextAttrs, TemplateParametersContext,
     TemplateParametersContextAttrs, TypeInstantiationContext, TypeInstantiationContextAttrs,
@@ -96,11 +95,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         let mut imports = Vec::new();
         for import in ctx.importDeclaration_all() {
-            let import_node: Box<ZImport>;
-            match self.visit(&*import) {
-                ZserioTreeReturnType::Import(n) => import_node = n,
+            let import_node: Box<ZImport> = match self.visit(&*import) {
+                ZserioTreeReturnType::Import(n) => n,
                 _ => panic!("should not happen"),
-            }
+            };
             imports.push(*import_node);
         }
 
@@ -272,14 +270,15 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
 
         // the field data type
-        let type_reference: Box<TypeReference>;
-        match ZserioParserVisitorCompat::visit_typeInstantiation(
-            self,
-            &ctx.typeInstantiation().unwrap(),
-        ) {
-            ZserioTreeReturnType::TypeReference(t) => type_reference = t,
-            _ => panic!("should not happen"),
-        }
+
+        let type_reference: Box<TypeReference> =
+            match ZserioParserVisitorCompat::visit_typeInstantiation(
+                self,
+                &ctx.typeInstantiation().unwrap(),
+            ) {
+                ZserioTreeReturnType::TypeReference(t) => t,
+                _ => panic!("should not happen"),
+            };
         // TODO check if alignment is set
 
         // check if the field is an array
@@ -400,19 +399,19 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_enumDeclaration(&mut self, ctx: &EnumDeclarationContext<'_>) -> Self::Return {
         // Retrieve the name of the Enum
-        let name: String;
-        match ZserioParserVisitorCompat::visit_id(self, &ctx.id().unwrap()) {
-            ZserioTreeReturnType::Str(n) => name = n,
+
+        let name: String = match ZserioParserVisitorCompat::visit_id(self, &ctx.id().unwrap()) {
+            ZserioTreeReturnType::Str(n) => n,
             _ => panic!(),
         };
 
         // Retrieve the type
-        let enum_type: Box<TypeReference>;
-        match ZserioParserVisitorCompat::visit_typeInstantiation(
+
+        let enum_type: Box<TypeReference> = match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
             &ctx.typeInstantiation().unwrap(),
         ) {
-            ZserioTreeReturnType::TypeReference(t) => enum_type = t,
+            ZserioTreeReturnType::TypeReference(t) => t,
             _ => panic!(),
         };
 
@@ -434,11 +433,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_enumItem(&mut self, ctx: &EnumItemContext<'_>) -> Self::Return {
-        let name: String;
-        match ZserioParserVisitorCompat::visit_id(self, &ctx.id().unwrap()) {
-            ZserioTreeReturnType::Str(n) => name = n,
+        let name: String = match ZserioParserVisitorCompat::visit_id(self, &ctx.id().unwrap()) {
+            ZserioTreeReturnType::Str(n) => n,
             _ => panic!(),
-        }
+        };
 
         /*
             // an enum item can have an optional expression, specifying the value
@@ -449,7 +447,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         */
 
         ZserioTreeReturnType::EnumItem(Box::new(ZEnumItem {
-            name: name,
+            name,
             comment: "".into(),
         }))
     }
@@ -506,11 +504,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_dotExpression(&mut self, ctx: &DotExpressionContext<'_>) -> Self::Return {
         let _expression_ctx = ctx.expression();
 
-        let op1;
-        match self.visit(&*ctx.expression().unwrap()) {
-            ZserioTreeReturnType::Expression(exp) => op1 = exp,
+        let op1 = match self.visit(&*ctx.expression().unwrap()) {
+            ZserioTreeReturnType::Expression(exp) => exp,
             _ => panic!("unexpected first dot operand"),
-        }
+        };
 
         /*
                 return &ast.Expression{
@@ -616,11 +613,14 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_typeInstantiation(&mut self, ctx: &TypeInstantiationContext<'_>) -> Self::Return {
-        let type_reference: Box<TypeReference>;
-        match ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap()) {
-            ZserioTreeReturnType::TypeReference(t) => type_reference = t,
-            _ => panic!("should not happen"),
-        }
+        let type_reference: Box<TypeReference> =
+            match ZserioParserVisitorCompat::visit_typeReference(
+                self,
+                &ctx.typeReference().unwrap(),
+            ) {
+                ZserioTreeReturnType::TypeReference(t) => t,
+                _ => panic!("should not happen"),
+            };
 
         // TODO type arguments and dynamic length argument
         /*

@@ -116,7 +116,7 @@ impl<T> Array<T> {
                     self.packing_context_node.as_mut().unwrap(),
                     end_position,
                     element,
-                ) as u64;
+                );
             }
         }
         end_position - bit_position

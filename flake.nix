@@ -22,6 +22,7 @@
         devenv.shells.default = {
           packages = with pkgs; [ cargo openjdk_headless antlr ];
           languages.rust.enable = true;
+          languages.rust.version = "latest";
           pre-commit.hooks = {
             clippy.enable = true;
             rustfmt.enable = true;
