@@ -1,12 +1,14 @@
+
 use crate::internal::generator::file_generator::write_to_file;
 
 use crate::internal::ast::package::ZPackage;
 use crate::internal::generator::{
-    preamble::get_default_scope, zenum::generate_enum, zstruct::generate_struct,
+    preamble::get_default_scope, zenum::generate_enum, zstruct::generate_struct, types::to_rust_module_name,
 };
 use std::path::Path;
 
 pub fn generate_package(package: &ZPackage, package_directory: &Path) {
+    let package_name = to_rust_module_name(&package.name);
     let mut module_names = Vec::new();
 
     // Generate  the rust code for structures, ...
@@ -16,15 +18,13 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
             continue;
         }
         let mut scope = get_default_scope(package);
-        generate_struct(&mut scope, z_struct, package_directory, &package.name);
-        module_names.push(&z_struct.name);
+        module_names.push(generate_struct(&mut scope, z_struct, package_directory, &package_name));
     }
 
     // and for zserio enumerations
     for z_enum in &package.enums {
         let mut scope = get_default_scope(package);
-        generate_enum(&mut scope, z_enum, package_directory, &package.name);
-        module_names.push(&z_enum.name);
+        module_names.push(generate_enum(&mut scope, z_enum, package_directory, &package_name));
     }
 
     // finally, generate the mod file
@@ -32,7 +32,7 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // module declarations.
     let mut mod_file_content = String::from("");
     for module_name in module_names {
-        mod_file_content += format!("pub mod {};\n", module_name.as_str()).as_str();
+        mod_file_content += format!("pub mod {};\n", module_name).as_str();
     }
-    write_to_file(&mod_file_content, package_directory, &package.name, "mod");
+    write_to_file(&mod_file_content, package_directory, &package_name, "mod");
 }

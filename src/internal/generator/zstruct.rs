@@ -6,16 +6,19 @@ use crate::internal::generator::array::instantiate_zserio_arrays;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, new::new_field, preamble::add_standard_imports,
-    types::convert_name, types::ztype_to_rust_type,
+    types::to_rust_module_name, types::to_rust_type_name, types::ztype_to_rust_type, types::convert_field_name,
 };
 
 use std::path::Path;
 
-pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &str) {
+pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &str) -> String {
+    let rust_module_name = to_rust_module_name(&zstruct.name);
+    let rust_type_name = to_rust_type_name(&zstruct.name);
+
     add_standard_imports(scope);
     // add the imports
     // generate the struct itself
-    let gen_struct = scope.new_struct(&zstruct.name);
+    let gen_struct = scope.new_struct(&rust_type_name);
     gen_struct.vis("pub");
 
     for field in &zstruct.fields {
@@ -27,23 +30,23 @@ pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, packag
         if field.is_optional {
             field_type = format!("Option<{}>", field_type.as_str());
         }
-        let gen_field = gen_struct.new_field(&convert_name(&field.name), &field_type);
+        let gen_field = gen_struct.new_field(&convert_field_name(&field.name), &field_type);
         gen_field.vis("pub");
     }
 
     // generate the functions to serialize/deserialize
-    let struct_impl = scope.new_impl(&zstruct.name);
+    let struct_impl = scope.new_impl(&rust_type_name);
     struct_impl.impl_trait("ztype::ZserioPackableOject");
 
     // Generate a function to create a new instance of the struct
     let new_fn = struct_impl.new_fn("new");
-    new_fn.ret(&zstruct.name);
-    new_fn.line(format!("return {} {{", &zstruct.name));
+    new_fn.ret("Self");
+    new_fn.line(format!("{} {{", &rust_type_name));
 
     for field in &zstruct.fields {
         new_field(new_fn, field);
     }
-    new_fn.line("};");
+    new_fn.line("}");
 
     let marshal_fn = struct_impl.new_fn("marshal_zserio");
     marshal_fn.arg_ref_self();
@@ -79,5 +82,7 @@ pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, packag
     }
     bitsize_fn.line("end_position - bit_position");
 
-    write_to_file(&scope.to_string(), path, package_name, &zstruct.name);
+
+    write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
+    rust_module_name
 }

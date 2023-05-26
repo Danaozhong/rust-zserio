@@ -2,8 +2,20 @@ use crate::internal::ast::type_reference::TypeReference;
 use convert_case::{Case, Casing};
 use std::result::Result;
 
-pub fn convert_name(name: &String) -> String {
+pub fn to_rust_module_name(name: &String) -> String {
     name.to_case(Case::Snake)
+}
+
+pub fn to_rust_type_name(name: &String) -> String {
+    name.to_case(Case::UpperCamel)
+}
+
+pub fn convert_field_name(name: &String) -> String {
+    name.to_case(Case::Snake)
+}
+
+pub fn convert_to_enum_field_name(name: &String) -> String {
+    name.to_case(Case::UpperCamel)
 }
 
 pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
@@ -12,7 +24,7 @@ pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
         return zserio_to_rust_type(&ztype.name).expect("type mapping failed");
     }
     // the type is a custom type, defined in some zserio file.
-    ztype.name.clone() + "::" + ztype.name.as_str()
+    to_rust_module_name(&ztype.name) + "::" + to_rust_type_name(&ztype.name).as_str()
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {

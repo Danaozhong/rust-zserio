@@ -2,14 +2,14 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{convert_name, zserio_to_rust_type};
+use crate::internal::generator::types::{zserio_to_rust_type, convert_field_name};
 
 use crate::internal::generator::array::array_type_name;
 
 pub fn encode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
-    let mut field_name = format!("self.{}", convert_name(&field.name));
+    let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
     if field.is_optional {
         function.line(format!("match {} {{", field_name));

@@ -2,13 +2,13 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{convert_name, zserio_to_rust_type};
+use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type};
 
 use crate::internal::generator::array::array_type_name;
 pub fn decode_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
-    let rvalue_field_name = format!("self.{}", convert_name(&field.name));
+    let rvalue_field_name = format!("self.{}", convert_field_name(&field.name));
     let mut lvalue_field_name = rvalue_field_name.as_str();
 
     // TODO optional clause

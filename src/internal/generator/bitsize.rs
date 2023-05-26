@@ -3,7 +3,7 @@ use codegen::Function;
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::convert_name;
+use crate::internal::generator::types::convert_field_name;
 
 use crate::internal::generator::array::array_type_name;
 
@@ -120,7 +120,7 @@ pub fn bitsize_type_reference(
 pub fn bitsize_field(function: &mut Function, field: &Field) {
     let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
-    let field_name = format!("self.{}", convert_name(&field.name));
+    let field_name = format!("self.{}", convert_field_name(&field.name));
 
     if field.is_optional {
         function.line("end_position += 1;");
