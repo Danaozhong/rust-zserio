@@ -6,12 +6,18 @@ use crate::internal::generator::array::instantiate_zserio_arrays;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, new::new_field, preamble::add_standard_imports,
-    types::to_rust_module_name, types::to_rust_type_name, types::ztype_to_rust_type, types::convert_field_name,
+    types::convert_field_name, types::to_rust_module_name, types::to_rust_type_name,
+    types::ztype_to_rust_type,
 };
 
 use std::path::Path;
 
-pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, package_name: &str) -> String {
+pub fn generate_struct(
+    scope: &mut Scope,
+    zstruct: &ZStruct,
+    path: &Path,
+    package_name: &str,
+) -> String {
     let rust_module_name = to_rust_module_name(&zstruct.name);
     let rust_type_name = to_rust_type_name(&zstruct.name);
 
@@ -81,7 +87,6 @@ pub fn generate_struct(scope: &mut Scope, zstruct: &ZStruct, path: &Path, packag
         bitsize_field(bitsize_fn, field);
     }
     bitsize_fn.line("end_position - bit_position");
-
 
     write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
     rust_module_name

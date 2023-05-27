@@ -1,9 +1,9 @@
-
 use crate::internal::generator::file_generator::write_to_file;
 
 use crate::internal::ast::package::ZPackage;
 use crate::internal::generator::{
-    preamble::get_default_scope, zenum::generate_enum, zstruct::generate_struct, types::to_rust_module_name,
+    preamble::get_default_scope, types::to_rust_module_name, zenum::generate_enum,
+    zstruct::generate_struct,
 };
 use std::path::Path;
 
@@ -18,13 +18,23 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
             continue;
         }
         let mut scope = get_default_scope(package);
-        module_names.push(generate_struct(&mut scope, z_struct, package_directory, &package_name));
+        module_names.push(generate_struct(
+            &mut scope,
+            z_struct,
+            package_directory,
+            &package_name,
+        ));
     }
 
     // and for zserio enumerations
     for z_enum in &package.enums {
         let mut scope = get_default_scope(package);
-        module_names.push(generate_enum(&mut scope, z_enum, package_directory, &package_name));
+        module_names.push(generate_enum(
+            &mut scope,
+            z_enum,
+            package_directory,
+            &package_name,
+        ));
     }
 
     // finally, generate the mod file

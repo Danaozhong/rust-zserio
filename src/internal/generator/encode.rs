@@ -2,7 +2,7 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{zserio_to_rust_type, convert_field_name};
+use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type};
 
 use crate::internal::generator::array::array_type_name;
 

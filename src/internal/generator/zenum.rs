@@ -3,9 +3,7 @@ use codegen::Scope;
 use crate::internal::ast::zenum::ZEnum;
 use crate::internal::generator::{
     bitsize::bitsize_type_reference, file_generator::write_to_file, preamble::add_standard_imports,
-    types::to_rust_module_name,
-    types::to_rust_type_name,
-    types::convert_to_enum_field_name
+    types::convert_to_enum_field_name, types::to_rust_module_name, types::to_rust_type_name,
 };
 use std::path::Path;
 
@@ -13,7 +11,7 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     let rust_module_name = to_rust_module_name(&zenum.name);
     let rust_type_name = to_rust_type_name(&zenum.name);
     add_standard_imports(scope);
-    
+
     // generate the struct itself
     let gen_enum = scope.new_enum(&rust_type_name);
     gen_enum.vis("pub");
@@ -28,7 +26,11 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     // Generate a function to create a new instance of the struct
     let new_fn = z_impl.new_fn("new");
     new_fn.ret("Self");
-    new_fn.line(format!("{}::{}", &rust_type_name, convert_to_enum_field_name(&zenum.items[0].name)));
+    new_fn.line(format!(
+        "{}::{}",
+        &rust_type_name,
+        convert_to_enum_field_name(&zenum.items[0].name)
+    ));
 
     // generate the functions to serialize/deserialize
     let marshal_fn = z_impl.new_fn("marshal_zserio");
