@@ -1,14 +1,14 @@
 use std::string::String;
 
 pub enum ExpressionType {
-    IntegerExpression(i32),
-    FloatExpression(f64),
-    StringExpression(String),
-    BoolExpression(bool),
-    BitMaskExpression,
-    EnumExpression,
-    CompoundExpression,
-    OtherExpression,
+    Integer(i32),
+    Float(f64),
+    String(String),
+    Bool(bool),
+    BitMask,
+    Enum,
+    Compound,
+    Other,
 }
 
 pub struct Expression {

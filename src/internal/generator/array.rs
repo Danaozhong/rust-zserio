@@ -1,7 +1,7 @@
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{convert_name, zserio_to_rust_type, ztype_to_rust_type};
+use crate::internal::generator::types::ztype_to_rust_type;
 use codegen::Function;
 
 pub fn array_type_name(name: &String) -> String {
@@ -10,26 +10,26 @@ pub fn array_type_name(name: &String) -> String {
 
 pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
     if !zserio_type.is_builtin {
-        return "ObjectArrayTrait".into();
+        "ObjectArrayTrait".into()
     } else {
         match zserio_type.name.as_str() {
-            "int8" => return "BitFieldArrayTrait".into(),
-            "int16" => return "BitFieldArrayTrait".into(),
-            "int32" => return "BitFieldArrayTrait".into(),
-            "int64" => return "BitFieldArrayTrait".into(),
-            "varint32" => return "VarUintArrayTrait".into(),
-            "uint8" => return "UnsignedBitFieldArrayTrait".into(),
-            "uint16" => return "UnsignedBitFieldArrayTrait".into(),
-            "uint32" => return "UnsignedBitFieldArrayTrait".into(),
-            "varuint32" => return "VarUint32ArrayTrait".into(),
-            "string" => return "StringArrayTrait".into(),
-            "float16" => return "F16ArrayTrait".into(),
-            "float32" => return "F32ArrayTrait".into(),
-            "float64" => return "F64ArrayTrait".into(),
-            "bool" => return "BooleanArrayTrait".into(),
-            "bit" => return "UnsignedBitFieldArrayTrait".into(),
-            "int" => return "BitFieldArrayTrait".into(),
-            "extern" => return "ObjectArrayTrait".into(),
+            "int8" => "BitFieldArrayTrait".into(),
+            "int16" => "BitFieldArrayTrait".into(),
+            "int32" => "BitFieldArrayTrait".into(),
+            "int64" => "BitFieldArrayTrait".into(),
+            "varint32" => "VarUintArrayTrait".into(),
+            "uint8" => "UnsignedBitFieldArrayTrait".into(),
+            "uint16" => "UnsignedBitFieldArrayTrait".into(),
+            "uint32" => "UnsignedBitFieldArrayTrait".into(),
+            "varuint32" => "VarUint32ArrayTrait".into(),
+            "string" => "StringArrayTrait".into(),
+            "float16" => "F16ArrayTrait".into(),
+            "float32" => "F32ArrayTrait".into(),
+            "float64" => "F64ArrayTrait".into(),
+            "bool" => "BooleanArrayTrait".into(),
+            "bit" => "UnsignedBitFieldArrayTrait".into(),
+            "int" => "BitFieldArrayTrait".into(),
+            "extern" => "ObjectArrayTrait".into(),
             _ => panic!("failed to identify array trait"),
         }
     }
@@ -39,8 +39,7 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
     let mut code_str = format!(
         "ztype::array_traits::{}{{\n",
         get_array_trait_for_type(zserio_type)
-    )
-    .into();
+    );
 
     // check if the array traits need initialization
     if zserio_type.is_builtin {
@@ -70,7 +69,7 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
 }
 
 pub fn instantiate_zserio_array(function: &mut Function, field: &Field) {
-    let native_type = get_fundamental_type(&*field.field_type);
+    let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
     let rust_type = ztype_to_rust_type(field.field_type.as_ref());
     // also initialize the array part
@@ -94,7 +93,7 @@ pub fn instantiate_zserio_array(function: &mut Function, field: &Field) {
     function.line("};");
 }
 
-pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Box<Field>>) {
+pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Field>) {
     for field in fields {
         if field.array.is_some() {
             instantiate_zserio_array(function, field);

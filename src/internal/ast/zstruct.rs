@@ -4,5 +4,5 @@ pub struct ZStruct {
     pub name: String,
     pub comment: String,
     pub template_params: Vec<String>,
-    pub fields: Vec<Box<Field>>,
+    pub fields: Vec<Field>,
 }

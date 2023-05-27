@@ -1,12 +1,9 @@
 use crate::ztype::array_traits::array_trait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
-use crate::ztype::read_string;
-use crate::ztype::varsize_bitsize;
-use crate::ztype::write_string;
+
 use crate::ztype::ZserioPackableOject;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use std::marker::PhantomData;
 
 pub struct ObjectArrayTrait {}
 
@@ -40,22 +37,22 @@ where
         value.marshal_zserio(writer)
     }
 
-    fn to_u64(&self, value: &T) -> u64 {
+    fn to_u64(&self, _value: &T) -> u64 {
         panic!("array trait does not support delta compression");
     }
-    fn from_u64(&self, value: u64) -> T {
+    fn from_u64(&self, _value: u64) -> T {
         panic!("array trait does not support delta compression");
     }
 
-    fn init_context(&self, context_node: &mut PackingContextNode, element: &T) {
+    fn init_context(&self, _context_node: &mut PackingContextNode, _element: &T) {
         // TODO
     }
 
     fn bitsize_of_packed(
         &self,
-        context_node: &mut PackingContextNode,
-        bit_position: u64,
-        element: &T,
+        _context_node: &mut PackingContextNode,
+        _bit_position: u64,
+        _element: &T,
     ) -> u64 {
         // TODO
         0
@@ -71,9 +68,9 @@ where
 
     fn write_packed(
         &self,
-        context_node: &mut PackingContextNode,
-        writer: &mut BitWriter,
-        element: &T,
+        _context_node: &mut PackingContextNode,
+        _writer: &mut BitWriter,
+        _element: &T,
     ) {
         // TODO
     }

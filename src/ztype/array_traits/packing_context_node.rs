@@ -7,7 +7,7 @@ For example, the packing context node of a struct would contain a packing contex
 node for each packable array/struct/choice field it contains as fields.
  */
 pub struct PackingContextNode {
-    children: Vec<PackingContextNode>,
+    pub children: Vec<PackingContextNode>,
     pub context: DeltaContext,
 }
 
@@ -17,5 +17,11 @@ impl PackingContextNode {
             children: vec![],
             context: DeltaContext::new(),
         }
+    }
+}
+
+impl Default for PackingContextNode {
+    fn default() -> Self {
+        Self::new()
     }
 }

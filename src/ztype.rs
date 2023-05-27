@@ -31,6 +31,9 @@ pub use self::bits_decode::read_unsigned_bits;
 
 pub use self::varuint_bitsize::unsigned_bitsize;
 pub use self::varuint_bitsize::varsize_bitsize;
+pub use self::varuint_decode::read_varsize;
+pub use self::varuint_decode::read_varuint;
+pub use self::varuint_decode::read_varuint32;
 
 pub use self::array::Array;
 
@@ -39,15 +42,15 @@ pub use self::traits::ZserioPackableOject;
 
 pub mod bits_decode;
 pub mod bits_encode;
-mod string_decode;
-mod string_encode;
-mod varuint_bitsize;
+pub mod string_decode;
+pub mod string_encode;
+pub mod varuint_bitsize;
 pub mod varuint_decode;
 pub mod varuint_encode;
 
 // all the modules required for arrays
-mod array;
+pub mod array;
 pub mod array_traits;
-mod bit_alignment;
+pub mod bit_alignment;
 
-mod traits;
+pub mod traits;

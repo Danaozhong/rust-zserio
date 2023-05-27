@@ -4,7 +4,7 @@ pub mod reference_modules {
     }
 }
 
-use crate::reference_modules::core::types::{Color, ValueWrapper};
+use crate::reference_modules::core::types::value_wrapper;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -15,7 +15,7 @@ fn main() {
     // that the data is still the same.
 
     // Instantiate the data
-    let value_wrapper = ValueWrapper::ValueWrapper::new();
+    let value_wrapper = value_wrapper::ValueWrapper::new();
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -24,8 +24,8 @@ fn main() {
     let serialized_byes = bitwriter.data();
 
     // deserialize
-    let mut other_value_wrapper = ValueWrapper::ValueWrapper::new();
-    let mut bitreader = BitReader::new(&serialized_byes);
+    let mut other_value_wrapper = value_wrapper::ValueWrapper::new();
+    let mut bitreader = BitReader::new(serialized_byes);
     other_value_wrapper.unmarshal_zserio(&mut bitreader);
 
     assert!(other_value_wrapper.value == value_wrapper.value);

@@ -20,8 +20,9 @@
 
       perSystem = { config, self', inputs', pkgs, system, ... }: {
         devenv.shells.default = {
-          packages = with pkgs; [ cargo ];
+          packages = with pkgs; [ cargo openjdk_headless ];
           languages.rust.enable = true;
+          languages.rust.version = "latest"; # to support rustfmt ignore config
           pre-commit.hooks = {
             clippy.enable = true;
             rustfmt.enable = true;

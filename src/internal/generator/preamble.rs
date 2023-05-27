@@ -20,7 +20,7 @@ pub fn get_default_scope(package: &ZPackage) -> Scope {
 
     // Add the import to the current (own) module
     scope.import(
-        (String::from("crate::") + package.name.replace(".", "::").as_str()).as_str(),
+        (String::from("crate::") + package.name.replace('.', "::").as_str()).as_str(),
         "*",
     );
 

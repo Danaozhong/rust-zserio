@@ -18,12 +18,12 @@ impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
         true
     }
 
-    fn bitsize_of(&self, bit_position: u64, value: &i64) -> u64 {
+    fn bitsize_of(&self, _bit_position: u64, _value: &i64) -> u64 {
         self.num_bits as u64
     }
 
     fn initialize_offsets(&self, bit_position: u64, _: &i64) -> u64 {
-        bit_position + self.bitsize_of(bit_position, &0) as u64
+        bit_position + self.bitsize_of(bit_position, &0)
     }
 
     fn read(&self, reader: &mut BitReader) -> i64 {
@@ -35,10 +35,10 @@ impl array_trait::ArrayTrait<i64> for BitFieldArrayTrait {
     }
 
     fn to_u64(&self, value: &i64) -> u64 {
-        return *value as u64;
+        *value as u64
     }
     fn from_u64(&self, value: u64) -> i64 {
-        return value as i64;
+        value as i64
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &i64) {

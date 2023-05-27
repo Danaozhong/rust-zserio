@@ -14,14 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Test rust-zserio Build
-      run: cargo build --release --verbose
+    - name: Run Build test
+      run: cargo build --release --verbose --all --all-targets
   test-unit:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Run Unit tests
-      run: cargo test --verbose
+      run: cargo test --all --verbose
   test-e2e:
     runs-on: ubuntu-latest
     steps:
@@ -32,11 +32,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
     - name: Run lint check
-      run: cargo clippy
+      run: cargo clippy --all --all-targets -- -D warnings
   format:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+        components: rustfmt, clippy
     - name: Run fmt check
-      run: cargo fmt --check
+      run: |
+        # The E2E test works by generating the rust interface files to read/write zserio.
+        # Since these files are referenced in the E2E test code, if these files are missing,
+        # the linter checker will not be able to find them, and throw an error.
+        cargo run -p round-trip-tests
+        cargo fmt --all -- --check

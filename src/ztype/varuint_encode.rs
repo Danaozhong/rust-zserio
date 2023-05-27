@@ -28,6 +28,6 @@ pub fn write_varuint(writer: &mut BitWriter, v: u64, max_bytes: u8) {
             shift_bits += 1;
         }
         b |= (v >> shift_bits as u64) & (0xff >> (8 - remaining_bits));
-        writer.write_unsigned_bits(b, 8, 8);
+        let _ = writer.write_unsigned_bits(b, 8, 8);
     }
 }
