@@ -31,6 +31,9 @@ pub trait ArrayTrait<T> {
         bit_position: u64,
         element: &T,
     ) -> u64;
+
+    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> T;
+
     fn write_packed(
         &self,
         context_node: &mut PackingContextNode,

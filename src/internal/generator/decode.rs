@@ -28,14 +28,14 @@ pub fn decode_field(function: &mut Function, field: &Field) {
         // TODO support @index operator
 
         function.line(format!(
-            "{} = {}.unmarshal_zserio(reader);",
+            "{} = {}.zserio_read(reader);",
             lvalue_field_name,
             array_type_name(&field.name)
         ));
     } else if native_type.is_marshaler {
         // the field is a marshable type (struct, choice, enum)
         function.line(format!(
-            "{}.unmarshal_zserio(reader);",
+            "{}.zserio_read(reader);",
             rvalue_field_name.as_str()
         ));
     } else if fund_type.is_builtin {

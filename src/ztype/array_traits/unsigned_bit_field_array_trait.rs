@@ -63,6 +63,10 @@ impl array_trait::ArrayTrait<u64> for UnsignedBitFieldArrayTrait {
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
+    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> u64 {
+        context_node.context.read(self, reader)
+    }
+
     fn write_packed(
         &self,
         context_node: &mut PackingContextNode,

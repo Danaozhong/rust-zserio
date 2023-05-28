@@ -54,18 +54,22 @@ pub fn generate_struct(
     }
     new_fn.line("}");
 
-    let marshal_fn = struct_impl.new_fn("marshal_zserio");
+    let marshal_fn = struct_impl.new_fn("zserio_write");
     marshal_fn.arg_ref_self();
     marshal_fn.arg("writer", "&mut BitWriter");
 
     // create the array traits
     instantiate_zserio_arrays(marshal_fn, &zstruct.fields);
-
     for field in &zstruct.fields {
         encode_field(marshal_fn, field);
     }
 
-    let unmarshal_fn = struct_impl.new_fn("unmarshal_zserio");
+    let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
+    zserio_write_packed_fn.arg_ref_self();
+    zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
+    zserio_write_packed_fn.arg("writer", "&mut BitWriter");
+
+    let unmarshal_fn = struct_impl.new_fn("zserio_read");
     unmarshal_fn.arg_mut_self();
     unmarshal_fn.arg("reader", "&mut BitReader");
 
@@ -74,6 +78,11 @@ pub fn generate_struct(
     for field in &zstruct.fields {
         decode_field(unmarshal_fn, field);
     }
+
+    let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
+    zserio_read_packed_fn.arg_mut_self();
+    zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
+    zserio_read_packed_fn.arg("reader", "&mut BitReader");
 
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.ret("u64");

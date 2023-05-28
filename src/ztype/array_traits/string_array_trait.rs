@@ -61,6 +61,10 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
+    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> String {
+        context_node.context.read(self, reader)
+    }
+
     fn write_packed(
         &self,
         context_node: &mut PackingContextNode,
