@@ -59,7 +59,7 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
             }
         }
         if bits != 0 {
-            code_str += format!("num_bits: {},\n", zserio_type.bits).as_str();
+            code_str += format!("num_bits: {},\n", bits).as_str();
         }
     }
 
@@ -68,7 +68,7 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
     code_str
 }
 
-pub fn instantiate_zserio_array(function: &mut Function, field: &Field) {
+pub fn instantiate_zserio_array(function: &mut Function, field: &Field, force_packed: bool) {
     let native_type = get_fundamental_type(&field.field_type);
     let fund_type = native_type.fundamental_type;
     let rust_type = ztype_to_rust_type(field.field_type.as_ref());
@@ -85,18 +85,20 @@ pub fn instantiate_zserio_array(function: &mut Function, field: &Field) {
     // TODO function.line(format!("fixed_size: {},", array.array_length_expression.is_some()));
     function.line("fixed_size: None,");
     function.line(format!("is_aligned: {},", field.alignment != 0));
-    //TODO function.line(format!("is_packed: {},", field.array.unwrap().is_packed));
-    function.line(format!("is_packed: {},", false));
+    function.line(format!(
+        "is_packed: {},",
+        field.array.as_ref().unwrap().is_packed || force_packed
+    ));
 
     function.line("packing_context_node: None,");
 
     function.line("};");
 }
 
-pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Field>) {
+pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Field>, force_packed: bool) {
     for field in fields {
         if field.array.is_some() {
-            instantiate_zserio_array(function, field);
+            instantiate_zserio_array(function, field, force_packed);
         }
     }
 }
