@@ -19,6 +19,7 @@ fn main() {
     value_wrapper.value = 18;
     value_wrapper.description = "test".into();
     value_wrapper.fixed_array = vec![100, 101, 102, 103];
+    value_wrapper.packed_array = vec![200, 201, 202, 203, 205, 204];
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -35,6 +36,7 @@ fn main() {
     assert!(other_value_wrapper.other_value == value_wrapper.other_value);
     assert!(other_value_wrapper.description == value_wrapper.description);
     assert!(other_value_wrapper.fixed_array == value_wrapper.fixed_array);
+    assert!(other_value_wrapper.packed_array == value_wrapper.packed_array);
 
     // serialize the new structure again, and ensure it is binary identical
     let mut other_bitwriter = BitWriter::new();

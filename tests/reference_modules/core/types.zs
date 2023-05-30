@@ -33,7 +33,7 @@ struct ValueWrapper(int32 parameter)
 
     string str_array[];
 
-    packed uint16 packed_array;
+    packed uint16 packed_array[];
 
     function int32 getValue()
     {
