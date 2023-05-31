@@ -19,6 +19,8 @@ bitstream-io = "1.6.0"
 clap = { version="4.2.7", features = [ "derive" ] }
 codegen = "0.2.0"
 convert_case = "0.6.0"
+duplicate = "1.0.0"
+num = "0.4.0"
 rstest = "0.16.0"
 rust-bitwriter = { git = "https://github.com/Danaozhong/rust-bitwriter", version = "0.0.1" }
 rust-format = "0.3.4"

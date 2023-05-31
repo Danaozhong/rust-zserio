@@ -1,6 +1,8 @@
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
+use crate::ztype::read_varsize;
+
 use crate::ztype::{align_to, varsize_bitsize};
 
 use crate::ztype::array_traits::array_trait::ArrayTrait;
@@ -22,7 +24,7 @@ impl<T> Array<T> {
         }
     }
 
-    pub fn marshal_zserio(&mut self, writer: &mut BitWriter, data: &Vec<T>) {
+    pub fn zserio_write(&mut self, writer: &mut BitWriter, data: &Vec<T>) {
         if let Some(expected_array_len) = self.fixed_size {
             // for fixed-size arrays, the provided length must match
             assert_eq!(expected_array_len, data.len() as u64);
@@ -58,8 +60,34 @@ impl<T> Array<T> {
         }
     }
 
-    pub fn unmarshal_zserio(&mut self, _reader: &mut BitReader) -> Vec<T> {
-        vec![]
+    pub fn zserio_read(&mut self, reader: &mut BitReader) -> Vec<T> {
+        let array_length;
+        if let Some(expected_array_len) = self.fixed_size {
+            array_length = expected_array_len;
+        } else {
+            array_length = read_varsize(reader);
+        }
+
+        let mut data = Vec::<T>::with_capacity(array_length as usize);
+        if array_length > 0 {
+            if self.is_packed {
+                self.create_packing_context_node_if_not_exists();
+            }
+            for _index in 0..array_length {
+                if self.is_aligned {
+                    reader.align(8).expect("failed to align reader");
+                }
+                if self.is_packed {
+                    data.push(
+                        self.array_trait
+                            .read_packed(self.packing_context_node.as_mut().unwrap(), reader),
+                    );
+                } else {
+                    data.push(self.array_trait.read(reader));
+                }
+            }
+        }
+        data
     }
 
     pub fn zserio_bitsize(&mut self, data: &Vec<T>, bit_position: u64) -> u64 {
@@ -121,31 +149,4 @@ impl<T> Array<T> {
         }
         end_position - bit_position
     }
-    /*
-    // BitSizeOfPacked returns the total size of the packed array in bits.
-    func (array *Array[T, Y]) ZserioBitSizePacked(bitPosition int) (int, error) {
-        endBitPosition := bitPosition
-        size := array.Size()
-        if array.IsAuto {
-            delta, err := SignedBitSize(int64(size), 4)
-            if err != nil {
-                return 0, err
-            }
-            endBitPosition += delta
-        }
-        if size > 0 {
-            for _, element := range array.RawArray {
-                if array.setOffsetMethod != nil {
-                    endBitPosition = alignTo(8, endBitPosition)
-                }
-                delta, err := array.ArrayTraits.PackedTraits().BitSizeOf(array.PackedContext, endBitPosition, element)
-                if err != nil {
-                    return 0, err
-                }
-                endBitPosition += delta
-            }
-        }
-        return endBitPosition - bitPosition, nil
-    }
-    */
 }

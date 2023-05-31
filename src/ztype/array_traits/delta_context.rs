@@ -1,6 +1,6 @@
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::bits_decode::read_signed_bits;
-use crate::ztype::read_unsigned_bits;
+use crate::ztype::{self, read_unsigned_bits};
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -23,6 +23,52 @@ impl Default for DeltaContext {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn abs_difference(x: u64, y: u64) -> u64 {
+    if x < y {
+        y - x
+    } else {
+        x - y
+    }
+}
+
+/**
+ * Returns the minimum number of bits required to represent x. the result is 0 for x == 0.
+ */
+
+const BIT_LENGTH_BYTE: &str = "\x00\x01\x02\x02\x03\x03\x03\x03\x04\x04\x04\x04\x04\x04\x04\x04\
+ \x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\
+ \x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\
+ \x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\
+ \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
+ \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
+ \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
+ \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
+ \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08";
+
+fn len64(mut x: u64) -> u8 {
+    let mut n = 0u8;
+    if x >= 1 << 32 {
+        x >>= 32;
+        n = 32;
+    }
+    if x >= 1 << 16 {
+        x >>= 16;
+        n += 16
+    }
+    if x >= 1 << 8 {
+        x >>= 8;
+        n += 8;
+    }
+    n + BIT_LENGTH_BYTE.chars().nth(x as usize).unwrap() as u8
 }
 
 impl DeltaContext {
@@ -49,40 +95,18 @@ impl DeltaContext {
             self.first_element_size = self.unpacked_size;
         } else if self.max_bit_number <= MAX_BIT_NUMBER_LIMIT {
             self.is_packed = true;
-            // TODO
-            /*
-            delta := absDiff(arrayTraits.AsUint64(element), *context.previousElement)
-            maxBitNumber := bits.Len64(delta)
-            if maxBitNumber > context.maxBitNumber {
-                context.maxBitNumber = maxBitNumber
-                // cannot store using delta packing if the 64bit range is
-                // exhausted
-                if maxBitNumber > maxBitNumberLimit {
-                    context.isPacked = false
+            let delta = abs_difference(array_trait.to_u64(element), self.previous_element);
+            let max_bit_number = len64(delta);
+            if max_bit_number > self.max_bit_number {
+                self.max_bit_number = max_bit_number;
+                if self.max_bit_number > MAX_BIT_NUMBER_LIMIT {
+                    self.is_packed = false;
                 }
             }
-            *context.previousElement = arrayTraits.AsUint64(element)
-            */
+            self.previous_element = array_trait.to_u64(element);
         }
     }
 
-    /*
-        // BitSizeOf returns the size of the delta context array in bits.
-        func (context *DeltaContext[T]) BitSizeOf(arrayTraits IArrayTraits[T], bitPosition int, element T) (int, error) {
-        if !context.processingStarted {
-            context.processingStarted = true
-            context.finishInit()
-            return context.BitSizeOfDescriptor() + bitsizeOfUnpacked(arrayTraits, element), nil
-        }
-        if !context.isPacked {
-            return bitsizeOfUnpacked(arrayTraits, element), nil
-        }
-        if context.maxBitNumber > 0 {
-            return context.maxBitNumber + 1, nil
-        }
-        return 0, nil
-    }
-     */
     pub fn bitsize_of<T>(
         &mut self,
         array_traits: &dyn ArrayTrait<T>,
@@ -115,101 +139,54 @@ impl DeltaContext {
         }
         if self.max_bit_number > 0 {
             let delta = read_signed_bits(reader, self.max_bit_number + 1);
-            self.previous_element += delta as u64;
+            self.previous_element = (self.previous_element as i64 + delta) as u64;
         }
         array_traits.from_u64(self.previous_element)
     }
 
+    pub fn finish_init(&mut self) {
+        if !self.is_packed {
+            return;
+        }
+        let mut delta_bit_size = self.max_bit_number as u64;
+        if delta_bit_size > 0 {
+            delta_bit_size += 1;
+        }
+        let packed_bit_size_with_decriptor = 1
+            + MAX_BIT_NUMBER_BITS as u64
+            + self.first_element_size
+            + (self.num_elements - 1) * delta_bit_size;
+
+        let unpacked_bit_size_with_descriptor = 1 + self.unpacked_size;
+
+        if packed_bit_size_with_decriptor >= unpacked_bit_size_with_descriptor {
+            self.is_packed = false;
+        }
+    }
+
     pub fn write<T>(
         &mut self,
-        _array_traits: &dyn ArrayTrait<T>,
-        _writer: &mut BitWriter,
-        _element: &T,
+        array_traits: &dyn ArrayTrait<T>,
+        writer: &mut BitWriter,
+        element: &T,
     ) {
-        // TODO
-    }
+        if !self.processing_started {
+            self.processing_started = true;
+            self.finish_init();
 
-    /*
-
-    // DeltaContext is a packing context used when writing data using delta
-    // packing, i.e. instead of storing all values, only stores the deltas.
-    type DeltaContext[T any] struct {
-
-        // specifies if delta packing is actually used (it may be skipped if normal
-        // packing is more efficient)
-        isPacked bool
-
-        // maxBitNumber specifies the number of bits needed per delta element
-        maxBitNumber int
-
-        // previousElement is the value of the previously stored element
-        previousElement     *uint64
-        processingStarted   bool
-        unpackedBitSize     int
-        firstElementBitSize int
-        numElements         int
-    }
-
-    // arrayTraitsBitsizeOf returns the bit size of an array element.
-    func arrayTraitsBitsizeOf[T any](arrayTraits IArrayTraits[T], bitPosition int, element T) int {
-        return arrayTraits.BitSizeOf(element, bitPosition)
-    }
-
-    func absDiff(lhs, rhs uint64) uint64 {
-        if lhs > rhs {
-            return lhs - rhs
+            self.write_descriptor(writer);
+            return self.write_unpacked(array_traits, writer, element);
         }
-        return rhs - lhs
-    }
-
-
-
-    // Write writes an element of an delta context array.
-    func (context *DeltaContext[T]) Write(arrayTraits IArrayTraits[T], writer zserio.Writer, element T) error {
-        if !context.processingStarted {
-            context.processingStarted = true
-            context.finishInit()
-            if err := context.WriteDescriptor(writer); err != nil {
-                return err
-            }
-            return context.writeUnpacked(arrayTraits, writer, element)
+        if !self.is_packed {
+            return self.write_unpacked(array_traits, writer, element);
         }
-        if !context.isPacked {
-            return context.writeUnpacked(arrayTraits, writer, element)
-        }
-        if context.maxBitNumber > 0 {
-            delta := arrayTraits.AsUint64(element) - *context.previousElement
-            err := writer.WriteBits(delta, uint8(context.maxBitNumber+1))
-            if err != nil {
-                return err
-            }
-            *context.previousElement = arrayTraits.AsUint64(element)
-        }
-        return nil
-    }
-
-    // finishInit decided if the array should be written packed or unpacked,
-    // depending on which variant is more space-efficient.
-    func (context *DeltaContext[T]) finishInit() {
-        if context.isPacked {
-            deltaBitsize := 0
-            if context.maxBitNumber > 0 {
-                deltaBitsize = context.maxBitNumber + 1
-            }
-            // decide if this array should be packed or not by comparing the array
-            // bit sizes of both methods. Packed is usually more efficient if the
-            // the array values are not differing too much from each other.
-            packedBitsizeWithDescriptor := 1 + maxBitNumberBits +
-                context.firstElementBitSize + (context.numElements-1)*deltaBitsize
-
-            unpackedBitsizeWithDescriptor := 1 + context.unpackedBitSize
-
-            if packedBitsizeWithDescriptor >= unpackedBitsizeWithDescriptor {
-                context.isPacked = false
-            }
+        if self.max_bit_number > 0 {
+            let element_as_u64 = array_traits.to_u64(element);
+            let delta = element_as_u64 as i64 - self.previous_element as i64;
+            ztype::write_signed_bits(writer, delta, self.max_bit_number + 1);
+            self.previous_element = element_as_u64;
         }
     }
-    */
 
     // BitSizeOfDescriptor returns the bit size of a delta context array descriptor.
     fn bitsize_of_descriptor(&self) -> u64 {
@@ -234,32 +211,26 @@ impl DeltaContext {
         self.previous_element = array_traits.to_u64(&element);
         element
     }
-    /*
 
-
-    // WriteDescriptor writes the descriptor of a delta packed context.
-    func (context *DeltaContext[T]) WriteDescriptor(writer zserio.Writer) error {
-        if err := writer.WriteBool(context.isPacked); err != nil {
-            return err
+    fn write_descriptor(&self, writer: &mut BitWriter) {
+        writer
+            .write_bool(self.is_packed)
+            .expect("failed to write bool");
+        if self.is_packed {
+            ztype::write_unsigned_bits(writer, self.max_bit_number as u64, MAX_BIT_NUMBER_BITS);
         }
-        if context.isPacked {
-            return writer.WriteBits(uint64(context.maxBitNumber), maxBitNumberBits)
-        }
-        return nil
     }
 
-    // writeUnpacked writes an unpacked array element to a writer.
-    func (context *DeltaContext[T]) writeUnpacked(arrayTraits IArrayTraits[T], writer zserio.Writer, element T) error {
-        elementAsUint64 := arrayTraits.AsUint64(element)
-        context.previousElement = &elementAsUint64
-        return arrayTraits.Write(writer, element)
+    fn write_unpacked<T>(
+        &mut self,
+        array_traits: &dyn ArrayTrait<T>,
+        writer: &mut BitWriter,
+        element: &T,
+    ) {
+        let element_as_u64 = array_traits.to_u64(element);
+        self.previous_element = element_as_u64;
+        array_traits.write(writer, element);
     }
-
-    // bitsizeOfUnpacked returns the unpacked bit size of an array element.
-    func bitsizeOfUnpacked[T any](arrayTraits IArrayTraits[T], element T) int {
-        return arrayTraits.BitSizeOf(element, 0)
-    }
-     */
 
     fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, element: &T) -> u64 {
         array_trait.bitsize_of(0, element)

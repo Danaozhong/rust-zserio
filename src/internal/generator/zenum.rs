@@ -33,13 +33,23 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     ));
 
     // generate the functions to serialize/deserialize
-    let marshal_fn = z_impl.new_fn("marshal_zserio");
+    let marshal_fn = z_impl.new_fn("zserio_write");
     marshal_fn.arg_ref_self();
     marshal_fn.arg("writer", "&mut BitWriter");
 
-    let unmarshal_fn = z_impl.new_fn("unmarshal_zserio");
+    let zserio_write_packed_fn = z_impl.new_fn("zserio_write_packed");
+    zserio_write_packed_fn.arg_ref_self();
+    zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
+    zserio_write_packed_fn.arg("writer", "&mut BitWriter");
+
+    let unmarshal_fn = z_impl.new_fn("zserio_read");
     unmarshal_fn.arg_mut_self();
     unmarshal_fn.arg("reader", "&mut BitReader");
+
+    let zserio_read_packed_fn = z_impl.new_fn("zserio_read_packed");
+    zserio_read_packed_fn.arg_mut_self();
+    zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
+    zserio_read_packed_fn.arg("reader", "&mut BitReader");
 
     let bitsize_fn = z_impl.new_fn("zserio_bitsize");
     bitsize_fn.ret("u64");

@@ -29,12 +29,12 @@ where
 
     fn read(&self, reader: &mut BitReader) -> T {
         let mut value = T::new();
-        value.unmarshal_zserio(reader);
+        value.zserio_read(reader);
         value
     }
 
     fn write(&self, writer: &mut BitWriter, value: &T) {
-        value.marshal_zserio(writer)
+        value.zserio_write(writer)
     }
 
     fn to_u64(&self, _value: &T) -> u64 {
@@ -66,12 +66,18 @@ where
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
+    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> T {
+        let mut element = T::new();
+        element.zserio_read_packed(context_node, reader);
+        element
+    }
+
     fn write_packed(
         &self,
-        _context_node: &mut PackingContextNode,
-        _writer: &mut BitWriter,
-        _element: &T,
+        context_node: &mut PackingContextNode,
+        writer: &mut BitWriter,
+        element: &T,
     ) {
-        // TODO
+        element.zserio_write_packed(context_node, writer);
     }
 }

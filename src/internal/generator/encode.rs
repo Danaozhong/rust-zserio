@@ -25,12 +25,12 @@ pub fn encode_field(function: &mut Function, field: &Field) {
         // TODO support @index operator
 
         function.line(format!(
-            "{}.marshal_zserio(writer, &{});",
+            "{}.zserio_write(writer, &{});",
             array_type_name(&field.name),
             field_name
         ));
     } else if native_type.is_marshaler {
-        function.line(format!("{}.marshal_zserio(writer);", field_name));
+        function.line(format!("{}.zserio_write(writer);", field_name));
     } else if fund_type.bits != 0 {
         if fund_type.name == "int" {
             function.line(format!(

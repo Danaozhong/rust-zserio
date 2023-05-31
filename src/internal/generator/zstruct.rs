@@ -1,6 +1,8 @@
 use codegen::Scope;
 
 use crate::internal::ast::zstruct::ZStruct;
+
+use crate::internal::ast::field::Field;
 use crate::internal::generator::array::instantiate_zserio_arrays;
 
 use crate::internal::generator::{
@@ -54,33 +56,29 @@ pub fn generate_struct(
     }
     new_fn.line("}");
 
-    let marshal_fn = struct_impl.new_fn("marshal_zserio");
+    generate_zserio_read(struct_impl, &zstruct.fields);
+
+    let marshal_fn = struct_impl.new_fn("zserio_write");
     marshal_fn.arg_ref_self();
     marshal_fn.arg("writer", "&mut BitWriter");
 
     // create the array traits
-    instantiate_zserio_arrays(marshal_fn, &zstruct.fields);
-
+    instantiate_zserio_arrays(marshal_fn, &zstruct.fields, false);
     for field in &zstruct.fields {
         encode_field(marshal_fn, field);
     }
 
-    let unmarshal_fn = struct_impl.new_fn("unmarshal_zserio");
-    unmarshal_fn.arg_mut_self();
-    unmarshal_fn.arg("reader", "&mut BitReader");
-
-    instantiate_zserio_arrays(unmarshal_fn, &zstruct.fields);
-
-    for field in &zstruct.fields {
-        decode_field(unmarshal_fn, field);
-    }
+    let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
+    zserio_write_packed_fn.arg_ref_self();
+    zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
+    zserio_write_packed_fn.arg("writer", "&mut BitWriter");
 
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
 
-    instantiate_zserio_arrays(bitsize_fn, &zstruct.fields);
+    instantiate_zserio_arrays(bitsize_fn, &zstruct.fields, false);
 
     bitsize_fn.line("let mut end_position = bit_position;");
     for field in &zstruct.fields {
@@ -90,4 +88,23 @@ pub fn generate_struct(
 
     write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
     rust_module_name
+}
+
+fn generate_zserio_read(struct_impl: &mut codegen::Impl, fields: &Vec<Field>) {
+    let unmarshal_fn = struct_impl.new_fn("zserio_read");
+    unmarshal_fn.arg_mut_self();
+    unmarshal_fn.arg("reader", "&mut BitReader");
+    instantiate_zserio_arrays(unmarshal_fn, fields, false);
+    for field in fields {
+        decode_field(unmarshal_fn, field, None);
+    }
+
+    let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
+    zserio_read_packed_fn.arg_mut_self();
+    zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
+    zserio_read_packed_fn.arg("reader", "&mut BitReader");
+    instantiate_zserio_arrays(zserio_read_packed_fn, fields, true);
+    for field in fields {
+        decode_field(zserio_read_packed_fn, field, Option::from(0));
+    }
 }
