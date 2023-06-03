@@ -1,6 +1,6 @@
 use crate::internal::ast::{field::Field, parameter::Parameter, zfunction::ZFunction};
 
-pub struct ZStruct {
+pub struct ZUnion {
     pub name: String,
     pub comment: String,
     pub template_parameters: Vec<String>,

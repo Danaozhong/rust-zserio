@@ -1,6 +1,13 @@
 pub mod expression;
 pub mod field;
 pub mod package;
+pub mod parameter;
 pub mod type_reference;
+pub mod zbitmask;
+pub mod zchoice;
+pub mod zconst;
 pub mod zenum;
+pub mod zfunction;
 pub mod zstruct;
+pub mod zsubtype;
+pub mod zunion;

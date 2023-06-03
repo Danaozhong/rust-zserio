@@ -43,15 +43,11 @@ pub fn decode_field(function: &mut Function, field: &Field, context_node_index: 
             // Use packed reading
             function.line(format!(
                 "{}.zserio_read_packed(&mut context_node.children[{}], reader);",
-                rvalue_field_name.as_str(),
-                node_idx,
+                rvalue_field_name, node_idx,
             ));
         } else {
             // use standard reading
-            function.line(format!(
-                "{}.zserio_read(reader);",
-                rvalue_field_name.as_str()
-            ));
+            function.line(format!("{}.zserio_read(reader);", rvalue_field_name));
         }
     } else if fund_type.is_builtin {
         // The type should be a native type

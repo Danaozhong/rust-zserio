@@ -1,5 +1,6 @@
 use std::string::String;
 
+#[derive(Clone)]
 pub enum ExpressionType {
     Integer(i32),
     Float(f64),
@@ -11,7 +12,9 @@ pub enum ExpressionType {
     Other,
 }
 
+#[derive(Clone)]
 pub struct Expression {
+    pub expression_type: isize,
     pub text: String,
     pub operand1: Option<Box<Expression>>,
     pub operand2: Option<Box<Expression>>,
