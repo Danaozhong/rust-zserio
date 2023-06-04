@@ -14,7 +14,7 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // Generate  the rust code for structures, ...
     for z_struct in &package.structs {
         // ignore templates, only generate code for instantiated structs
-        if !z_struct.template_params.is_empty() {
+        if !z_struct.template_parameters.is_empty() {
             continue;
         }
         let mut scope = get_default_scope(package);
