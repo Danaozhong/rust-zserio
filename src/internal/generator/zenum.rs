@@ -1,9 +1,9 @@
 use codegen::Scope;
 
-use crate::internal::ast::zenum::ZEnum;
+use crate::internal::ast::type_reference::TypeReference;
+use crate::internal::ast::{expression::ExpressionType, zenum::ZEnum};
 use crate::internal::generator::{
     bitsize::bitsize_type_reference, file_generator::write_to_file, preamble::add_standard_imports,
-    types::convert_to_enum_field_name, types::to_rust_module_name, types::to_rust_type_name,
 };
 use std::path::Path;
 
@@ -16,8 +16,20 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     let gen_enum = scope.new_enum(&rust_type_name);
     gen_enum.vis("pub");
 
+    let mut enum_value = 0;
     for item in &zenum.items {
-        gen_enum.new_variant(convert_to_enum_field_name(&item.name));
+        if let Some(value_expression) = &item.expression {
+            match value_expression.result_type {
+                ExpressionType::Integer(v) => enum_value = v,
+                _ => panic!("only integer value expressions are supported"),
+            }
+        }
+        gen_enum.new_variant(format!(
+            "{} = {}",
+            convert_to_enum_field_name(&item.name),
+            enum_value
+        ));
+        enum_value += 1;
     }
 
     let z_impl = scope.new_impl(&rust_type_name);
