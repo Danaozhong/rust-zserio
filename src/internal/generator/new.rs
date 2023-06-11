@@ -1,19 +1,40 @@
 use codegen::Function;
 
-use crate::internal::ast::field::Field;
+use crate::internal::ast::{field::Array, field::Field, parameter::Parameter};
 
+use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
 use crate::internal::generator::types::{to_rust_module_name, ztype_to_rust_type};
 
 pub fn new_field(function: &mut Function, field: &Field) {
-    let native_type = get_fundamental_type(&field.field_type);
-    let fund_type = native_type.fundamental_type;
-    let field_name = to_rust_module_name(&field.name);
-    let rust_type = ztype_to_rust_type(field.field_type.as_ref());
+    new_type(
+        function,
+        &field.name,
+        &field.field_type,
+        field.is_optional,
+        &field.array,
+    );
+}
 
-    if field.is_optional {
+pub fn new_param(function: &mut Function, param: &Parameter) {
+    new_type(function, &param.name, &param.zserio_type, false, &None);
+}
+
+pub fn new_type(
+    function: &mut Function,
+    name: &String,
+    type_reference: &TypeReference,
+    is_optional: bool,
+    array: &Option<Array>,
+) {
+    let native_type = get_fundamental_type(&type_reference);
+    let fund_type = native_type.fundamental_type;
+    let field_name = to_rust_module_name(&name);
+    let rust_type = ztype_to_rust_type(type_reference);
+
+    if is_optional {
         function.line(format!("{}: None,", field_name));
-    } else if let Some(_array) = &field.array {
+    } else if let Some(_array) = array {
         function.line(format!("{}: vec![],", field_name));
     } else if native_type.is_marshaler {
         function.line(format!("{}: {}::new(),", field_name, rust_type));

@@ -9,4 +9,9 @@ pub trait ZserioPackableOject {
     fn zserio_read_packed(&mut self, context_node: &mut PackingContextNode, reader: &mut BitReader);
     fn zserio_write_packed(&self, context_node: &mut PackingContextNode, writer: &mut BitWriter);
     fn zserio_bitsize(&self, bit_position: u64) -> u64;
+    fn zserio_bitsize_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        bit_position: u64,
+    ) -> u64;
 }

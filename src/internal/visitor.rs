@@ -643,15 +643,15 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_parameterDefinition(&mut self, ctx: &ParameterDefinitionContext<'_>) -> Self::Return {
-        let mut parameter = Parameter {
-            name: ctx.id().unwrap().get_text(),
-            zserio_type: None,
-        };
+        let zserio_type;
         match self.visit(&*ctx.typeReference().unwrap()) {
-            ZserioTreeReturnType::TypeReference(t) => parameter.zserio_type = Option::from(t),
+            ZserioTreeReturnType::TypeReference(t) => zserio_type = t,
             _ => panic!(),
         }
-        ZserioTreeReturnType::Parameter(parameter)
+        ZserioTreeReturnType::Parameter(Parameter {
+            name: ctx.id().unwrap().get_text(),
+            zserio_type: zserio_type,
+        })
     }
 
     fn visit_id(&mut self, ctx: &IdContext<'_>) -> Self::Return {
