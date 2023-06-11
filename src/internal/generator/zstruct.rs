@@ -6,10 +6,10 @@ use crate::internal::ast::field::Field;
 use crate::internal::generator::array::instantiate_zserio_arrays;
 
 use crate::internal::generator::{
-    bitsize::bitsize_field, decode::decode_field,
-    encode::encode_field, file_generator::write_to_file, new::new_field, new::new_param,
-    preamble::add_standard_imports, types::convert_field_name, types::to_rust_module_name,
-    types::to_rust_type_name, types::ztype_to_rust_type,
+    bitsize::bitsize_field, decode::decode_field, encode::encode_field,
+    file_generator::write_to_file, new::new_field, new::new_param, preamble::add_standard_imports,
+    types::convert_field_name, types::to_rust_module_name, types::to_rust_type_name,
+    types::ztype_to_rust_type,
 };
 
 use std::path::Path;

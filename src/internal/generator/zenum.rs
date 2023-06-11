@@ -1,6 +1,5 @@
 use codegen::Scope;
 
-
 use crate::internal::ast::{expression::ExpressionType, zenum::ZEnum};
 use crate::internal::generator::{
     bitsize::bitsize_type_reference, decode::decode_type, encode::encode_type,

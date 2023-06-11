@@ -1,4 +1,6 @@
-use crate::internal::parser::gen::zserioparser::{AND, BANG, OR, XOR};
+use crate::internal::parser::gen::zserioparser::{
+    AND, BANG, DIVIDE, LSHIFT, MINUS, MODULO, MULTIPLY, OR, PLUS, RSHIFT, TILDE, XOR,
+};
 use std::string::String;
 
 #[derive(Clone)]
@@ -65,11 +67,103 @@ impl Expression {
         }
 
         match self.expression_type {
+            LPAREN => self.evaluate_paranthesized_expression(),
+            RPAREN => self.evaluate_function_call_expression(),
+            PLUS => self.evaluate_arithmetic_expression(),
+            MINUS => self.evaluate_arithmetic_expression(),
+            MULTIPLY => self.evaluate_arithmetic_expression(),
+            DIVIDE => self.evaluate_arithmetic_expression(),
+            MODULO => self.evaluate_arithmetic_expression(),
             BANG => self.evaluate_logical_negation(),
+            TILDE => self.evaluate_bitwise_negation(),
             AND => self.evaluate_bitwise_expression(),
             OR => self.evaluate_bitwise_expression(),
             XOR => self.evaluate_bitwise_expression(),
+            LSHIFT => self.evaluate_bitwise_expression(),
+            RSHIFT => self.evaluate_bitwise_expression(),
             _ => panic!("unsupported expression type"),
+        }
+    }
+
+    fn evaluate_paranthesized_expression(&mut self) {
+        match &self.operand1 {
+            Some(op1) => {
+                // just pass through the expression content
+                self.result_type = op1.result_type.clone();
+            }
+            _ => panic!("paranthesized expression requries one operator"),
+        }
+    }
+
+    fn evaluate_function_call_expression(&mut self) {
+        // TODO need to look up the symbol
+    }
+
+    fn evaluate_unary_arithmetic_expression(&mut self) {
+        match &self.operand1 {
+            Some(op1) => match op1.result_type {
+                ExpressionType::Integer(value) => match self.expression_type {
+                    PLUS => self.result_type = ExpressionType::Integer(value),
+                    MINUS => self.result_type = ExpressionType::Integer(-value),
+                    _ => panic!("unexpected unary integer expression"),
+                },
+                ExpressionType::Float(value) => match self.expression_type {
+                    PLUS => self.result_type = ExpressionType::Float(value),
+                    MINUS => self.result_type = ExpressionType::Float(-value),
+                    _ => panic!("unexpected unary float expression"),
+                },
+                _ => {
+                    panic!("logical negation expression can only be applied to boolean expressions")
+                }
+            },
+            _ => panic!("logical negation expression requries one operator"),
+        }
+    }
+
+    fn evaluate_arithmetic_expression(&mut self) {
+        if self.operand2.is_none() {
+            // an arithmetic expression may be +5 or -5, i.e. a sign
+            // of a float or integer expression.
+            return self.evaluate_unary_arithmetic_expression();
+        }
+        match (&self.operand1, &self.operand2) {
+            (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
+                (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
+                    let result;
+                    match self.expression_type {
+                        PLUS => result = value1 + value2,
+                        MINUS => result = value1 - value2,
+                        MULTIPLY => result = value1 * value2,
+                        DIVIDE => result = value1 / value2,
+                        MODULO => result = value1 % value2,
+                        _ => panic!("unexpected integer arithmetic expression"),
+                    }
+                    self.result_type = ExpressionType::Integer(result);
+                }
+                (ExpressionType::Float(value1), ExpressionType::Float(value2)) => {
+                    let result;
+                    match self.expression_type {
+                        PLUS => result = value1 + value2,
+                        MINUS => result = value1 - value2,
+                        MULTIPLY => result = value1 * value2,
+                        DIVIDE => result = value1 / value2,
+                        _ => panic!("unexpected float arithmetic expression"),
+                    }
+                    self.result_type = ExpressionType::Float(result);
+                }
+                (ExpressionType::String(str1), ExpressionType::String(str2)) => {
+                    match self.expression_type {
+                        PLUS => {
+                            self.result_type = ExpressionType::String(format!("{}{}", str1, str2))
+                        }
+                        _ => panic!("unexpected string arithmetic expression"),
+                    }
+                }
+                _ => {
+                    panic!("arithmetic expression can only be applied to integer, float or string operands")
+                }
+            },
+            _ => panic!("arithmetic expression requries two operators"),
         }
     }
 
@@ -87,24 +181,40 @@ impl Expression {
         }
     }
 
+    fn evaluate_bitwise_negation(&mut self) {
+        match &self.operand1 {
+            Some(op1) => match op1.result_type {
+                ExpressionType::Integer(value) => {
+                    self.result_type = ExpressionType::Integer(!value);
+                }
+                _ => {
+                    panic!("bitwise negation expression can only be applied to integer expressions")
+                }
+            },
+            _ => panic!("bitwise negation expression requries one operator"),
+        }
+    }
+
     fn evaluate_bitwise_expression(&mut self) {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
                 (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
-                    let mut result = 0;
+                    let result;
                     match self.expression_type {
                         AND => result = value1 & value2,
                         OR => result = value1 | value2,
                         XOR => result = value1 ^ value2,
+                        LSHIFT => result = value1 << value2,
+                        RSHIFT => result = value1 >> value2,
                         _ => panic!("unexpected bitwise expression"),
                     }
                     self.result_type = ExpressionType::Integer(result);
                 }
                 _ => {
-                    panic!("logical negation expression can only be applied to boolean expressions")
+                    panic!("bitwise expression can only be applied to integer operands")
                 }
             },
-            _ => panic!("logical negation expression requries one operator"),
+            _ => panic!("bitwise expression requries two operands"),
         }
     }
 }
