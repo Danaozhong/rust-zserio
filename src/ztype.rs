@@ -39,7 +39,6 @@ pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
 pub use self::traits::ZserioPackableOject;
-
 pub mod bits_decode;
 pub mod bits_encode;
 pub mod string_decode;
