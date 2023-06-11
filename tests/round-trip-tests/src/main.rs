@@ -4,7 +4,7 @@ pub mod reference_modules {
     }
 }
 
-use crate::reference_modules::core::types::value_wrapper;
+use crate::reference_modules::core::types::{color::Color, value_wrapper};
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -17,6 +17,7 @@ fn main() {
     // Instantiate the data
     let mut value_wrapper = value_wrapper::ValueWrapper::new();
     value_wrapper.value = 18;
+    value_wrapper.enum_value = Color::Red;
     value_wrapper.description = "test".into();
     value_wrapper.fixed_array = vec![100, 101, 102, 103];
     value_wrapper.packed_array = vec![200, 201, 202, 203, 205, 204];
@@ -33,6 +34,7 @@ fn main() {
     other_value_wrapper.zserio_read(&mut bitreader);
 
     assert!(other_value_wrapper.value == value_wrapper.value);
+    assert!(other_value_wrapper.enum_value == value_wrapper.enum_value);
     assert!(other_value_wrapper.other_value == value_wrapper.other_value);
     assert!(other_value_wrapper.description == value_wrapper.description);
     assert!(other_value_wrapper.fixed_array == value_wrapper.fixed_array);
