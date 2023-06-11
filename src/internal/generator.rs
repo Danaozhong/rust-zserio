@@ -11,3 +11,4 @@ pub mod preamble;
 pub mod types;
 pub mod zenum;
 pub mod zstruct;
+pub mod pass_parameters;
