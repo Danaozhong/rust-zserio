@@ -11,7 +11,7 @@ use crate::internal::ast::{
 };
 
 use crate::internal::ast::{
-    expression::{Expression, ExpressionType},
+    expression::{EvaluationState, Expression, ExpressionType},
     field::Array,
     field::Field,
     parameter::Parameter,
@@ -686,6 +686,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -706,6 +707,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -723,6 +725,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -744,6 +747,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         ZserioTreeReturnType::Expression(expression)
     }
@@ -766,11 +770,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 operand2: None,
                 operand3: None,
                 result_type: ExpressionType::Other,
-                fully_resolved: true,
+                fully_resolved: false,
+                evaluation_state: EvaluationState::NotEvaluated,
             })),
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         }))
     }
 
@@ -787,6 +793,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         }))
     }
 
@@ -828,6 +835,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type,
             fully_resolved: true,
+            evaluation_state: EvaluationState::Completed,
         }))
     }
 
@@ -847,6 +855,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -864,6 +873,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -881,6 +891,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -901,6 +912,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -922,6 +934,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -943,6 +956,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -972,6 +986,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -993,6 +1008,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1017,6 +1033,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1038,6 +1055,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1062,6 +1080,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1086,6 +1105,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1107,6 +1127,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1128,6 +1149,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand3: None,
             result_type: ExpressionType::Other,
             fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1273,7 +1295,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 operand2: None,
                 operand3: None,
                 result_type: ExpressionType::Other,
-                fully_resolved: true,
+                fully_resolved: false,
+                evaluation_state: EvaluationState::NotEvaluated,
             }));
         }
         self.visit(&*ctx.expression().unwrap())
