@@ -63,6 +63,9 @@ use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
 use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree};
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use super::parser::gen::zserioparser::{IdContextAttrs, GT, RSHIFT};
 
 // the antlr implementation for Rust requires to use one single return type,
@@ -73,9 +76,9 @@ pub enum ZserioTreeReturnType {
     Str(String),
     StrVec(Vec<String>),
     Package(Box<ZPackage>),
-    Const(ZConst),
-    Subtype(Subtype),
-    InstantiateType(InstantiateType),
+    Const(Box<ZConst>),
+    Subtype(Box<Subtype>),
+    InstantiateType(Box<InstantiateType>),
     Structure(Box<ZStruct>),
     Enumeration(Box<ZEnum>),
     Union(Box<ZUnion>),
@@ -87,10 +90,10 @@ pub enum ZserioTreeReturnType {
     TypeReferences(Vec<Box<TypeReference>>),
     Vec(Vec<ZserioTreeReturnType>),
     Import(Box<ZImport>),
-    BitmaskType(ZBitmaskType),
+    BitmaskType(Box<ZBitmaskType>),
     BitmaskValue(ZBitmaskValue),
     ChoiceCase(ZChoiceCase),
-    Choice(ZChoice),
+    Choice(Box<ZChoice>),
     Parameter(Parameter),
     Parameters(Vec<Parameter>),
     Function(ZFunction),
@@ -173,15 +176,27 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 ZserioTreeReturnType::Vec(v) => {
                     for ve in v {
                         match ve {
-                            ZserioTreeReturnType::Structure(s) => package.structs.push(*s),
-                            ZserioTreeReturnType::Choice(c) => package.zchoices.push(c),
-                            ZserioTreeReturnType::Enumeration(e) => package.enums.push(*e),
-                            ZserioTreeReturnType::Const(c) => package.consts.push(c),
-                            ZserioTreeReturnType::Union(u) => package.zunions.push(*u),
-                            ZserioTreeReturnType::Subtype(s) => package.subtypes.push(s),
-                            ZserioTreeReturnType::BitmaskType(bitmask_type) => {
-                                package.bitmask_types.push(bitmask_type)
+                            ZserioTreeReturnType::Structure(s) => {
+                                package.structs.push(Rc::new(RefCell::new(*s)))
                             }
+                            ZserioTreeReturnType::Choice(c) => {
+                                package.zchoices.push(Rc::new(RefCell::new(*c)))
+                            }
+                            ZserioTreeReturnType::Enumeration(e) => {
+                                package.enums.push(Rc::new(RefCell::new(*e)))
+                            }
+                            ZserioTreeReturnType::Const(c) => {
+                                package.consts.push(Rc::new(RefCell::new(*c)))
+                            }
+                            ZserioTreeReturnType::Union(u) => {
+                                package.zunions.push(Rc::new(RefCell::new(*u)))
+                            }
+                            ZserioTreeReturnType::Subtype(s) => {
+                                package.subtypes.push(Rc::new(RefCell::new(*s)))
+                            }
+                            ZserioTreeReturnType::BitmaskType(bitmask_type) => package
+                                .bitmask_types
+                                .push(Rc::new(RefCell::new(*bitmask_type))),
                             ZserioTreeReturnType::Str(s) => println!("unknown str: {0}", s),
                             ZserioTreeReturnType::StrVec(s) => {
                                 println!("unknown str vec: {0}", s[0])
@@ -192,7 +207,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                             ZserioTreeReturnType::Field(_z) => print!("field found"),
                             ZserioTreeReturnType::Expression(_e) => print!("expression found"),
                             ZserioTreeReturnType::InstantiateType(t) => {
-                                package.instantiated_types.push(t)
+                                package.instantiated_types.push(Rc::new(RefCell::new(*t)))
                             }
                             _ => panic!("should not happen2"),
                         }
@@ -243,12 +258,12 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_constDefinition(&mut self, ctx: &ConstDefinitionContext<'_>) -> Self::Return {
-        let mut z_const = ZConst {
+        let mut z_const = Box::new(ZConst {
             name: ctx.id().unwrap().get_text(),
             comment: "".into(),
             zserio_type: None,
             value_expression: None,
-        };
+        });
 
         match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
@@ -267,10 +282,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_subtypeDeclaration(&mut self, ctx: &SubtypeDeclarationContext<'_>) -> Self::Return {
-        let mut z_subtype = Subtype {
+        let mut z_subtype = Box::new(Subtype {
             name: ctx.id().unwrap().get_text(),
             zserio_type: None,
-        };
+        });
         match ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap()) {
             ZserioTreeReturnType::TypeReference(t) => z_subtype.zserio_type = Option::from(t),
             _ => panic!("should not happen"),
@@ -282,10 +297,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         &mut self,
         ctx: &InstantiateDeclarationContext<'_>,
     ) -> Self::Return {
-        let mut z_instantiate_type = InstantiateType {
+        let mut z_instantiate_type = Box::new(InstantiateType {
             name: ctx.id().unwrap().get_text(),
             zserio_type: None,
-        };
+        });
         match ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap()) {
             ZserioTreeReturnType::TypeReference(t) => {
                 z_instantiate_type.zserio_type = Option::from(t)
@@ -296,11 +311,11 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_bitmaskDeclaration(&mut self, ctx: &BitmaskDeclarationContext<'_>) -> Self::Return {
-        let mut bitmask_type = ZBitmaskType {
+        let mut bitmask_type = Box::new(ZBitmaskType {
             name: ctx.id().unwrap().get_text(),
             zserio_type: None,
             values: vec![],
-        };
+        });
         match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
             &ctx.typeInstantiation().unwrap(),
@@ -439,7 +454,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         self.visit_fieldTypeId(&*ctx.fieldTypeId().unwrap())
     }
     fn visit_choiceDeclaration(&mut self, ctx: &ChoiceDeclarationContext<'_>) -> Self::Return {
-        let mut choice = ZChoice {
+        let mut choice = Box::new(ZChoice {
             name: ctx.id().unwrap().get_text(),
             template_parameters: vec![],
             type_parameters: vec![],
@@ -447,7 +462,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             cases: vec![],
             default_case: None,
             functions: vec![],
-        };
+        });
         match ctx.templateParameters() {
             Some(x) => match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
                 ZserioTreeReturnType::StrVec(n) => choice.template_parameters = n,

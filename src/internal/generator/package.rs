@@ -12,7 +12,8 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     let mut module_names = Vec::new();
 
     // Generate  the rust code for structures, ...
-    for z_struct in &package.structs {
+    for z_struct_ref_cell in &package.structs {
+        let z_struct = z_struct_ref_cell.borrow();
         // ignore templates, only generate code for instantiated structs
         if !z_struct.template_parameters.is_empty() {
             continue;
@@ -20,18 +21,19 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
         let mut scope = get_default_scope(package);
         module_names.push(generate_struct(
             &mut scope,
-            z_struct,
+            &z_struct,
             package_directory,
             &package_name,
         ));
     }
 
     // and for zserio enumerations
-    for z_enum in &package.enums {
+    for z_enum_ref_cell in &package.enums {
+        let z_enum = z_enum_ref_cell.borrow();
         let mut scope = get_default_scope(package);
         module_names.push(generate_enum(
             &mut scope,
-            z_enum,
+            &z_enum,
             package_directory,
             &package_name,
         ));

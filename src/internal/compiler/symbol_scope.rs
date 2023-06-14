@@ -1,15 +1,19 @@
-use crate::internal::ast::{zconst::ZConst, zenum::ZEnum, zstruct::ZStruct, zsubtype::Subtype};
+use crate::internal::{
+    ast::{package::ZPackage, zconst::ZConst, zenum::ZEnum, zstruct::ZStruct, zsubtype::Subtype},
+    model::Model,
+};
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 /// This enum is used to cover any possible type of symbols.
 #[derive(Clone)]
 pub enum Symbol {
-    Struct(Rc<ZStruct>),
-    Enum(Rc<ZEnum>),
-    Subtype(Rc<Subtype>),
-    Const(Rc<ZConst>),
+    Struct(Rc<RefCell<ZStruct>>),
+    Enum(Rc<RefCell<ZEnum>>),
+    Subtype(Rc<RefCell<Subtype>>),
+    Const(Rc<RefCell<ZConst>>),
 }
 /// A struct to hold a reference to a specific symbol. It provides the package, symbol and symbol name.
 pub struct SymbolReference {
@@ -18,7 +22,7 @@ pub struct SymbolReference {
     pub package: String,
 }
 /// The symbol scope contains a list of all existing symbols.
-pub struct SymbolScope {
+pub struct PackageScope {
     /// These are symbols valid within a struct/function/choice, but not outside of it.
     pub local_symbols: HashMap<String, HashMap<String, Symbol>>,
 
@@ -29,7 +33,46 @@ pub struct SymbolScope {
     pub other_symbols: HashMap<String, Symbol>,
 }
 
-impl SymbolScope {
+pub struct ModelScope {
+    pub package_scopes: HashMap<String, PackageScope>,
+}
+
+impl ModelScope {
+    pub fn build_scope(model: &Model) -> Self {
+        let mut scope = ModelScope {
+            package_scopes: HashMap::new(),
+        };
+        for package in &model.packages {
+            scope
+                .package_scopes
+                .insert(package.name.clone(), PackageScope::build_scope(package));
+        }
+        scope
+    }
+}
+
+impl PackageScope {
+    pub fn build_scope(package: &ZPackage) -> Self {
+        let mut scope = PackageScope {
+            local_symbols: HashMap::new(),
+            file_symbols: HashMap::new(),
+            other_symbols: HashMap::new(),
+        };
+        for zstruct in &package.structs {
+            scope.file_symbols.insert(
+                zstruct.borrow().name.clone(),
+                Symbol::Struct(zstruct.clone()),
+            );
+        }
+        for zenum in &package.enums {
+            scope
+                .file_symbols
+                .insert(zenum.borrow().name.clone(), Symbol::Enum(zenum.clone()));
+        }
+
+        scope
+    }
+
     /// Searches for a symbol within the current scope.
     pub fn resolve_symbol(
         &self,

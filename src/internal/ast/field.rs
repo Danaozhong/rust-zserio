@@ -1,4 +1,5 @@
 use crate::internal::ast::{expression::Expression, type_reference::TypeReference};
+use crate::internal::compiler::symbol_scope::ModelScope;
 use std::string::String;
 
 pub struct Array {
@@ -17,4 +18,10 @@ pub struct Field {
 
     // Specifies if the field is an array
     pub array: Option<Array>,
+}
+
+impl Field {
+    pub fn evaluate(&mut self, scope: &ModelScope) {
+        // TODO wait for expression evaluation PR to be merged
+    }
 }

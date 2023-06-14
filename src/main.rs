@@ -1,8 +1,7 @@
 use crate::internal::generator::model::generate_model;
-use crate::internal::model::from_filesystem;
+use crate::internal::model::Model;
 use clap::Parser;
 use std::path::Path;
-
 pub mod internal;
 pub mod ztype;
 
@@ -24,6 +23,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let model = from_filesystem(Path::new(args.zserio_path.as_str()));
+    let mut model = Model::from_filesystem(Path::new(args.zserio_path.as_str()));
+    model.evaluate();
     generate_model(&model, Path::new(args.out.as_str()), args.root.as_str());
 }

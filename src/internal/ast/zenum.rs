@@ -15,3 +15,13 @@ pub struct ZEnum {
     pub items: Vec<ZEnumItem>,
     pub enum_type: Box<TypeReference>,
 }
+
+impl ZEnum {
+    pub fn evaluate(&mut self, scope: &ModelScope) {
+        for item in &mut self.items {
+            if let Some(item_expression) = item.expression {
+                item_expression.evaluate();
+            }
+        }
+    }
+}
