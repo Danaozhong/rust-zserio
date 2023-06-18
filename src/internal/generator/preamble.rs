@@ -19,7 +19,12 @@ pub fn get_default_scope(package: &ZPackage) -> Scope {
         for import_part in &import.package_dir {
             import_str = import_str + "::" + import_part.as_str();
         }
-        scope.import(import_str.as_str(), import.symbol_name.as_str());
+
+        let symbol_import = match &import.symbol_name {
+            None => "*".into(),
+            Some(symbol_name) => symbol_name.clone(),
+        };
+        scope.import(import_str.as_str(), symbol_import.as_str());
     }
 
     // Add the import to the current (own) module

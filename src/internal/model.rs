@@ -5,6 +5,8 @@ use crate::internal::model::package::package_from_file;
 use std::path::Path;
 use walkdir::WalkDir;
 
+use super::compiler::symbol_scope::ScopeLocation;
+
 pub mod package;
 
 pub struct Model {
@@ -34,24 +36,46 @@ impl Model {
     pub fn evaluate(&mut self) {
         // collect symbols
         let mut_self = self;
-        let scope = ModelScope::build_scope(mut_self);
+        let mut scope = ModelScope::build_scope(mut_self);
 
         // resolve types
 
         // evaluate templates
 
         // evaluate expressions
-        mut_self.evaluate_structs(&scope);
+        mut_self.evaluate_package(&mut scope);
     }
 
-    pub fn evaluate_structs(&mut self, scope: &ModelScope) {
+    pub fn evaluate_package(&mut self, scope: &mut ModelScope) {
         for pkg in &mut self.packages {
-            for z_struct in &mut pkg.structs {
-                z_struct.borrow_mut().evaluate(scope);
+            for z_struct in &pkg.structs {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_struct.as_ref().borrow().name.clone()),
+                });
+                z_struct.as_ref().borrow().evaluate(scope);
+                scope.scope_stack.pop();
             }
 
             for z_enum in &mut pkg.enums {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_enum.as_ref().borrow().name.clone()),
+                });
                 z_enum.borrow_mut().evaluate(scope);
+                scope.scope_stack.pop();
+            }
+
+            for bitmask in &mut pkg.bitmask_types {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(bitmask.as_ref().borrow().name.clone()),
+                });
+                bitmask.borrow_mut().evaluate(scope);
+                scope.scope_stack.pop();
             }
         }
     }

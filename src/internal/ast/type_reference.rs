@@ -1,5 +1,7 @@
 use crate::internal::ast::expression::Expression;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::string::String;
 
 #[derive(Clone)]
@@ -9,24 +11,23 @@ pub struct TypeReference {
     pub name: String,
     pub bits: i8,
     pub template_arguments: Vec<Box<TypeReference>>,
-    pub type_arguments: Vec<Box<Expression>>,
-    pub length_expression: Option<Box<Expression>>,
+    pub type_arguments: Vec<Rc<RefCell<Expression>>>,
+    pub length_expression: Option<Rc<RefCell<Expression>>>,
 }
 
 impl TypeReference {
-    pub fn evaluate(&mut self, scope: &ModelScope) {
+    pub fn evaluate(&self, scope: &mut ModelScope) {
         for type_argument in &self.type_arguments {
-            // TODO wait for expression PR to be merged
-            //type_argument.evaluate();
+            type_argument.as_ref().borrow_mut().evaluate(scope);
         }
 
         if let Some(length_expression) = &self.length_expression {
-            //length_expression.evaluate();
+            length_expression.as_ref().borrow_mut().evaluate(scope);
         }
     }
 }
 
 pub struct InstantiateType {
     pub name: String,
-    pub zserio_type: Option<Box<TypeReference>>,
+    pub zserio_type: Box<TypeReference>,
 }

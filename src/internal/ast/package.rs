@@ -7,10 +7,13 @@ use super::{
     type_reference::InstantiateType, zbitmask::ZBitmaskType, zchoice::ZChoice, zconst::ZConst,
     zsubtype::Subtype, zunion::ZUnion,
 };
-
+#[derive(Clone)]
 pub struct ZImport {
     pub package_dir: Vec<String>,
-    pub symbol_name: String,
+
+    /// The symbol name that is imported from the package. If the entire package is imported
+    /// via "*", this will be empty.
+    pub symbol_name: Option<String>,
 }
 pub struct ZPackage {
     pub name: String,
