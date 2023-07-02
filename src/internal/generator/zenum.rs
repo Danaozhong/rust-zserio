@@ -24,7 +24,7 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     let mut enum_value = 0;
     for item in &zenum.items {
         if let Some(value_expression) = &item.expression {
-            match value_expression.result_type {
+            match value_expression.as_ref().borrow().result_type {
                 ExpressionType::Integer(v) => enum_value = v,
                 _ => panic!("only integer value expressions are supported"),
             }
@@ -47,7 +47,7 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     let mut enum_value = 0;
     for item in &zenum.items {
         if let Some(value_expression) = &item.expression {
-            match value_expression.result_type {
+            match value_expression.as_ref().borrow().result_type {
                 ExpressionType::Integer(v) => enum_value = v,
                 _ => panic!("only integer value expressions are supported"),
             }

@@ -1,10 +1,12 @@
 use crate::internal::ast::{expression::Expression, type_reference::TypeReference};
+use crate::internal::compiler::symbol_scope::ModelScope;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::string::String;
-
 pub struct Array {
     pub is_packed: bool,
     pub is_implicit: bool,
-    pub array_length_expression: Option<Box<Expression>>,
+    pub array_length_expression: Option<Rc<RefCell<Expression>>>,
 }
 
 pub struct Field {
@@ -17,4 +19,10 @@ pub struct Field {
 
     // Specifies if the field is an array
     pub array: Option<Array>,
+}
+
+impl Field {
+    pub fn evaluate(&self, scope: &mut ModelScope) {
+        self.field_type.evaluate(scope);
+    }
 }
