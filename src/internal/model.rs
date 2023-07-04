@@ -58,13 +58,23 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
-            for z_enum in &mut pkg.enums {
+            for z_enum in &pkg.enums {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
                     symbol_name: Option::from(z_enum.as_ref().borrow().name.clone()),
                 });
                 z_enum.borrow_mut().evaluate(scope);
+                scope.scope_stack.pop();
+            }
+
+            for z_choice in &pkg.zchoices {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_choice.as_ref().borrow().name.clone()),
+                });
+                z_choice.borrow_mut().evaluate(scope);
                 scope.scope_stack.pop();
             }
 

@@ -1,6 +1,9 @@
 use crate::internal::{
     ast::{
         package::{ZImport, ZPackage},
+        parameter::Parameter,
+        zchoice::add_choice_to_scope,
+        zchoice::ZChoice,
         zconst::ZConst,
         zenum::{add_enum_to_scope, ZEnum},
         zstruct::add_struct_to_scope,
@@ -18,12 +21,13 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub enum Symbol {
     Struct(Rc<RefCell<ZStruct>>),
+    Choice(Rc<RefCell<ZChoice>>),
     Enum(Rc<RefCell<ZEnum>>),
     EnumItem(Rc<RefCell<ZEnum>>, usize),
     Subtype(Rc<RefCell<Subtype>>),
     Const(Rc<RefCell<ZConst>>),
     Field(Rc<RefCell<ZStruct>>, usize),
-    Parameter(Rc<RefCell<ZStruct>>, usize),
+    Parameter(Rc<RefCell<Parameter>>),
 }
 /// A struct to hold a reference to a specific symbol. It provides the package, symbol and symbol name.
 pub struct SymbolReference {
@@ -135,6 +139,9 @@ impl PackageScope {
         for zstruct in &package.structs {
             add_struct_to_scope(zstruct, &mut scope);
         }
+        for zchoice in &package.zchoices {
+            add_choice_to_scope(zchoice, &mut scope);
+        }
         for zenum in &package.enums {
             add_enum_to_scope(zenum, &mut scope);
         }
@@ -161,7 +168,7 @@ impl PackageScope {
                     }
                     _ => (),
                 },
-                _ => panic!("a nonexisting symbol was referenced within the package"),
+                _ => (),
             }
         }
 

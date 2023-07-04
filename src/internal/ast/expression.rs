@@ -9,14 +9,22 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
 
+use super::parameter::Parameter;
 use super::type_reference::TypeReference;
+use super::zfunction::ZFunction;
 
 #[derive(Clone)]
 pub enum CompoundExpressionType {
     Field(Rc<RefCell<Field>>),
-    ZEnum(Rc<RefCell<ZEnum>>),
     ZStruct(Rc<RefCell<ZStruct>>),
 }
+
+#[derive(Clone, PartialEq)]
+pub enum ExpressionFlag {
+    None,
+    IsDotExpressionRightOperand,
+}
+
 #[derive(Clone)]
 pub enum ExpressionType {
     Integer(i32),
@@ -24,8 +32,10 @@ pub enum ExpressionType {
     String(String),
     Bool(bool),
     BitMask,
-    Enum,
+    Enum(Rc<RefCell<ZEnum>>),
     Compound(CompoundExpressionType),
+    Function(Rc<RefCell<ZFunction>>),
+    Parameter(Rc<RefCell<Parameter>>),
     Other,
 }
 
@@ -40,6 +50,7 @@ pub enum EvaluationState {
 pub struct Expression {
     pub expression_type: isize,
     pub text: String,
+    pub flag: ExpressionFlag,
     pub operand1: Option<Box<Expression>>,
     pub operand2: Option<Box<Expression>>,
     pub operand3: Option<Box<Expression>>,
@@ -82,7 +93,7 @@ impl Expression {
 
         match self.expression_type {
             LPAREN => self.evaluate_paranthesized_expression(),
-            RPAREN => self.evaluate_function_call_expression(),
+            RPAREN => self.evaluate_function_call_expression(scope),
             LBRACKET => self.evaluate_array_element(scope),
             DOT => self.evaluate_dot_expression(scope),
             PLUS => self.evaluate_arithmetic_expression(),
@@ -99,6 +110,7 @@ impl Expression {
             RSHIFT => self.evaluate_bitwise_expression(),
             INDEX => self.evaluate_index_expression(),
             ID => self.evaluate_identifier_expression(scope),
+            0xFFFFF => (), // Ignore
             _ => panic!("unsupported expression type"),
         }
     }
@@ -113,8 +125,16 @@ impl Expression {
         }
     }
 
-    fn evaluate_function_call_expression(&mut self) {
-        // TODO need to look up the symbol
+    fn evaluate_function_call_expression(&mut self, scope: &mut ModelScope) {
+        match &self.operand1.as_ref().unwrap().result_type {
+            ExpressionType::Function(func) => {
+                self.result_type = type_reference_to_expression_type(
+                    func.as_ref().borrow().return_type.as_ref().unwrap(),
+                    scope,
+                );
+            }
+            _ => panic!("expression is not a function"),
+        }
     }
 
     fn evaluate_array_element(&mut self, _scope: &mut ModelScope) {
@@ -133,13 +153,40 @@ impl Expression {
 
     fn evaluate_dot_expression(&mut self, scope: &mut ModelScope) {
         match (&self.operand1, &self.operand2) {
-            (Some(op1), Some(_op2)) => match &op1.result_type {
-                ExpressionType::Compound(compound_expr) => {
-                    self.evaluate_compound_dot_expression(scope, &compound_expr.clone())
+            (Some(op1), Some(_op2)) => {
+                match &op1.result_type {
+                    ExpressionType::Enum(_z_enum) => {
+                        self.evaluate_enum_dot_expression();
+                    }
+                    ExpressionType::Compound(compound_expr) => {
+                        self.evaluate_compound_dot_expression(scope, &compound_expr.clone());
+                    }
+                    _ => {
+                        panic!("dot expression can only be applied to integer, float or string operands")
+                    }
                 }
-                _ => {
-                    panic!("arithmetic expression can only be applied to integer, float or string operands")
+            }
+            _ => panic!("arithmetic expression requries two operators"),
+        }
+    }
+
+    fn evaluate_enum_dot_expression(&mut self) {
+        match (&self.operand1, &self.operand2) {
+            (Some(op1), Some(op2)) => match &op1.result_type {
+                ExpressionType::Enum(z_enum) => {
+                    for z_enum_field in &z_enum.as_ref().borrow().items {
+                        if z_enum_field.name == op2.text {
+                            self.result_type = ExpressionType::Integer(0);
+                            return;
+                        }
+                    }
+                    panic!(
+                        "enum value {} not found in enum {}",
+                        &z_enum.as_ref().borrow().name,
+                        &op2.text
+                    );
                 }
+                _ => panic!(),
             },
             _ => panic!("arithmetic expression requries two operators"),
         }
@@ -288,6 +335,13 @@ impl Expression {
     }
 
     fn evaluate_identifier_expression(&mut self, scope: &mut ModelScope) {
+        if self.flag == ExpressionFlag::IsDotExpressionRightOperand {
+            // The right-hand part of a dot expression, e.g. <ENUM>.<ENUM_VALUE>
+            // cannot be evaluated without knowledge of the left operand. Evaluation
+            // of the right hand operand of the expression is stopped here, and the
+            // value will be evaluated when the complete dot expression is evaluated.
+            return;
+        }
         self.result_type = symbol_to_expression_type(scope.resolve_symbol(&self.text), scope);
     }
 }
@@ -301,7 +355,7 @@ fn symbol_to_expression_type(
             return ExpressionType::Compound(CompoundExpressionType::ZStruct(x));
         }
         Symbol::Enum(z_enum) => {
-            return ExpressionType::Compound(CompoundExpressionType::ZEnum(z_enum));
+            return ExpressionType::Enum(z_enum);
         }
         Symbol::Field(param, field_index) => {
             return type_reference_to_expression_type(
@@ -309,12 +363,7 @@ fn symbol_to_expression_type(
                 scope,
             );
         }
-        Symbol::Parameter(param, type_index) => {
-            return type_reference_to_expression_type(
-                &param.as_ref().borrow().type_parameters[type_index].zserio_type,
-                scope,
-            );
-        }
+        Symbol::Parameter(param) => return ExpressionType::Parameter(param),
         Symbol::EnumItem(z_enum, _) => {
             // The index doesn't really matter, as each enum value has the same type.
             // We are only interested in the type at the moment. The actual value will
