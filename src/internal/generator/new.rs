@@ -4,7 +4,7 @@ use crate::internal::ast::{field::Array, field::Field, parameter::Parameter};
 
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
-use crate::internal::generator::types::{to_rust_module_name, ztype_to_rust_type};
+use crate::internal::generator::types::{convert_field_name, ztype_to_rust_type};
 
 pub fn new_field(function: &mut Function, field: &Field) {
     new_type(
@@ -29,7 +29,7 @@ pub fn new_type(
 ) {
     let native_type = get_fundamental_type(&type_reference);
     let fund_type = native_type.fundamental_type;
-    let field_name = to_rust_module_name(&name);
+    let field_name = convert_field_name(&name);
     let rust_type = ztype_to_rust_type(type_reference);
 
     if is_optional {
