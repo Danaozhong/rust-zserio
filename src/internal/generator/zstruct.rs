@@ -32,12 +32,15 @@ pub fn generate_struct(
 
     // if the field is parameterized, add the parameters as member variables
     for param in &zstruct.type_parameters {
-        let param_type = ztype_to_rust_type(param.zserio_type.as_ref());
+        let param_type = ztype_to_rust_type(param.as_ref().borrow().zserio_type.as_ref());
         // Possible improvement: currently the parameters are copied instead of taken the reference.
         // It would be great to change that to references to avoid unnecessary copying, but this is
         // painful in rust due to the lifetime checks.
         // Because I am lazy, this implementation will just copy values over.
-        let gen_param_field = gen_struct.new_field(convert_field_name(&param.name), param_type);
+        let gen_param_field = gen_struct.new_field(
+            convert_field_name(&param.as_ref().borrow().name),
+            param_type,
+        );
         gen_param_field.vis("pub");
     }
 
@@ -65,7 +68,7 @@ pub fn generate_struct(
     new_fn.line(format!("{} {{", &rust_type_name));
 
     for param in &zstruct.type_parameters {
-        new_param(new_fn, param);
+        new_param(new_fn, &param.as_ref().borrow());
     }
 
     for field in &zstruct.fields {

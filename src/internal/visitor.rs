@@ -11,7 +11,7 @@ use crate::internal::ast::{
 };
 
 use crate::internal::ast::{
-    expression::{EvaluationState, Expression, ExpressionType},
+    expression::{EvaluationState, Expression, ExpressionFlag, ExpressionType},
     field::Array,
     field::Field,
     parameter::Parameter,
@@ -95,7 +95,7 @@ pub enum ZserioTreeReturnType {
     ChoiceCase(ZChoiceCase),
     Choice(Box<ZChoice>),
     Parameter(Parameter),
-    Parameters(Vec<Parameter>),
+    Parameters(Vec<Rc<RefCell<Parameter>>>),
     Function(ZFunction),
 }
 
@@ -460,7 +460,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             name: ctx.id().unwrap().get_text(),
             template_parameters: vec![],
             type_parameters: vec![],
-            selector_expression: None,
+            selector_expression: match self.visit(&*ctx.expression().unwrap()) {
+                ZserioTreeReturnType::Expression(e) => Rc::from(RefCell::from(*e)),
+                _ => panic!("failed to valuate choice selector expression"),
+            },
             cases: vec![],
             default_case: None,
             functions: vec![],
@@ -702,6 +705,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -723,6 +727,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -741,6 +746,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -763,6 +769,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let expression = Box::new(Expression {
             expression_type: ctx.INDEX().unwrap().symbol.token_type,
             text: ctx.INDEX().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -783,10 +790,12 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         ZserioTreeReturnType::Expression(Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.DOT().unwrap().get_text(),
+            flag: ExpressionFlag::None,
             operand1: Option::from(op1),
             operand2: Option::from(Box::new(Expression {
                 expression_type: 0xFFFFF, // TODO make this a constant
                 text: ctx.id().unwrap().get_text(),
+                flag: ExpressionFlag::IsDotExpressionRightOperand,
                 operand1: None,
                 operand2: None,
                 operand3: None,
@@ -809,6 +818,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         ZserioTreeReturnType::Expression(Box::new(Expression {
             expression_type: id_context.ID().unwrap().symbol.get_token_type(),
             text: id_context.get_text(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -851,6 +861,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         ZserioTreeReturnType::Expression(Box::new(Expression {
             expression_type: expression_type,
             text: literal_text,
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -871,6 +882,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -889,6 +901,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -907,6 +920,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -928,6 +942,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -950,6 +965,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -972,6 +988,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1002,6 +1019,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1024,6 +1042,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1049,6 +1068,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1071,6 +1091,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1096,6 +1117,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1121,6 +1143,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1143,6 +1166,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1165,6 +1189,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,
             text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
             operand3: None,
@@ -1297,7 +1322,9 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut type_parameters = Vec::new();
         for type_param_ctx in ctx.parameterDefinition_all() {
             match self.visit(&*type_param_ctx) {
-                ZserioTreeReturnType::Parameter(p) => type_parameters.push(p),
+                ZserioTreeReturnType::Parameter(p) => {
+                    type_parameters.push(Rc::from(RefCell::from(p)))
+                }
                 _ => panic!(),
             };
         }
@@ -1320,6 +1347,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             return ZserioTreeReturnType::Expression(Box::new(Expression {
                 expression_type: ctx.id().unwrap().ID().unwrap().symbol.token_type,
                 text: ctx.id().unwrap().get_text(),
+                flag: ExpressionFlag::None,
                 operand1: None,
                 operand2: None,
                 operand3: None,
