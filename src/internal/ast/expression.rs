@@ -113,6 +113,7 @@ impl Expression {
             0xFFFFF => (), // Ignore
             _ => panic!("unsupported expression type"),
         }
+        self.evaluation_state = EvaluationState::Completed;
     }
 
     fn evaluate_paranthesized_expression(&mut self) {

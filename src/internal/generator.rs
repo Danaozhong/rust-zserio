@@ -2,6 +2,7 @@ mod array;
 pub mod bitsize;
 pub mod decode;
 pub mod encode;
+pub mod expression;
 pub mod file_generator;
 pub mod model;
 pub mod native_type;
