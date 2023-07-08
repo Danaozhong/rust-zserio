@@ -87,9 +87,11 @@ pub fn generate_choice(
 pub fn generate_choice_match_construct(
     code_gen_fn: &mut Function,
     zchoice: &ZChoice,
+    packed: bool,
     f: &dyn Fn(&mut Function, &Field, Option<u8>),
 ) {
     let selector_name = convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
+    let mut context_node_index = 0;
 
     code_gen_fn.line(format!("match self.{} {{", selector_name));
     for case in &zchoice.cases {
@@ -101,14 +103,23 @@ pub fn generate_choice_match_construct(
 
         code_gen_fn.line(format!("{} => {{", selector_expression_evaluation));
         if let Some(field) = &case.field {
-            f(code_gen_fn, field, None);
+            let mut packing_node_index = None;
+            if packed {
+                packing_node_index = Option::from(context_node_index);
+                context_node_index += 1
+            }
+            f(code_gen_fn, field, packing_node_index);
         }
         code_gen_fn.line("},");
     }
     if let Some(default_case) = &zchoice.default_case {
         code_gen_fn.line("_ => (");
         if let Some(field) = &default_case.field {
-            f(code_gen_fn, field, None);
+            let mut packing_node_index = None;
+            if packed {
+                packing_node_index = Option::from(context_node_index);
+            }
+            f(code_gen_fn, field, packing_node_index);
         }
         code_gen_fn.line("),");
     } else {
@@ -121,26 +132,26 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
-    generate_choice_match_construct(zserio_read_fn, choice, &decode_field);
+    generate_choice_match_construct(zserio_read_fn, choice, false, &decode_field);
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
-    generate_choice_match_construct(zserio_read_packed_fn, choice, &decode_field);
+    generate_choice_match_construct(zserio_read_packed_fn, choice, true, &decode_field);
 }
 
 fn generate_zserio_write(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
-    generate_choice_match_construct(zserio_write_fn, choice, &encode_field);
+    generate_choice_match_construct(zserio_write_fn, choice, false, &encode_field);
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
-    generate_choice_match_construct(zserio_write_packed_fn, choice, &encode_field);
+    generate_choice_match_construct(zserio_write_packed_fn, choice, true, &encode_field);
 }
 
 fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
@@ -149,7 +160,7 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
-    generate_choice_match_construct(bitsize_fn, choice, &bitsize_field);
+    generate_choice_match_construct(bitsize_fn, choice, false, &bitsize_field);
     bitsize_fn.line("end_position - bit_position");
 
     let bitsize_packed_fn = struct_impl.new_fn("zserio_bitsize_packed");
@@ -158,6 +169,6 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
     bitsize_packed_fn.line("let mut end_position = bit_position;");
-    generate_choice_match_construct(bitsize_packed_fn, choice, &bitsize_field);
+    generate_choice_match_construct(bitsize_packed_fn, choice, true, &bitsize_field);
     bitsize_packed_fn.line("end_position - bit_position");
 }
