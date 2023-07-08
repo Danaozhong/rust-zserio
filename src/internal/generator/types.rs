@@ -2,6 +2,8 @@ use crate::internal::ast::type_reference::TypeReference;
 use convert_case::{Case, Casing};
 use std::result::Result;
 
+const RESERVED_RUST_KEYWORDS: &'static [&'static str] = &["type", "struct"];
+
 pub fn to_rust_module_name(name: &String) -> String {
     name.to_case(Case::Snake)
 }
@@ -11,6 +13,9 @@ pub fn to_rust_type_name(name: &String) -> String {
 }
 
 pub fn convert_field_name(name: &String) -> String {
+    if RESERVED_RUST_KEYWORDS.contains(&name.as_str()) {
+        return format!("z_{}", name.to_case(Case::Snake));
+    }
     name.to_case(Case::Snake)
 }
 
@@ -24,7 +29,15 @@ pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
         return zserio_to_rust_type(&ztype.name).expect("type mapping failed");
     }
     // the type is a custom type, defined in some zserio file.
-    to_rust_module_name(&ztype.name) + "::" + to_rust_type_name(&ztype.name).as_str()
+    custom_type_to_rust_type(&ztype.name)
+}
+
+pub fn custom_type_to_rust_type(name: &String) -> String {
+    format!(
+        "{}::{}",
+        to_rust_module_name(&name),
+        to_rust_type_name(&name)
+    )
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
