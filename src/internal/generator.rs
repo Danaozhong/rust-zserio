@@ -13,3 +13,4 @@ pub mod types;
 pub mod zchoice;
 pub mod zenum;
 pub mod zstruct;
+pub mod function;

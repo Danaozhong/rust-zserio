@@ -381,7 +381,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
         for function_ctx in ctx.functionDefinition_all() {
             match ZserioParserVisitorCompat::visit_functionDefinition(self, &function_ctx) {
-                ZserioTreeReturnType::Function(f) => zserio_struct.functions.push(f),
+                ZserioTreeReturnType::Function(f) => zserio_struct.functions.push(Rc::from(RefCell::from(f))),
                 _ => panic!(),
             }
         }
@@ -492,7 +492,15 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             };
         }
 
-        // visit the default type
+        // TODO visit the default type
+
+        // Visit all functions defined for this choice.
+        for function_ctx in ctx.functionDefinition_all() {
+            match ZserioParserVisitorCompat::visit_functionDefinition(self, &function_ctx) {
+                ZserioTreeReturnType::Function(f) => choice.functions.push(Rc::from(RefCell::from(f))),
+                _ => panic!(),
+            }
+        }
 
         ZserioTreeReturnType::Choice(choice)
     }
@@ -710,6 +718,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -732,6 +741,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -751,6 +761,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -774,6 +785,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -800,11 +812,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 operand2: None,
                 operand3: None,
                 result_type: ExpressionType::Other,
+            symbol: None,
                 fully_resolved: false,
                 evaluation_state: EvaluationState::NotEvaluated,
             })),
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         }))
@@ -823,6 +837,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         }))
@@ -860,6 +875,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let expression_type = literal_ctx.start().token_type;
         ZserioTreeReturnType::Expression(Box::new(Expression {
             expression_type: expression_type,
+            symbol: None,
             text: literal_text,
             flag: ExpressionFlag::None,
             operand1: None,
@@ -887,6 +903,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -906,6 +923,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -925,6 +943,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -947,6 +966,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -970,6 +990,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -993,6 +1014,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1024,6 +1046,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1047,6 +1070,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1073,6 +1097,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1096,6 +1121,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1122,6 +1148,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1148,6 +1175,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1171,6 +1199,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1194,6 +1223,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             operand2: None,
             operand3: None,
             result_type: ExpressionType::Other,
+            symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
         });
@@ -1300,22 +1330,20 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_functionDefinition(&mut self, ctx: &FunctionDefinitionContext<'_>) -> Self::Return {
-        let mut zserio_function = ZFunction {
+        // Reads a zserio function from the parse tree.
+        ZserioTreeReturnType::Function(ZFunction {
             name: ctx.functionName().unwrap().get_text(),
-            result: None,
-            return_type: None,
-        };
-        match self.visit(&*ctx.functionBody().unwrap().expression().unwrap()) {
-            ZserioTreeReturnType::Expression(e) => {
-                zserio_function.result = Option::from(Rc::from(RefCell::from(*e)))
-            }
-            _ => panic!(),
-        };
-        match self.visit(&*ctx.functionType().unwrap().typeReference().unwrap()) {
-            ZserioTreeReturnType::TypeReference(t) => zserio_function.return_type = Option::from(t),
-            _ => panic!(),
-        };
-        ZserioTreeReturnType::Function(zserio_function)
+            result: match self.visit(&*ctx.functionBody().unwrap().expression().unwrap()) {
+                ZserioTreeReturnType::Expression(e) => {
+                    Rc::from(RefCell::from(*e))
+                }
+                _ => panic!("zserio function {} does not provide a valid content", ctx.functionName().unwrap().get_text()),
+            },
+            return_type: match self.visit(&*ctx.functionType().unwrap().typeReference().unwrap()) {
+                ZserioTreeReturnType::TypeReference(t) => t,
+                _ => panic!(),
+            },
+        })
     }
 
     fn visit_typeParameters(&mut self, ctx: &TypeParametersContext<'_>) -> Self::Return {
@@ -1352,6 +1380,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 operand2: None,
                 operand3: None,
                 result_type: ExpressionType::Other,
+            symbol: None,
                 fully_resolved: false,
                 evaluation_state: EvaluationState::NotEvaluated,
             }));

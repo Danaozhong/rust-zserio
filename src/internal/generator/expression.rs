@@ -2,7 +2,7 @@ use crate::internal::ast::expression::{EvaluationState, Expression, ExpressionTy
 use crate::internal::generator::types::{convert_to_enum_field_name, custom_type_to_rust_type};
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, DIVIDE, DOT, ID, INDEX, LBRACKET, LPAREN, LSHIFT, MINUS, MODULO, MULTIPLY, OR, PLUS,
-    RPAREN, RSHIFT, TILDE, XOR,
+    RPAREN, RSHIFT, TILDE, XOR, QUESTIONMARK
 };
 
 pub struct ExpressionGenerationResult {
@@ -23,6 +23,8 @@ pub fn generate_expression(expression: &Expression) -> String {
             generate_expression(&expression.operand1.as_ref().unwrap())
         ),
         DOT => generate_dot_expression(expression),
+        PLUS | MINUS | MULTIPLY | DIVIDE => generate_arithmetic_expression(expression),
+        QUESTIONMARK => generate_ternary_expression(expression),
         /*
         PLUS => self.evaluate_arithmetic_expression(),
         MINUS => self.evaluate_arithmetic_expression(),
@@ -46,6 +48,21 @@ pub fn generate_expression(expression: &Expression) -> String {
     };
 }
 
+fn generate_arithmetic_expression(expression: &Expression) -> String {
+    return format!("{} {} {}",
+    generate_expression(&expression.operand1.as_ref().unwrap()),
+        match expression.expression_type {
+            PLUS => "+",
+            MINUS => "-",
+            MULTIPLY => "*",
+            DIVIDE => "/",
+            _ => panic!("unexpected arithmetic expression operator"),
+        },
+        generate_expression(&expression.operand2.as_ref().unwrap()),
+    )
+
+}
+
 fn generate_dot_expression(expression: &Expression) -> String {
     let op1 = expression.operand1.as_ref().unwrap();
 
@@ -63,4 +80,17 @@ fn generate_dot_expression(expression: &Expression) -> String {
 
 fn generate_identifier_expression(expression: &Expression) -> String {
     expression.text.clone()
+}
+
+fn generate_ternary_expression(expression: &Expression) -> String {
+    format!("
+{{
+    
+}} else {{
+    
+}}",
+
+
+)
+
 }

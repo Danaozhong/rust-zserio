@@ -1,7 +1,7 @@
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol, SymbolReference};
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, DIVIDE, DOT, ID, INDEX, LBRACKET, LPAREN, LSHIFT, MINUS, MODULO, MULTIPLY, OR, PLUS,
-    RPAREN, RSHIFT, TILDE, XOR,
+    RPAREN, RSHIFT, TILDE, XOR, EQ, GT, GE, LT, LE, NE, QUESTIONMARK
 };
 
 use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
@@ -35,7 +35,6 @@ pub enum ExpressionType {
     Enum(Rc<RefCell<ZEnum>>),
     Compound(CompoundExpressionType),
     Function(Rc<RefCell<ZFunction>>),
-    Parameter(Rc<RefCell<Parameter>>),
     Other,
 }
 
@@ -55,6 +54,7 @@ pub struct Expression {
     pub operand2: Option<Box<Expression>>,
     pub operand3: Option<Box<Expression>>,
     pub result_type: ExpressionType,
+    pub symbol: Option<Symbol>,
 
     // Flag which indicates that the expression is fully resolved
     pub fully_resolved: bool,
@@ -96,6 +96,12 @@ impl Expression {
             RPAREN => self.evaluate_function_call_expression(scope),
             LBRACKET => self.evaluate_array_element(scope),
             DOT => self.evaluate_dot_expression(scope),
+            EQ => self.evaluate_comparison_expression(),
+            GE => self.evaluate_comparison_expression(),
+            GT => self.evaluate_comparison_expression(),
+            LE => self.evaluate_comparison_expression(),
+            LT => self.evaluate_comparison_expression(),
+            NE => self.evaluate_comparison_expression(),
             PLUS => self.evaluate_arithmetic_expression(),
             MINUS => self.evaluate_arithmetic_expression(),
             MULTIPLY => self.evaluate_arithmetic_expression(),
@@ -108,6 +114,7 @@ impl Expression {
             XOR => self.evaluate_bitwise_expression(),
             LSHIFT => self.evaluate_bitwise_expression(),
             RSHIFT => self.evaluate_bitwise_expression(),
+            QUESTIONMARK => self.evaluate_ternary_expression(),
             INDEX => self.evaluate_index_expression(),
             ID => self.evaluate_identifier_expression(scope),
             0xFFFFF => (), // Ignore
@@ -130,7 +137,7 @@ impl Expression {
         match &self.operand1.as_ref().unwrap().result_type {
             ExpressionType::Function(func) => {
                 self.result_type = type_reference_to_expression_type(
-                    func.as_ref().borrow().return_type.as_ref().unwrap(),
+                    func.as_ref().borrow().return_type.as_ref(),
                     scope,
                 );
             }
@@ -232,6 +239,46 @@ impl Expression {
         }
     }
 
+    fn evaluate_comparison_expression(&mut self) {
+        match (&self.operand1, &self.operand2) {
+            (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
+                (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
+                    self.result_type = ExpressionType::Bool(match self.expression_type {
+                        EQ => value1 == value2,
+                        GE => value1 >= value2,
+                        GT => value1 > value2,
+                        LE => value1 <= value2,
+                        LT => value1 < value2,
+                        NE => value1 != value2,
+                        _ => panic!("unexpected integer comparison"),
+                    })
+                },
+                (ExpressionType::Float(value1), ExpressionType::Float(value2)) => {
+                    self.result_type = ExpressionType::Bool(match self.expression_type {
+                        EQ => value1 == value2,
+                        GE => value1 >= value2,
+                        GT => value1 > value2,
+                        LE => value1 <= value2,
+                        LT => value1 < value2,
+                        NE => value1 != value2,
+                        _ => panic!("unexpected float comparison"),
+                    })
+                },
+                (ExpressionType::String(value1), ExpressionType::String(value2)) => {
+                    self.result_type = ExpressionType::Bool(match self.expression_type {
+                        EQ => value1 == value2,
+                        NE => value1 != value2,
+                        _ => panic!("unexpected string comparison"),
+                    })
+                },
+                _ => {
+                    panic!("comparsion expression can only be applied to integer, float, or string types")
+                }
+            },
+            _ => panic!("comparsion expression requries two operands"),
+        }
+    }
+
     fn evaluate_arithmetic_expression(&mut self) {
         if self.operand2.is_none() {
             // an arithmetic expression may be +5 or -5, i.e. a sign
@@ -330,6 +377,23 @@ impl Expression {
         }
     }
 
+    fn evaluate_ternary_expression(&mut self) {
+        match self.operand1.as_ref().unwrap().result_type {
+            ExpressionType::Bool(condition) => {
+                if condition {
+                    self.result_type = self.operand2.as_ref().unwrap().result_type.clone();
+                    self.symbol = self.operand2.as_ref().unwrap().symbol.clone();
+                    self.fully_resolved = self.operand2.as_ref().unwrap().fully_resolved;
+                } else {
+                    self.result_type = self.operand3.as_ref().unwrap().result_type.clone();
+                    self.symbol = self.operand3.as_ref().unwrap().symbol.clone();
+                    self.fully_resolved = self.operand3.as_ref().unwrap().fully_resolved;
+                }
+            }
+            _ => panic!("the first operand in a ternary expression must have a boolean type")
+        }
+    }
+
     fn evaluate_index_expression(&mut self) {
         self.result_type = ExpressionType::Integer(0);
         self.fully_resolved = false;
@@ -343,28 +407,35 @@ impl Expression {
             // value will be evaluated when the complete dot expression is evaluated.
             return;
         }
-        self.result_type = symbol_to_expression_type(scope.resolve_symbol(&self.text), scope);
+        let symbol_reference = scope.resolve_symbol(&self.text);
+        self.symbol = Option::from(symbol_reference.symbol.clone());
+        self.result_type = symbol_to_expression_type(&symbol_reference, scope);
     }
 }
 
 fn symbol_to_expression_type(
-    symbol_reference: SymbolReference,
+    symbol_reference: &SymbolReference,
     scope: &mut ModelScope,
 ) -> ExpressionType {
-    match symbol_reference.symbol {
+    match &symbol_reference.symbol {
         Symbol::Struct(x) => {
-            return ExpressionType::Compound(CompoundExpressionType::ZStruct(x));
+            return ExpressionType::Compound(CompoundExpressionType::ZStruct(x.clone()));
         }
         Symbol::Enum(z_enum) => {
-            return ExpressionType::Enum(z_enum);
+            return ExpressionType::Enum(z_enum.clone());
         }
         Symbol::Field(param, field_index) => {
             return type_reference_to_expression_type(
-                &param.as_ref().borrow().fields[field_index].field_type,
+                &param.as_ref().borrow().fields[*field_index].field_type,
                 scope,
             );
         }
-        Symbol::Parameter(param) => return ExpressionType::Parameter(param),
+        Symbol::Parameter(param) => {
+            return type_reference_to_expression_type(
+                &param.as_ref().borrow().zserio_type,
+                scope,
+            );
+        }
         Symbol::EnumItem(z_enum, _) => {
             // The index doesn't really matter, as each enum value has the same type.
             // We are only interested in the type at the moment. The actual value will
@@ -400,6 +471,6 @@ fn type_reference_to_expression_type(
         }
     } else {
         // Resolve the symbol recursively, until a fundamental type is found.
-        return symbol_to_expression_type(scope.resolve_symbol(&type_ref.name), scope);
+        return symbol_to_expression_type(&scope.resolve_symbol(&type_ref.name), scope);
     }
 }

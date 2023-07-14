@@ -10,6 +10,7 @@ use crate::internal::generator::{
     file_generator::write_to_file, new::new_field, new::new_param, preamble::add_standard_imports,
     types::convert_field_name, types::to_rust_module_name, types::to_rust_type_name,
     types::ztype_to_rust_type,
+    function::generate_function,
 };
 
 use std::path::Path;
@@ -80,9 +81,15 @@ pub fn generate_struct(
     }
     new_fn.line("}");
 
+    // Generate the functions to read, write and bitcount the data to/from zserio format.
     generate_zserio_read(struct_impl, &zstruct.fields);
     generate_zserio_write(struct_impl, &zstruct.fields);
     generate_zserio_bitsize(struct_impl, &zstruct.fields);
+
+    // Generate all the helper functions.
+    for zserio_function in &zstruct.functions {
+        generate_function(struct_impl, &zserio_function.as_ref().borrow());
+    }
 
     write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
     rust_module_name
