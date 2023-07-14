@@ -1,8 +1,10 @@
 use crate::internal::ast::expression::{EvaluationState, Expression, ExpressionType};
+use crate::internal::compiler::symbol_scope::Symbol;
 use crate::internal::generator::types::{convert_to_enum_field_name, custom_type_to_rust_type};
+use crate::internal::parser::gen::zseriolexer::DECIMAL_LITERAL;
 use crate::internal::parser::gen::zserioparser::{
-    AND, BANG, DIVIDE, DOT, ID, INDEX, LBRACKET, LPAREN, LSHIFT, MINUS, MODULO, MULTIPLY, OR, PLUS,
-    RPAREN, RSHIFT, TILDE, XOR,
+    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LPAREN, LSHIFT, LT, MINUS, MODULO,
+    MULTIPLY, NE, OR, PLUS, QUESTIONMARK, RPAREN, RSHIFT, TILDE, XOR,
 };
 
 pub struct ExpressionGenerationResult {
@@ -23,27 +25,35 @@ pub fn generate_expression(expression: &Expression) -> String {
             generate_expression(&expression.operand1.as_ref().unwrap())
         ),
         DOT => generate_dot_expression(expression),
-        /*
-        PLUS => self.evaluate_arithmetic_expression(),
-        MINUS => self.evaluate_arithmetic_expression(),
-        MULTIPLY => self.evaluate_arithmetic_expression(),
-        DIVIDE => self.evaluate_arithmetic_expression(),
-        MODULO => self.evaluate_arithmetic_expression(),
-        BANG => self.evaluate_logical_negation(),
-        TILDE => self.evaluate_bitwise_negation(),
-        AND => self.evaluate_bitwise_expression(),
-        OR => self.evaluate_bitwise_expression(),
-        XOR => self.evaluate_bitwise_expression(),
-        LSHIFT => self.evaluate_bitwise_expression(),
-        RSHIFT => self.evaluate_bitwise_expression(),
-        INDEX => self.evaluate_index_expression(),
-        */
+        EQ | GE | GT | LE | LT | NE => generate_comparison_expression(expression),
+        PLUS | MINUS | MULTIPLY | DIVIDE | MODULO => generate_arithmetic_expression(expression),
+        QUESTIONMARK => generate_ternary_expression(expression),
+        BANG => generate_logical_negation(expression),
+        TILDE => generate_bitwise_negation(expression),
+        AND | OR | XOR | LSHIFT | RSHIFT => generate_bitwise_expression(expression),
         ID => generate_identifier_expression(expression),
+        DECIMAL_LITERAL => generate_literal_expression(expression),
         /*
         0xFFFFF => (), // Ignore
          */
         _ => panic!("unsupported expression type"),
     };
+}
+
+fn generate_arithmetic_expression(expression: &Expression) -> String {
+    return format!(
+        "{} {} {}",
+        generate_expression(&expression.operand1.as_ref().unwrap()),
+        match expression.expression_type {
+            PLUS => "+",
+            MINUS => "-",
+            MULTIPLY => "*",
+            DIVIDE => "/",
+            MODULO => "%",
+            _ => panic!("unexpected arithmetic expression operator"),
+        },
+        generate_expression(&expression.operand2.as_ref().unwrap()),
+    );
 }
 
 fn generate_dot_expression(expression: &Expression) -> String {
@@ -62,5 +72,84 @@ fn generate_dot_expression(expression: &Expression) -> String {
 }
 
 fn generate_identifier_expression(expression: &Expression) -> String {
-    expression.text.clone()
+    match expression.symbol.as_ref().unwrap() {
+        Symbol::Struct(s) => s.as_ref().borrow().name.clone(),
+        Symbol::Enum(e) => e.as_ref().borrow().name.clone(),
+        Symbol::Field(f, i) => format!("self.{}", f.as_ref().borrow().fields[*i].name),
+        Symbol::Parameter(p) => format!("self.{}", p.as_ref().borrow().name),
+        _ => panic!("unsupported identifier type"),
+    }
+}
+
+fn generate_ternary_expression(expression: &Expression) -> String {
+    format!(
+        "
+if {} {{
+    {}
+}} else {{
+    {}
+}}",
+        generate_expression(&expression.operand1.as_ref().unwrap()),
+        generate_expression(&expression.operand2.as_ref().unwrap()),
+        generate_expression(&expression.operand3.as_ref().unwrap()),
+    )
+}
+
+fn generate_logical_negation(expression: &Expression) -> String {
+    format!(
+        "!{}",
+        generate_expression(&expression.operand1.as_ref().unwrap())
+    )
+}
+
+fn generate_bitwise_negation(expression: &Expression) -> String {
+    format!(
+        "~{}",
+        generate_expression(&expression.operand1.as_ref().unwrap())
+    )
+}
+
+fn generate_bitwise_expression(expression: &Expression) -> String {
+    return format!(
+        "{} {} {}",
+        generate_expression(&expression.operand1.as_ref().unwrap()),
+        match expression.expression_type {
+            AND => "&",
+            OR => "|",
+            XOR => "^",
+            LSHIFT => "<<",
+            RSHIFT => ">>",
+            _ => panic!("unexpected bitwise expression operator"),
+        },
+        generate_expression(&expression.operand2.as_ref().unwrap()),
+    );
+}
+
+fn generate_comparison_expression(expression: &Expression) -> String {
+    return format!(
+        "{} {} {}",
+        generate_expression(&expression.operand1.as_ref().unwrap()),
+        match expression.expression_type {
+            EQ => "==",
+            LE => "<=",
+            LT => "<",
+            GT => ">",
+            GE => ">=",
+            NE => "!=",
+            _ => panic!("unexpected comparison expression operator"),
+        },
+        generate_expression(&expression.operand2.as_ref().unwrap()),
+    );
+}
+
+fn generate_literal_expression(expression: &Expression) -> String {
+    let literal_value = match expression.result_type {
+        ExpressionType::Integer(v) => v,
+        _ => panic!(),
+    };
+
+    match expression.expression_type {
+        DECIMAL_LITERAL => i32::to_string(&literal_value),
+        _ => panic!("unexpected comparison expression operator"),
+    }
 }

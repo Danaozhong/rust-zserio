@@ -14,6 +14,7 @@ use rust_zserio::ztype::ZserioPackableOject;
 
 fn main() {
     test_structure();
+    test_functions();
     test_choice();
 }
 
@@ -55,6 +56,17 @@ fn test_structure() {
     assert!(other_serialized_bytes == serialized_bytes);
 }
 
+fn test_functions() {
+    // This test generates a test structure, puts some values in it, and and ensures
+    // that the function is generated correctly.
+
+    // Instantiate the data
+    let mut value_wrapper = value_wrapper::ValueWrapper::new();
+    value_wrapper.parameter = 2;
+    value_wrapper.value = 9;
+    // Call the function, and expect it to return the correct value.
+    assert!(value_wrapper.get_some_random_value() == 36)
+}
 fn test_choice() {
     // This test generates a test zserio choice, serializes it, deserializes it, and ensures
     // that the data is identical to what was serialized.

@@ -39,6 +39,11 @@ struct ValueWrapper(int32 parameter)
     {
         return value + parameter;
     }
+
+    function int32 getSomeRandomValue()
+    {
+        return parameter > 0 ? (value << 2) : 1;
+    }
 };
 
 

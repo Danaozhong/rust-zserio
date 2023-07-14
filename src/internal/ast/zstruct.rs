@@ -12,7 +12,7 @@ pub struct ZStruct {
     pub template_parameters: Vec<String>,
     pub type_parameters: Vec<Rc<RefCell<Parameter>>>,
     pub fields: Vec<Field>,
-    pub functions: Vec<ZFunction>,
+    pub functions: Vec<Rc<RefCell<ZFunction>>>,
 }
 
 impl ZStruct {
@@ -28,6 +28,9 @@ impl ZStruct {
         }
         for field in &self.fields {
             field.evaluate(scope);
+        }
+        for function in &self.functions {
+            function.as_ref().borrow_mut().evaluate(scope);
         }
     }
 }

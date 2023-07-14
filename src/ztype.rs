@@ -35,6 +35,10 @@ pub use self::varuint_decode::read_varsize;
 pub use self::varuint_decode::read_varuint;
 pub use self::varuint_decode::read_varuint32;
 
+pub use self::float_encode::write_f16;
+pub use self::float_encode::write_f32;
+pub use self::float_encode::write_f64;
+
 pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
@@ -52,4 +56,6 @@ pub mod array;
 pub mod array_traits;
 pub mod bit_alignment;
 
+pub mod extern_type;
+pub mod float_encode;
 pub mod traits;

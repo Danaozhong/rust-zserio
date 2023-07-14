@@ -7,9 +7,10 @@ use crate::internal::generator::array::instantiate_zserio_arrays;
 
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
-    expression::generate_expression, file_generator::write_to_file, new::new_field, new::new_param,
-    preamble::add_standard_imports, types::convert_field_name, types::to_rust_module_name,
-    types::to_rust_type_name, types::ztype_to_rust_type, zstruct::generate_struct_member_for_field,
+    expression::generate_expression, file_generator::write_to_file, function::generate_function,
+    new::new_field, new::new_param, preamble::add_standard_imports, types::convert_field_name,
+    types::to_rust_module_name, types::to_rust_type_name, types::ztype_to_rust_type,
+    zstruct::generate_struct_member_for_field,
 };
 
 use std::path::Path;
@@ -79,6 +80,12 @@ pub fn generate_choice(
     generate_zserio_read(choice_impl, &zchoice);
     generate_zserio_write(choice_impl, &zchoice);
     generate_zserio_bitsize(choice_impl, &zchoice);
+
+    // Generate all the zserio functions.
+    let pub_impl = scope.new_impl(&rust_type_name);
+    for zserio_function in &zchoice.functions {
+        generate_function(pub_impl, &zserio_function.as_ref().borrow());
+    }
 
     write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
     rust_module_name

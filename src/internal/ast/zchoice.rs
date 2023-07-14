@@ -23,23 +23,29 @@ pub struct ZChoice {
     pub selector_expression: Rc<RefCell<Expression>>,
     pub cases: Vec<ZChoiceCase>,
     pub default_case: Option<ZChoiceCase>,
-    pub functions: Vec<ZFunction>,
+    pub functions: Vec<Rc<RefCell<ZFunction>>>,
 }
 
 impl ZChoice {
-    pub fn evaluate(&mut self, scope: &mut ModelScope) {
+    pub fn evaluate_selector_expression(&self, scope: &mut ModelScope) {
         // Ignore packages that are templated. They cannot be evaluated. Only their templated
         // instances will be evaluated.
         if !self.template_parameters.is_empty() {
             return;
         }
+
         self.selector_expression
             .as_ref()
             .borrow_mut()
             .evaluate(scope);
+    }
 
-        // Add the enumeration type prefix, if the selector is an enumeration type.
-        self.add_enumeration_type_prefix_to_choice_cases();
+    pub fn evaluate(&self, scope: &mut ModelScope) {
+        // Ignore packages that are templated. They cannot be evaluated. Only their templated
+        // instances will be evaluated.
+        if !self.template_parameters.is_empty() {
+            return;
+        }
 
         for param in &self.type_parameters {
             param.as_ref().borrow().zserio_type.evaluate(scope);
@@ -60,9 +66,12 @@ impl ZChoice {
                 case_condition.as_ref().borrow_mut().evaluate(scope);
             }
         }
+        for function in &self.functions {
+            function.as_ref().borrow_mut().evaluate(scope);
+        }
     }
 
-    fn add_enumeration_type_prefix_to_choice_cases(&mut self) {
+    pub fn add_enumeration_type_prefix_to_choice_cases(&mut self) {
         // For enumerator parameters, this function will look for choice cases that are not fully
         // described, and replaces them by a dot expression.
         // This is needed to satisfy the zserio rule:
@@ -72,14 +81,28 @@ impl ZChoice {
         // case ENUM_VALUE:
         // will be replaced by:
         // case EnumType.ENUM_VALUE
+
+        // Ignore packages that are templated. They cannot be evaluated. Only their templated
+        // instances will be evaluated.
+        if !self.template_parameters.is_empty() {
+            return;
+        }
+
         for case in &mut self.cases {
             for condition in &mut case.conditions.iter_mut() {
                 let mut dot_expression = None;
                 {
                     let condition_expression = condition.as_ref().borrow();
                     if condition_expression.expression_type == ID {
-                        match &self.selector_expression.as_ref().borrow().result_type {
-                            ExpressionType::Parameter(p) => {
+                        match &self
+                            .selector_expression
+                            .as_ref()
+                            .borrow()
+                            .symbol
+                            .as_ref()
+                            .unwrap()
+                        {
+                            Symbol::Parameter(p) => {
                                 let mut operand2 = Box::from(condition_expression.clone());
                                 operand2.flag = ExpressionFlag::IsDotExpressionRightOperand;
 
@@ -94,6 +117,7 @@ impl ZChoice {
                                         operand2: None,
                                         operand3: None,
                                         result_type: ExpressionType::Other,
+                                        symbol: None,
                                         fully_resolved: false,
                                         evaluation_state: EvaluationState::NotEvaluated,
                                     })),
@@ -101,6 +125,7 @@ impl ZChoice {
                                     operand3: None,
                                     text: "".into(),
                                     result_type: ExpressionType::Other,
+                                    symbol: None,
                                     fully_resolved: false,
                                     evaluation_state: EvaluationState::NotEvaluated,
                                 });
@@ -110,6 +135,9 @@ impl ZChoice {
                     }
                 }
                 if let Some(new_dot_expression) = dot_expression {
+                    // TODO fully understand how the rust FnOnce() works. Using
+                    // replace_with() would make this function non-mutable.
+                    //condition.replace_with(|dot_expression| dot_expression.clone());
                     *condition = Rc::from(RefCell::from(new_dot_expression));
                 }
             }
