@@ -1,6 +1,6 @@
-use codegen::Scope;
-
 use crate::internal::ast::zstruct::ZStruct;
+use codegen::Scope;
+use codegen::Struct;
 
 use crate::internal::ast::field::Field;
 use crate::internal::generator::array::instantiate_zserio_arrays;
@@ -13,6 +13,19 @@ use crate::internal::generator::{
 };
 
 use std::path::Path;
+
+pub fn generate_struct_member_for_field(gen_struct: &mut Struct, field: &Field) {
+    let mut field_type = ztype_to_rust_type(field.field_type.as_ref());
+
+    if field.array.is_some() {
+        field_type = format!("Vec<{}>", field_type.as_str());
+    }
+    if field.is_optional {
+        field_type = format!("Option<{}>", field_type.as_str());
+    }
+    let gen_field = gen_struct.new_field(&convert_field_name(&field.name), &field_type);
+    gen_field.vis("pub");
+}
 
 pub fn generate_struct(
     scope: &mut Scope,
@@ -46,16 +59,7 @@ pub fn generate_struct(
 
     // Add the data fields to the struct
     for field in &zstruct.fields {
-        let mut field_type = ztype_to_rust_type(field.field_type.as_ref());
-
-        if field.array.is_some() {
-            field_type = format!("Vec<{}>", field_type.as_str());
-        }
-        if field.is_optional {
-            field_type = format!("Option<{}>", field_type.as_str());
-        }
-        let gen_field = gen_struct.new_field(&convert_field_name(&field.name), &field_type);
-        gen_field.vis("pub");
+        generate_struct_member_for_field(gen_struct, field);
     }
 
     // generate the functions to serialize/deserialize
