@@ -8,7 +8,7 @@ use crate::internal::{
         zenum::{add_enum_to_scope, ZEnum},
         zstruct::add_struct_to_scope,
         zstruct::ZStruct,
-        zsubtype::Subtype,
+        zsubtype::{add_subtype_to_scope, Subtype},
     },
     model::Model,
 };
@@ -123,7 +123,8 @@ impl ModelScope {
             // packages that were just processed.
             imports_to_process = new_imports_to_process;
         }
-        // If this line is reached,
+        // If this line is reached, the symbol lookup has failed, and the symbol
+        // was not found anywhere.
         panic!("symbol not found");
     }
 }
@@ -144,6 +145,9 @@ impl PackageScope {
         }
         for zenum in &package.enums {
             add_enum_to_scope(zenum, &mut scope);
+        }
+        for subtype in &package.subtypes {
+            add_subtype_to_scope(subtype, &mut scope)
         }
 
         scope
