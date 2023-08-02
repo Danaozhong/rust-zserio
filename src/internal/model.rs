@@ -54,7 +54,7 @@ impl Model {
                     import_symbol: None,
                     symbol_name: Option::from(z_struct.as_ref().borrow().name.clone()),
                 });
-                z_struct.as_ref().borrow().evaluate(scope);
+                z_struct.borrow().evaluate(scope);
                 scope.scope_stack.pop();
             }
 
@@ -74,7 +74,12 @@ impl Model {
                     import_symbol: None,
                     symbol_name: Option::from(z_choice.as_ref().borrow().name.clone()),
                 });
-                z_choice.borrow_mut().evaluate(scope);
+                z_choice.borrow().evaluate_selector_expression(scope);
+                z_choice
+                    .borrow_mut()
+                    .add_enumeration_type_prefix_to_choice_cases();
+                z_choice.borrow().evaluate(scope);
+
                 scope.scope_stack.pop();
             }
 
