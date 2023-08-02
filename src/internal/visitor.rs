@@ -38,12 +38,12 @@ use crate::internal::parser::gen::zserioparser::{
     FunctionDefinitionContext, FunctionDefinitionContextAttrs, FunctionTypeContextAttrs, IdContext,
     IdentifierExpressionContext, IdentifierExpressionContextAttrs, ImportDeclarationContext,
     ImportDeclarationContextAttrs, IndexExpressionContext, IndexExpressionContextAttrs,
-    InstantiateDeclarationContext, InstantiateDeclarationContextAttrs, LiteralContextAttrs,
-    LiteralExpressionContext, LiteralExpressionContextAttrs, LogicalAndExpressionContext,
-    LogicalAndExpressionContextAttrs, LogicalOrExpressionContext, LogicalOrExpressionContextAttrs,
-    MultiplicativeExpressionContext, MultiplicativeExpressionContextAttrs,
-    NumbitsExpressionContext, NumbitsExpressionContextAttrs, PackageDeclarationContext,
-    PackageDeclarationContextAttrs, PackageNameDefinitionContext,
+    InstantiateDeclarationContext, InstantiateDeclarationContextAttrs, LengthofExpressionContext,
+    LengthofExpressionContextAttrs, LiteralContextAttrs, LiteralExpressionContext,
+    LiteralExpressionContextAttrs, LogicalAndExpressionContext, LogicalAndExpressionContextAttrs,
+    LogicalOrExpressionContext, LogicalOrExpressionContextAttrs, MultiplicativeExpressionContext,
+    MultiplicativeExpressionContextAttrs, NumbitsExpressionContext, NumbitsExpressionContextAttrs,
+    PackageDeclarationContext, PackageDeclarationContextAttrs, PackageNameDefinitionContext,
     PackageNameDefinitionContextAttrs, ParameterDefinitionContext, ParameterDefinitionContextAttrs,
     ParenthesizedExpressionContext, ParenthesizedExpressionContextAttrs, QualifiedNameContext,
     RelationalExpressionContext, RelationalExpressionContextAttrs, ShiftExpressionContext,
@@ -283,15 +283,17 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_subtypeDeclaration(&mut self, ctx: &SubtypeDeclarationContext<'_>) -> Self::Return {
-        let mut z_subtype = Box::new(Subtype {
-            name: ctx.id().unwrap().get_text(),
-            zserio_type: None,
-        });
-        match ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap()) {
-            ZserioTreeReturnType::TypeReference(t) => z_subtype.zserio_type = Option::from(t),
+        let zserio_type = match ZserioParserVisitorCompat::visit_typeReference(
+            self,
+            &ctx.typeReference().unwrap(),
+        ) {
+            ZserioTreeReturnType::TypeReference(t) => t,
             _ => panic!("should not happen"),
         };
-        ZserioTreeReturnType::Subtype(z_subtype)
+        ZserioTreeReturnType::Subtype(Box::new(Subtype {
+            name: ctx.id().unwrap().get_text(),
+            zserio_type: zserio_type,
+        }))
     }
 
     fn visit_instantiateDeclaration(
@@ -896,6 +898,26 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         ctx: &DynamicLengthArgumentContext<'_>,
     ) -> Self::Return {
         self.visit(&*ctx.expression().unwrap())
+    }
+
+    fn visit_lengthofExpression(&mut self, ctx: &LengthofExpressionContext<'_>) -> Self::Return {
+        let mut expression = Box::new(Expression {
+            expression_type: ctx.operator.as_ref().unwrap().token_type,
+            text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
+            operand1: None,
+            operand2: None,
+            operand3: None,
+            result_type: ExpressionType::Other,
+            symbol: None,
+            fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
+        });
+        match self.visit(&*ctx.expression().unwrap()) {
+            ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
+            _ => panic!(),
+        }
+        ZserioTreeReturnType::Expression(expression)
     }
 
     fn visit_valueofExpression(&mut self, ctx: &ValueofExpressionContext<'_>) -> Self::Return {

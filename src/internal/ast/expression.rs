@@ -425,6 +425,12 @@ fn symbol_to_expression_type(
             // be applied in the generated code.
             return type_reference_to_expression_type(&z_enum.as_ref().borrow().enum_type, scope);
         }
+        Symbol::Subtype(subtype) => {
+            return type_reference_to_expression_type(
+                &subtype.as_ref().borrow().zserio_type,
+                scope,
+            );
+        }
         _ => panic!("unexpected symbol type"),
     }
 }
