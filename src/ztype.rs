@@ -57,5 +57,6 @@ pub mod array_traits;
 pub mod bit_alignment;
 
 pub mod extern_type;
+pub mod float_decode;
 pub mod float_encode;
 pub mod traits;
