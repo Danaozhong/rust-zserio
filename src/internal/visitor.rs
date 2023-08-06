@@ -1,5 +1,3 @@
-use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitorCompat;
-
 use crate::internal::ast::package::{ZImport, ZPackage};
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::ast::zconst::ZConst;
@@ -9,6 +7,8 @@ use crate::internal::ast::{
     type_reference::InstantiateType, zchoice::ZChoice, zchoice::ZChoiceCase, zfunction::ZFunction,
     zsubtype::Subtype, zunion::ZUnion,
 };
+use crate::internal::parser::gen::zserioparservisitor::ZserioParserVisitorCompat;
+use std::collections::HashMap;
 
 use crate::internal::ast::{
     expression::{EvaluationState, Expression, ExpressionFlag, ExpressionType},
@@ -160,8 +160,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             name: package_name,
             comment: "".into(),
             imports: imports,
-            structs: vec![],
-            zchoices: vec![],
+            structs: HashMap::new(),
+            zchoices: HashMap::new(),
             zunions: vec![],
             enums: vec![],
             consts: vec![],
@@ -177,10 +177,12 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                     for ve in v {
                         match ve {
                             ZserioTreeReturnType::Structure(s) => {
-                                package.structs.push(Rc::new(RefCell::new(*s)))
+                                let name = s.name.clone();
+                                package.structs.insert(name, Rc::new(RefCell::new(*s)));
                             }
                             ZserioTreeReturnType::Choice(c) => {
-                                package.zchoices.push(Rc::new(RefCell::new(*c)))
+                                let name = c.name.clone();
+                                package.zchoices.insert(name, Rc::new(RefCell::new(*c)));
                             }
                             ZserioTreeReturnType::Enumeration(e) => {
                                 package.enums.push(Rc::new(RefCell::new(*e)))

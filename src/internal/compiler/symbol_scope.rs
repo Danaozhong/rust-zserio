@@ -72,12 +72,19 @@ impl ModelScope {
             package_scopes: HashMap::new(),
             scope_stack: vec![],
         };
-        for package in &model.packages {
+        for package in model.packages.values() {
             scope
                 .package_scopes
                 .insert(package.name.clone(), PackageScope::build_scope(package));
         }
         scope
+    }
+
+    pub fn get_package_scope(&mut self) -> &mut PackageScope {
+        let evaluation_scope = self.scope_stack.last().unwrap();
+        self.package_scopes
+            .get_mut(&evaluation_scope.package)
+            .unwrap()
     }
 
     pub fn resolve_symbol(&self, name: &String) -> SymbolReference {
@@ -137,10 +144,10 @@ impl PackageScope {
             imports: package.imports.to_vec(),
         };
 
-        for zstruct in &package.structs {
+        for zstruct in package.structs.values() {
             add_struct_to_scope(zstruct, &mut scope);
         }
-        for zchoice in &package.zchoices {
+        for zchoice in package.zchoices.values() {
             add_choice_to_scope(zchoice, &mut scope);
         }
         for zenum in &package.enums {

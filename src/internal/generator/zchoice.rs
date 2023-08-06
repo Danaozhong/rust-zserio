@@ -1,9 +1,8 @@
 use codegen::{Function, Scope};
 
-use crate::internal::ast::{zchoice::ZChoice, zchoice::ZChoiceCase};
+use crate::internal::ast::zchoice::ZChoice;
 
 use crate::internal::ast::field::Field;
-use crate::internal::generator::array::instantiate_zserio_arrays;
 
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
