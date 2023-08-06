@@ -1,22 +1,22 @@
 use crate::internal::ast::package::ZPackage;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::model::package::package_from_file;
-
+use std::collections::HashMap;
 use std::path::Path;
 use walkdir::WalkDir;
 
 use super::compiler::symbol_scope::ScopeLocation;
-
 pub mod package;
+use crate::internal::compiler::template_instantiation::instantiate_type;
 
 pub struct Model {
-    pub packages: Vec<ZPackage>,
+    pub packages: HashMap<String, ZPackage>,
 }
 
 impl Model {
     /// Loads a complete zserio model from a directory.
     pub fn from_filesystem(directory: &Path) -> Self {
-        let mut packages = Vec::new();
+        let mut packages = HashMap::new();
 
         for entry in WalkDir::new(directory) {
             let path = entry.unwrap().path().to_owned();
@@ -27,7 +27,7 @@ impl Model {
             file_name = file_name.to_ascii_lowercase();
             if file_name.ends_with(".zs") || file_name.ends_with(".zserio") {
                 let package = package_from_file(&path);
-                packages.push(package);
+                packages.insert(package.name.clone(), package);
             }
         }
         Model { packages }
@@ -41,14 +41,36 @@ impl Model {
         // resolve types
 
         // evaluate templates
+        mut_self.instantiate_templates(&mut scope);
 
         // evaluate expressions
         mut_self.evaluate_package(&mut scope);
     }
 
+    pub fn instantiate_templates(&mut self, scope: &mut ModelScope) {
+        for pkg in self.packages.values_mut() {
+            scope.scope_stack.push(ScopeLocation {
+                package: pkg.name.clone(),
+                import_symbol: None,
+                symbol_name: None,
+            });
+            let type_instantiations = pkg.instantiated_types.clone();
+            for rc_instantiation in &type_instantiations {
+                let instantiation = rc_instantiation.as_ref().borrow_mut();
+                instantiate_type(
+                    pkg,
+                    scope,
+                    &instantiation.zserio_type.clone(),
+                    &instantiation.name.clone(),
+                );
+            }
+            scope.scope_stack.pop();
+        }
+    }
+
     pub fn evaluate_package(&mut self, scope: &mut ModelScope) {
-        for pkg in &mut self.packages {
-            for z_struct in &pkg.structs {
+        for pkg in self.packages.values_mut() {
+            for z_struct in pkg.structs.values_mut() {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
@@ -68,7 +90,7 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
-            for z_choice in &pkg.zchoices {
+            for z_choice in pkg.zchoices.values_mut() {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,

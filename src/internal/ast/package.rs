@@ -1,5 +1,6 @@
 use crate::internal::ast::{zenum::ZEnum, zstruct::ZStruct};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::string::String;
 
@@ -20,8 +21,8 @@ pub struct ZPackage {
     pub comment: String,
 
     pub imports: Vec<ZImport>,
-    pub structs: Vec<Rc<RefCell<ZStruct>>>,
-    pub zchoices: Vec<Rc<RefCell<ZChoice>>>,
+    pub structs: HashMap<String, Rc<RefCell<ZStruct>>>,
+    pub zchoices: HashMap<String, Rc<RefCell<ZChoice>>>,
     pub zunions: Vec<Rc<RefCell<ZUnion>>>,
     pub enums: Vec<Rc<RefCell<ZEnum>>>,
     pub consts: Vec<Rc<RefCell<ZConst>>>,

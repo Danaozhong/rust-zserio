@@ -12,7 +12,7 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     let mut module_names = Vec::new();
 
     // Generate  the rust code for zserio structures.
-    for z_struct_ref_cell in &package.structs {
+    for z_struct_ref_cell in package.structs.values() {
         let z_struct = z_struct_ref_cell.borrow();
         // ignore templates, only generate code for instantiated structs
         if !z_struct.template_parameters.is_empty() {
@@ -28,7 +28,7 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     }
 
     // Generate  the rust code for zserio structures.
-    for z_choice_ref_cell in &package.zchoices {
+    for z_choice_ref_cell in package.zchoices.values() {
         let z_choice = z_choice_ref_cell.borrow();
         // Ignore templates, only generate code for instantiated choices.
         if !z_choice.template_parameters.is_empty() {

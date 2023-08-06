@@ -11,11 +11,14 @@ use std::rc::Rc;
 use std::collections::HashMap;
 
 use crate::internal::compiler::symbol_scope::{ModelScope, PackageScope, Symbol};
+
+#[derive(Clone)]
 pub struct ZChoiceCase {
     pub conditions: Vec<Rc<RefCell<Expression>>>,
     pub field: Option<Box<Field>>,
 }
 
+#[derive(Clone)]
 pub struct ZChoice {
     pub name: String,
     pub template_parameters: Vec<String>,
