@@ -105,6 +105,16 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
+            for z_const in &mut pkg.consts {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_const.as_ref().borrow().name.clone()),
+                });
+                z_const.borrow_mut().evaluate(scope);
+                scope.scope_stack.pop();
+            }
+
             for bitmask in &mut pkg.bitmask_types {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),

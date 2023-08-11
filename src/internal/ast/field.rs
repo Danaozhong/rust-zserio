@@ -4,14 +4,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Array {
     pub is_packed: bool,
     pub is_implicit: bool,
     pub array_length_expression: Option<Rc<RefCell<Expression>>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Field {
     pub name: String,
     pub zserio_name: String,

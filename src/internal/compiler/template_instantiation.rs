@@ -3,6 +3,7 @@ use crate::internal::ast::package::ZPackage;
 use crate::internal::ast::parameter::Parameter;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::ast::zchoice::{add_choice_to_scope, ZChoice, ZChoiceCase};
+use crate::internal::ast::zfunction::ZFunction;
 use crate::internal::ast::zstruct::{add_struct_to_scope, ZStruct};
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use std::cell::RefCell;
@@ -63,7 +64,7 @@ fn instantiate_struct(
     pkg: &mut ZPackage,
     scope: &mut ModelScope,
     z_struct: &ZStruct,
-    template_arguments: &Vec<Box<TypeReference>>,
+    template_arguments: &Vec<TypeReference>,
     instantiated_name: &String,
 ) -> TypeReference {
     assert!(z_struct.template_parameters.len() > 0);
@@ -112,7 +113,12 @@ fn instantiate_struct(
     for field in &z_struct.fields {
         instantiated_struct
             .fields
-            .push(instantiate_field(pkg, scope, field, &instantiated_types));
+            .push(Rc::from(RefCell::from(instantiate_field(
+                pkg,
+                scope,
+                &field.borrow(),
+                &instantiated_types,
+            ))));
     }
     // Instantiate the parameters
     for rc_param in &z_struct.type_parameters {
@@ -135,6 +141,24 @@ fn instantiate_struct(
         }
     }
 
+    for rc_function in &z_struct.functions {
+        let function = rc_function.as_ref().borrow();
+        if instantiated_types.contains_key(&function.return_type.name) {
+            // The parameter is a templated type, so replace the parameter
+            // type by a reference to the newly instantiated type.
+            instantiated_struct
+                .functions
+                .push(Rc::new(RefCell::new(ZFunction {
+                    name: function.name.clone(),
+                    result: function.result.clone(),
+                    return_type: Box::new(instantiated_types[&function.return_type.name].clone()),
+                })));
+            instantiated_struct
+                .functions
+                .push(Rc::new(RefCell::new(function.clone())));
+        }
+    }
+
     // Add the newly added structure to the package.
     pkg.structs.insert(
         instantiated_name.clone(),
@@ -150,7 +174,7 @@ fn instantiate_choice(
     pkg: &mut ZPackage,
     scope: &mut ModelScope,
     z_choice: &ZChoice,
-    template_arguments: &Vec<Box<TypeReference>>,
+    template_arguments: &Vec<TypeReference>,
     instantiated_name: &String,
 ) -> TypeReference {
     assert!(z_choice.template_parameters.len() > 0);
@@ -202,12 +226,12 @@ fn instantiate_choice(
             conditions: case.conditions.clone(),
             field: {
                 if let Some(field) = &case.field {
-                    Option::from(Box::from(instantiate_field(
+                    Option::from(Rc::from(RefCell::from(instantiate_field(
                         pkg,
                         scope,
-                        field,
+                        &field.borrow(),
                         &instantiated_types,
-                    )))
+                    ))))
                 } else {
                     None
                 }
@@ -220,12 +244,12 @@ fn instantiate_choice(
             conditions: default_case.conditions.clone(),
             field: {
                 if let Some(field) = &default_case.field {
-                    Option::from(Box::from(instantiate_field(
+                    Option::from(Rc::from(RefCell::from(instantiate_field(
                         pkg,
                         scope,
-                        field,
+                        &field.borrow(),
                         &instantiated_types,
-                    )))
+                    ))))
                 } else {
                     None
                 }
@@ -254,6 +278,23 @@ fn instantiate_choice(
         }
     }
 
+    for rc_function in &z_choice.functions {
+        let function = rc_function.as_ref().borrow();
+        if instantiated_types.contains_key(&function.return_type.name) {
+            // The parameter is a templated type, so replace the parameter
+            // type by a reference to the newly instantiated type.
+            instantiated_choice
+                .functions
+                .push(Rc::new(RefCell::new(ZFunction {
+                    name: function.name.clone(),
+                    result: function.result.clone(),
+                    return_type: Box::new(instantiated_types[&function.return_type.name].clone()),
+                })));
+            instantiated_choice
+                .functions
+                .push(Rc::new(RefCell::new(function.clone())));
+        }
+    }
     // Add the newly added choice to the package.
     pkg.zchoices.insert(
         instantiated_name.clone(),
@@ -285,9 +326,7 @@ pub fn instantiate_field(
             new_field.field_type.template_arguments.iter().enumerate()
         {
             if instantiated_types.contains_key(&template_parameter.name) {
-                new_template_arguments.push(Box::from(
-                    instantiated_types[&template_parameter.name].clone(),
-                ));
+                new_template_arguments.push(instantiated_types[&template_parameter.name].clone());
             } else {
                 new_template_arguments.push(template_parameter.clone());
             }

@@ -6,12 +6,13 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::string::String;
+#[derive(Debug)]
 pub struct ZEnumItem {
     pub name: String,
     pub comment: String,
     pub expression: Option<Rc<RefCell<Expression>>>,
 }
-
+#[derive(Debug)]
 pub struct ZEnum {
     pub name: String,
     pub comment: String,

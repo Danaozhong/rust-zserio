@@ -1,14 +1,18 @@
 use crate::internal::{
     ast::{
+        field::Field,
         package::{ZImport, ZPackage},
         parameter::Parameter,
+        zbitmask::{add_bitmask_to_scope, ZBitmaskType},
         zchoice::add_choice_to_scope,
         zchoice::ZChoice,
-        zconst::ZConst,
+        zconst::{add_const_to_scope, ZConst},
         zenum::{add_enum_to_scope, ZEnum},
+        zfunction::ZFunction,
         zstruct::add_struct_to_scope,
         zstruct::ZStruct,
         zsubtype::{add_subtype_to_scope, Subtype},
+        zunion::ZUnion,
     },
     model::Model,
 };
@@ -18,18 +22,22 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 /// This enum is used to cover any possible type of symbols.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Symbol {
     Struct(Rc<RefCell<ZStruct>>),
     Choice(Rc<RefCell<ZChoice>>),
+    Union(Rc<RefCell<ZUnion>>),
     Enum(Rc<RefCell<ZEnum>>),
     EnumItem(Rc<RefCell<ZEnum>>, usize),
     Subtype(Rc<RefCell<Subtype>>),
     Const(Rc<RefCell<ZConst>>),
-    Field(Rc<RefCell<ZStruct>>, usize),
+    Bitmask(Rc<RefCell<ZBitmaskType>>),
+    Field(Rc<RefCell<Field>>),
     Parameter(Rc<RefCell<Parameter>>),
+    Function(Rc<RefCell<ZFunction>>),
 }
 /// A struct to hold a reference to a specific symbol. It provides the package, symbol and symbol name.
+#[derive(Clone, Debug)]
 pub struct SymbolReference {
     pub symbol: Symbol,
     pub name: String,
@@ -38,6 +46,8 @@ pub struct SymbolReference {
 
 /// The symbol scope contains a list of all existing symbols.
 pub struct PackageScope {
+    pub name: String,
+
     /// These are symbols valid within a struct/function/choice, but not outside of it.
     pub local_symbols: HashMap<String, HashMap<String, Symbol>>,
 
@@ -132,18 +142,25 @@ impl ModelScope {
         }
         // If this line is reached, the symbol lookup has failed, and the symbol
         // was not found anywhere.
-        panic!("symbol not found");
+        panic!("symbol not found: {:?}", name);
     }
 }
 
 impl PackageScope {
     pub fn build_scope(package: &ZPackage) -> Self {
         let mut scope = PackageScope {
+            name: package.name.clone(),
             local_symbols: HashMap::new(),
             file_symbols: HashMap::new(),
             imports: package.imports.to_vec(),
         };
 
+        for zconst in &package.consts {
+            add_const_to_scope(zconst, &mut scope);
+        }
+        for zbitmask in &package.bitmask_types {
+            add_bitmask_to_scope(zbitmask, &mut scope);
+        }
         for zstruct in package.structs.values() {
             add_struct_to_scope(zstruct, &mut scope);
         }
@@ -173,8 +190,8 @@ impl PackageScope {
                     Some(symbol) => {
                         return Option::from(SymbolReference {
                             symbol: symbol.clone(),
-                            name: "".into(),
-                            package: "".into(),
+                            name: get_symbol_name(symbol),
+                            package: self.name.clone(),
                         });
                     }
                     _ => (),
@@ -188,8 +205,8 @@ impl PackageScope {
             Some(symbol) => {
                 return Option::from(SymbolReference {
                     symbol: symbol.clone(),
-                    name: "".into(),
-                    package: "".into(),
+                    name: get_symbol_name(symbol),
+                    package: self.name.clone(),
                 })
             }
             _ => (),
@@ -197,4 +214,14 @@ impl PackageScope {
         // The symbol was not found in the current package.
         None
     }
+}
+
+fn get_symbol_name(symbol: &Symbol) -> String {
+    return match symbol {
+        Symbol::Struct(s) => s.as_ref().borrow().name.clone(),
+        Symbol::Choice(c) => c.as_ref().borrow().name.clone(),
+        Symbol::Subtype(s) => s.as_ref().borrow().name.clone(),
+        Symbol::Enum(e) => e.as_ref().borrow().name.clone(),
+        _ => "".into(),
+    };
 }

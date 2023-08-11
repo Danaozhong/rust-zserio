@@ -1,6 +1,8 @@
 use crate::internal::ast::{field::Field, parameter::Parameter, zfunction::ZFunction};
 use std::cell::RefCell;
 use std::rc::Rc;
+
+#[derive(Debug)]
 pub struct ZUnion {
     pub name: String,
     pub comment: String,

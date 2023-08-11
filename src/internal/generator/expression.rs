@@ -73,10 +73,10 @@ fn generate_dot_expression(expression: &Expression) -> String {
 
 fn generate_identifier_expression(expression: &Expression) -> String {
     match expression.symbol.as_ref().unwrap() {
-        Symbol::Struct(s) => s.as_ref().borrow().name.clone(),
-        Symbol::Enum(e) => e.as_ref().borrow().name.clone(),
-        Symbol::Field(f, i) => format!("self.{}", f.as_ref().borrow().fields[*i].name),
-        Symbol::Parameter(p) => format!("self.{}", p.as_ref().borrow().name),
+        Symbol::Struct(s) => s.borrow().name.clone(),
+        Symbol::Enum(e) => e.borrow().name.clone(),
+        Symbol::Field(f) => format!("self.{}", f.borrow().name),
+        Symbol::Parameter(p) => format!("self.{}", p.borrow().name),
         _ => panic!("unsupported identifier type"),
     }
 }
