@@ -12,13 +12,13 @@ use std::collections::HashMap;
 
 use crate::internal::compiler::symbol_scope::{ModelScope, PackageScope, Symbol};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ZChoiceCase {
     pub conditions: Vec<Rc<RefCell<Expression>>>,
-    pub field: Option<Box<Field>>,
+    pub field: Option<Rc<RefCell<Field>>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ZChoice {
     pub name: String,
     pub template_parameters: Vec<String>,
@@ -55,7 +55,7 @@ impl ZChoice {
         }
         for case in &self.cases {
             if let Some(case_field) = &case.field {
-                case_field.evaluate(scope);
+                case_field.as_ref().borrow_mut().evaluate(scope);
             }
             for case_condition in &case.conditions {
                 case_condition.as_ref().borrow_mut().evaluate(scope);
@@ -63,7 +63,7 @@ impl ZChoice {
         }
         if let Some(default_field) = &self.default_case {
             if let Some(case_field) = &default_field.field {
-                case_field.evaluate(scope);
+                case_field.as_ref().borrow_mut().evaluate(scope);
             }
             for case_condition in &default_field.conditions {
                 case_condition.as_ref().borrow_mut().evaluate(scope);
@@ -155,9 +155,28 @@ pub fn add_choice_to_scope(z_choice: &Rc<RefCell<ZChoice>>, package_scope: &mut 
         let param = rc_param.as_ref().borrow();
         local_symbols.insert(param.name.clone(), Symbol::Parameter(rc_param.clone()));
     }
-    //for (i, field) in z_choice.borrow().cases.iter().enumerate() {
-    //local_symbols.insert(field.name.clone(), Symbol::Field(z_choice.clone(), i));
-    //}
+    // Add the fields to the scope.
+    for (i, choice_case) in z_choice.borrow().cases.iter().enumerate() {
+        if let Some(field_rc) = &choice_case.field {
+            let field = field_rc.as_ref().borrow();
+            local_symbols.insert(field.name.clone(), Symbol::Field(field_rc.clone()));
+        }
+    }
+    if let Some(default_case) = &z_choice.borrow().default_case {
+        if let Some(field_rc) = &default_case.field {
+            let field = field_rc.as_ref().borrow();
+            local_symbols.insert(field.name.clone(), Symbol::Field(field_rc.clone()));
+        }
+    }
+
+    // add the functions to the local symbol scope
+    for function in &z_choice.borrow().functions {
+        local_symbols.insert(
+            function.as_ref().borrow().name.clone(),
+            Symbol::Function((function.clone())),
+        );
+    }
+
     package_scope
         .local_symbols
         .insert(z_choice.borrow().name.clone(), local_symbols);

@@ -3,6 +3,8 @@ use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::generator::native_type::get_fundamental_type;
 use crate::internal::generator::types::ztype_to_rust_type;
 use codegen::Function;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub fn array_type_name(name: &String) -> String {
     String::from("zs_array_") + name
@@ -95,10 +97,14 @@ pub fn instantiate_zserio_array(function: &mut Function, field: &Field, force_pa
     function.line("};");
 }
 
-pub fn instantiate_zserio_arrays(function: &mut Function, fields: &Vec<Field>, force_packed: bool) {
+pub fn instantiate_zserio_arrays(
+    function: &mut Function,
+    fields: &Vec<Rc<RefCell<Field>>>,
+    force_packed: bool,
+) {
     for field in fields {
-        if field.array.is_some() {
-            instantiate_zserio_array(function, field, force_packed);
+        if field.borrow().array.is_some() {
+            instantiate_zserio_array(function, &field.borrow(), force_packed);
         }
     }
 }

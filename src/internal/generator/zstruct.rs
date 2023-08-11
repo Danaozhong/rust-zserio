@@ -1,9 +1,10 @@
+use crate::internal::ast::field::Field;
 use crate::internal::ast::zstruct::ZStruct;
+use crate::internal::generator::array::instantiate_zserio_arrays;
 use codegen::Scope;
 use codegen::Struct;
-
-use crate::internal::ast::field::Field;
-use crate::internal::generator::array::instantiate_zserio_arrays;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
@@ -59,7 +60,7 @@ pub fn generate_struct(
 
     // Add the data fields to the struct
     for field in &zstruct.fields {
-        generate_struct_member_for_field(gen_struct, field);
+        generate_struct_member_for_field(gen_struct, &field.borrow());
     }
 
     // generate the functions to serialize/deserialize
@@ -76,7 +77,7 @@ pub fn generate_struct(
     }
 
     for field in &zstruct.fields {
-        new_field(new_fn, field);
+        new_field(new_fn, &field.borrow());
     }
     new_fn.line("}");
 
@@ -95,13 +96,13 @@ pub fn generate_struct(
     rust_module_name
 }
 
-fn generate_zserio_read(struct_impl: &mut codegen::Impl, fields: &Vec<Field>) {
+fn generate_zserio_read(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefCell<Field>>>) {
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
     instantiate_zserio_arrays(zserio_read_fn, fields, false);
     for field in fields {
-        decode_field(zserio_read_fn, field, None);
+        decode_field(zserio_read_fn, &field.borrow(), None);
     }
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
@@ -110,18 +111,19 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, fields: &Vec<Field>) {
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
     instantiate_zserio_arrays(zserio_read_packed_fn, fields, true);
     for field in fields {
-        decode_field(zserio_read_packed_fn, field, Option::from(0)); // TODO node index
+        decode_field(zserio_read_packed_fn, &field.borrow(), Option::from(0)); // TODO node index
     }
 }
 
-fn generate_zserio_write(struct_impl: &mut codegen::Impl, fields: &Vec<Field>) {
+fn generate_zserio_write(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefCell<Field>>>) {
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
 
     instantiate_zserio_arrays(zserio_write_fn, &fields, false);
-    for field in fields {
-        encode_field(zserio_write_fn, field, None);
+    for field_rc in fields {
+        let field = field_rc.borrow();
+        encode_field(zserio_write_fn, &field, None);
     }
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
@@ -130,11 +132,11 @@ fn generate_zserio_write(struct_impl: &mut codegen::Impl, fields: &Vec<Field>) {
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
     instantiate_zserio_arrays(zserio_write_packed_fn, &fields, true);
     for field in fields {
-        encode_field(zserio_write_packed_fn, field, Option::from(0)); // TODO node index
+        encode_field(zserio_write_packed_fn, &field.borrow(), Option::from(0)); // TODO node index
     }
 }
 
-fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, fields: &Vec<Field>) {
+fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefCell<Field>>>) {
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
@@ -142,7 +144,7 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, fields: &Vec<Field>)
     instantiate_zserio_arrays(bitsize_fn, &fields, false);
     bitsize_fn.line("let mut end_position = bit_position;");
     for field in fields {
-        bitsize_field(bitsize_fn, field, None);
+        bitsize_field(bitsize_fn, &field.borrow(), None);
     }
     bitsize_fn.line("end_position - bit_position");
 
@@ -154,7 +156,7 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, fields: &Vec<Field>)
     instantiate_zserio_arrays(bitsize_packed_fn, &fields, true);
     bitsize_packed_fn.line("let mut end_position = bit_position;");
     for field in fields {
-        bitsize_field(bitsize_packed_fn, field, Option::from(0));
+        bitsize_field(bitsize_packed_fn, &field.borrow(), Option::from(0));
     }
     bitsize_packed_fn.line("end_position - bit_position");
 }

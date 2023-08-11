@@ -11,8 +11,9 @@ use crate::internal::generator::{
     types::to_rust_module_name, types::to_rust_type_name, types::ztype_to_rust_type,
     zstruct::generate_struct_member_for_field,
 };
-
+use std::cell::RefCell;
 use std::path::Path;
+use std::rc::Rc;
 
 pub fn generate_choice(
     scope: &mut Scope,
@@ -46,13 +47,13 @@ pub fn generate_choice(
     // Add the data fields for each choice case to the generated structure.
     for case in &zchoice.cases {
         if let Some(case_field) = &case.field {
-            generate_struct_member_for_field(gen_choice, case_field);
+            generate_struct_member_for_field(gen_choice, &case_field.borrow());
         }
     }
     // Also add the field for the default case, if it is set.
     if let Some(default_case) = &zchoice.default_case {
         if let Some(case_field) = &default_case.field {
-            generate_struct_member_for_field(gen_choice, case_field);
+            generate_struct_member_for_field(gen_choice, &case_field.borrow());
         }
     }
 
@@ -71,7 +72,7 @@ pub fn generate_choice(
 
     for case in &zchoice.cases {
         if let Some(case_field) = &case.field {
-            new_field(new_fn, case_field);
+            new_field(new_fn, &case_field.borrow());
         }
     }
     new_fn.line("}");
@@ -114,7 +115,7 @@ pub fn generate_choice_match_construct(
                 packing_node_index = Option::from(context_node_index);
                 context_node_index += 1
             }
-            f(code_gen_fn, field, packing_node_index);
+            f(code_gen_fn, &field.borrow(), packing_node_index);
         }
         code_gen_fn.line("},");
     }
@@ -125,7 +126,7 @@ pub fn generate_choice_match_construct(
             if packed {
                 packing_node_index = Option::from(context_node_index);
             }
-            f(code_gen_fn, field, packing_node_index);
+            f(code_gen_fn, &field.borrow(), packing_node_index);
         }
         code_gen_fn.line("),");
     } else {

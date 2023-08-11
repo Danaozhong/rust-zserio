@@ -1,6 +1,10 @@
-use crate::internal::ast::expression::{EvaluationState, Expression, ExpressionType};
+use crate::internal::ast::expression::{
+    EvaluationState, Expression, ExpressionFlag, ExpressionType,
+};
 use crate::internal::compiler::symbol_scope::Symbol;
-use crate::internal::generator::types::{convert_to_enum_field_name, custom_type_to_rust_type};
+use crate::internal::generator::types::{
+    convert_field_name, convert_to_enum_field_name, custom_type_to_rust_type,
+};
 use crate::internal::parser::gen::zseriolexer::DECIMAL_LITERAL;
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LPAREN, LSHIFT, LT, MINUS, MODULO,
@@ -63,20 +67,51 @@ fn generate_dot_expression(expression: &Expression) -> String {
         ExpressionType::Enum(z_enum) => {
             format!(
                 "{}::{}",
-                custom_type_to_rust_type(&z_enum.as_ref().borrow().name),
+                custom_type_to_rust_type(&z_enum.borrow().name),
                 convert_to_enum_field_name(&expression.operand2.as_ref().unwrap().text)
             )
         }
-        _ => panic!("unsupported dot expression"),
+        ExpressionType::Compound => {
+            match op1
+                .symbol
+                .as_ref()
+                .expect("failed to retrieve the symbol of compound expression")
+            {
+                Symbol::Field(z_field) => {
+                    let op2 = expression
+                        .operand2
+                        .as_ref()
+                        .expect("a dot expression must have two operands");
+
+                    let right_side = match op2.flag {
+                        ExpressionFlag::IsDotExpressionRightOperand => {
+                            convert_field_name(&op2.text)
+                        }
+                        _ => panic!("failed to generate right side of field dot expression"),
+                    };
+
+                    format!(
+                        "self.{}.{}",
+                        convert_field_name(&z_field.borrow().name),
+                        right_side,
+                    )
+                }
+                _ => panic!(
+                    "unsupported symbol type for dot expression generation {:?}",
+                    op1.symbol
+                ),
+            }
+        }
+        _ => panic!("unsupported dot expression {:?}", op1),
     };
 }
 
 fn generate_identifier_expression(expression: &Expression) -> String {
     match expression.symbol.as_ref().unwrap() {
-        Symbol::Struct(s) => s.as_ref().borrow().name.clone(),
-        Symbol::Enum(e) => e.as_ref().borrow().name.clone(),
-        Symbol::Field(f, i) => format!("self.{}", f.as_ref().borrow().fields[*i].name),
-        Symbol::Parameter(p) => format!("self.{}", p.as_ref().borrow().name),
+        Symbol::Struct(s) => s.borrow().name.clone(),
+        Symbol::Enum(e) => e.borrow().name.clone(),
+        Symbol::Field(f) => format!("self.{}", f.borrow().name),
+        Symbol::Parameter(p) => format!("self.{}", p.borrow().name),
         _ => panic!("unsupported identifier type"),
     }
 }

@@ -5,13 +5,13 @@ use crate::internal::ast::{field::Field, parameter::Parameter, zfunction::ZFunct
 use crate::internal::compiler::symbol_scope::{ModelScope, PackageScope, Symbol};
 use std::cell::RefCell;
 use std::rc::Rc;
-
+#[derive(Debug)]
 pub struct ZStruct {
     pub name: String,
     pub comment: String,
     pub template_parameters: Vec<String>,
     pub type_parameters: Vec<Rc<RefCell<Parameter>>>,
-    pub fields: Vec<Field>,
+    pub fields: Vec<Rc<RefCell<Field>>>,
     pub functions: Vec<Rc<RefCell<ZFunction>>>,
 }
 
@@ -27,7 +27,7 @@ impl ZStruct {
             param.as_ref().borrow().zserio_type.evaluate(scope);
         }
         for field in &self.fields {
-            field.evaluate(scope);
+            field.as_ref().borrow_mut().evaluate(scope);
         }
         for function in &self.functions {
             function.as_ref().borrow_mut().evaluate(scope);
@@ -42,9 +42,20 @@ pub fn add_struct_to_scope(z_struct: &Rc<RefCell<ZStruct>>, package_scope: &mut 
         let param = rc_param.as_ref().borrow();
         local_symbols.insert(param.name.clone(), Symbol::Parameter(rc_param.clone()));
     }
-    for (i, field) in z_struct.borrow().fields.iter().enumerate() {
-        local_symbols.insert(field.name.clone(), Symbol::Field(z_struct.clone(), i));
+
+    // add the fields to the local scope
+    for field in &z_struct.borrow().fields {
+        local_symbols.insert(field.borrow().name.clone(), Symbol::Field(field.clone()));
     }
+
+    // add the functions to the local scope
+    for function in &z_struct.borrow().functions {
+        local_symbols.insert(
+            function.as_ref().borrow().name.clone(),
+            Symbol::Function((function.clone())),
+        );
+    }
+
     package_scope
         .local_symbols
         .insert(z_struct.borrow().name.clone(), local_symbols);

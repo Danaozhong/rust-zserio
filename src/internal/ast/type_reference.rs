@@ -4,13 +4,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TypeReference {
     pub is_builtin: bool,
     pub package: String,
     pub name: String,
     pub bits: i8,
-    pub template_arguments: Vec<Box<TypeReference>>,
+    pub template_arguments: Vec<TypeReference>,
     pub type_arguments: Vec<Rc<RefCell<Expression>>>,
     pub length_expression: Option<Rc<RefCell<Expression>>>,
 }

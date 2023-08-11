@@ -1,9 +1,11 @@
 use crate::internal::ast::expression::Expression;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::symbol_scope::{ModelScope, PackageScope, Symbol};
+use crate::internal::parser::gen::zseriolexer::AND;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Clone, Debug)]
 pub struct ZFunction {
     pub name: String,
     pub result: Rc<RefCell<Expression>>,
