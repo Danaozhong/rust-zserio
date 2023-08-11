@@ -153,6 +153,7 @@ fn instantiate_struct(
                     result: function.result.clone(),
                     return_type: Box::new(instantiated_types[&function.return_type.name].clone()),
                 })));
+        } else {
             instantiated_struct
                 .functions
                 .push(Rc::new(RefCell::new(function.clone())));
@@ -290,6 +291,7 @@ fn instantiate_choice(
                     result: function.result.clone(),
                     return_type: Box::new(instantiated_types[&function.return_type.name].clone()),
                 })));
+        } else {
             instantiated_choice
                 .functions
                 .push(Rc::new(RefCell::new(function.clone())));
