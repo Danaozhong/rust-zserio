@@ -20,6 +20,7 @@ fn main() {
     test_functions();
     test_choice();
     test_template_instantiation();
+    test_functions_in_instantiated_templates();
 }
 
 fn test_structure() {
@@ -120,4 +121,14 @@ fn test_template_instantiation() {
     other_struct.zserio_read(&mut bitreader);
 
     assert!(other_struct.field.description == z_struct.field.description);
+}
+
+fn test_functions_in_instantiated_templates() {
+    // This function tests that templates can be successfully instantiated, functions that rely on
+    // template properties (e.g. "T.getValue()") that are unknown before tempalte instantiation.
+    let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
+    z_struct.field.description = "Test Description".into();
+    z_struct.parameter = 15;
+    z_struct.field.value = 32;
+    assert!(z_struct.get_value() == 64);
 }
