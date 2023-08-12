@@ -99,9 +99,9 @@ pub fn encode_field(function: &mut Function, field: &Field, context_node_index: 
     }
 
     if field.is_optional {
-        function.line("},");
+        function.line("}");
         // write a "0" if the field is not set.
-        function.line("None => writer.write_bool(false).unwrap(), ");
+        function.line("None => writer.write_bool(false).unwrap()");
         function.line("};");
     }
 }

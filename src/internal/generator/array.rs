@@ -76,7 +76,7 @@ pub fn instantiate_zserio_array(function: &mut Function, field: &Field, force_pa
     let rust_type = ztype_to_rust_type(field.field_type.as_ref());
     // also initialize the array part
     function.line(format!(
-        "let mut {} = ztype::Array::<{}>{{",
+        "let mut {} = ztype::Array::{}{{",
         array_type_name(&field.name),
         rust_type
     ));
