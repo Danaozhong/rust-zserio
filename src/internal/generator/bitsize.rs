@@ -35,6 +35,10 @@ pub fn bitsize_type_reference(
                 "end_position += ztype::bitsize_string({}.as_str());",
                 field_name
             ));
+        } else if type_reference.name == "extern" {
+            // TODO
+        } else if type_reference.name == "bytes" {
+            // TODO
         } else if type_reference.name == "bool" {
             // boolean
             function.line("end_position += 1;");

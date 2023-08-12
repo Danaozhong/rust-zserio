@@ -67,6 +67,8 @@ pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
         "bool" => Ok("bool".into()),
         "bit" => Ok("u64".into()),
         "int" => Ok("i64".into()),
+        "extern" => Ok("ztype::ExternType".into()),
+        "bytes" => Ok("ztype::BytesType".into()),
         _ => Err("not found"),
     }
 }

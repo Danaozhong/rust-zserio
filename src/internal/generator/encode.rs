@@ -31,6 +31,10 @@ pub fn encode_type(
                 "ztype::write_string(writer, {}.as_str());",
                 field_name
             ));
+        } else if fund_type.name == "extern" {
+            // TODO
+        } else if fund_type.name == "bytes" {
+            // TODO
         } else if fund_type.name == "bool" {
             // boolean
             function.line(format!(
