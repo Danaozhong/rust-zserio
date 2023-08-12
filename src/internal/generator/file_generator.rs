@@ -4,9 +4,15 @@ use std::io::Write;
 use std::path::Path;
 
 pub fn write_to_file(content: &String, root_path: &Path, zserio_pkg_name: &str, file_name: &str) {
-    let formatted_code = RustFmt::default()
-        .format_str(content)
-        .expect("code formatting failed");
+    let format_result = RustFmt::default().format_str(content);
+    if format_result.is_err() {
+        panic!(
+            "code formatting failed: error {:?}, content {:?}",
+            format_result.err(),
+            content
+        );
+    }
+    let formatted_code = format_result.unwrap();
     let file_bytes = formatted_code.as_bytes();
 
     let mut file_path = root_path.to_owned();
