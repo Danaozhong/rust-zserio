@@ -19,11 +19,18 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
             "int16" => "BitFieldArrayTrait".into(),
             "int32" => "BitFieldArrayTrait".into(),
             "int64" => "BitFieldArrayTrait".into(),
-            "varint32" => "VarUintArrayTrait".into(),
+            "varint16" => "VarInt16ArrayTrait".into(),
+            "varint32" => "VarInt32ArrayTrait".into(),
+            "varint64" => "VarInt64ArrayTrait".into(),
+            "varint" => "VarIntArrayTrait".into(),
             "uint8" => "UnsignedBitFieldArrayTrait".into(),
             "uint16" => "UnsignedBitFieldArrayTrait".into(),
             "uint32" => "UnsignedBitFieldArrayTrait".into(),
+            "varuint16" => "VarUint16ArrayTrait".into(),
             "varuint32" => "VarUint32ArrayTrait".into(),
+            "varuint64" => "VarUint64ArrayTrait".into(),
+            "varuint" => "VarUintArrayTrait".into(),
+            "varsize" => "VarSizeArrayTrait".into(),
             "string" => "StringArrayTrait".into(),
             "float16" => "F16ArrayTrait".into(),
             "float32" => "F32ArrayTrait".into(),
@@ -32,7 +39,7 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
             "bit" => "UnsignedBitFieldArrayTrait".into(),
             "int" => "BitFieldArrayTrait".into(),
             "extern" => "ObjectArrayTrait".into(),
-            _ => panic!("failed to identify array trait"),
+            _ => panic!("failed to identify array trait {:?}", &zserio_type.name),
         }
     }
 }

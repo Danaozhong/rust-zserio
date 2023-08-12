@@ -31,7 +31,8 @@ pub fn convert_to_function_name(name: &String) -> String {
 pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
     if ztype.is_builtin {
         // the type is a zserio built-in type, such as int32, string, bool
-        return zserio_to_rust_type(&ztype.name).expect("type mapping failed");
+        return zserio_to_rust_type(&ztype.name)
+            .expect(format!("type mapping failed {:?}", &ztype.name).as_str());
     }
     // the type is a custom type, defined in some zserio file.
     custom_type_to_rust_type(&ztype.name)
@@ -47,11 +48,18 @@ pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
         "int16" => Ok("i16".into()),
         "int32" => Ok("i32".into()),
         "int64" => Ok("i64".into()),
+        "varint16" => Ok("i16".into()),
         "varint32" => Ok("i32".into()),
+        "varint64" => Ok("i64".into()),
+        "varint" => Ok("i64".into()),
         "uint8" => Ok("u8".into()),
         "uint16" => Ok("u16".into()),
         "uint32" => Ok("u32".into()),
+        "varuint16" => Ok("u16".into()),
         "varuint32" => Ok("u32".into()),
+        "varuint64" => Ok("u64".into()),
+        "varsize" => Ok("u32".into()),
+        "varuint" => Ok("u64".into()),
         "string" => Ok("String".into()),
         "float16" => Ok("f32".into()),
         "float32" => Ok("f32".into()),
