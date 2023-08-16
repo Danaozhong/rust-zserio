@@ -1,9 +1,6 @@
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol, SymbolReference};
 
-pub fn get_fundamental_type(
-    symbol_ref: &SymbolReference,
-    scope: &mut ModelScope,
-) -> SymbolReference {
+pub fn _get_fundamental_type(symbol_ref: &SymbolReference, scope: &ModelScope) -> SymbolReference {
     let mut current_symbol_ref = symbol_ref.clone();
 
     loop {

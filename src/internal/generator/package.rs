@@ -59,6 +59,13 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // For now, this is using raw string concatination, as codegen does not support
     // module declarations.
     let mut mod_file_content = String::from("");
+
+    // https://github.com/Danaozhong/rust-zserio/issues/28
+    // The generated code does not pass clippy format checks.
+    // Fixing these is moved to later, once the generated code works correctly.
+    mod_file_content += "#![allow(clippy::all)]\n";
+    mod_file_content += "#![allow(warnings)]\n";
+
     for module_name in module_names {
         mod_file_content += format!("pub mod {};\n", module_name).as_str();
     }

@@ -18,12 +18,12 @@ pub fn instantiate_type(
 ) -> TypeReference {
     // A template instantiation is only possible if the type accepts template arguments.
     // For types that are no templates, return the type itself.
-    if zserio_type.template_arguments.len() == 0 {
+    if zserio_type.template_arguments.is_empty() {
         return zserio_type.clone();
     }
 
     let mut new_type_name = String::from(name);
-    if new_type_name == "" {
+    if new_type_name.is_empty() {
         // in case no name is provided, a new name needs to be generated.
         new_type_name = generate_instantiated_name(zserio_type);
     }
@@ -67,7 +67,7 @@ fn instantiate_struct(
     template_arguments: &Vec<TypeReference>,
     instantiated_name: &String,
 ) -> TypeReference {
-    assert!(z_struct.template_parameters.len() > 0);
+    assert!(!z_struct.template_parameters.is_empty());
     assert!(z_struct.template_parameters.len() == template_arguments.len());
 
     let new_type_ref = TypeReference {
@@ -178,7 +178,7 @@ fn instantiate_choice(
     template_arguments: &Vec<TypeReference>,
     instantiated_name: &String,
 ) -> TypeReference {
-    assert!(z_choice.template_parameters.len() > 0);
+    assert!(!z_choice.template_parameters.is_empty());
     assert!(z_choice.template_parameters.len() == template_arguments.len());
 
     let new_type_ref = TypeReference {
@@ -315,7 +315,7 @@ pub fn instantiate_field(
     instantiated_types: &HashMap<String, TypeReference>,
 ) -> Field {
     let mut new_field = field.clone();
-    if new_field.field_type.template_arguments.len() > 0 {
+    if !new_field.field_type.template_arguments.is_empty() {
         // The field type is not a template type itself, but by itself is a template,
         // which is using the template type in its template parameters.
         // For example:
@@ -324,7 +324,7 @@ pub fn instantiate_field(
         // Iterate over the teamplate parameters and instantiate them.
         let mut new_template_arguments = vec![];
 
-        for (index, template_parameter) in
+        for (_index, template_parameter) in
             new_field.field_type.template_arguments.iter().enumerate()
         {
             if instantiated_types.contains_key(&template_parameter.name) {
@@ -335,7 +335,7 @@ pub fn instantiate_field(
         }
         new_field.field_type.template_arguments = new_template_arguments;
 
-        new_field.field_type = Box::from(instantiate_type(pkg, scope, &*new_field.field_type, ""));
+        new_field.field_type = Box::from(instantiate_type(pkg, scope, &new_field.field_type, ""));
         return new_field;
     }
 
@@ -344,5 +344,5 @@ pub fn instantiate_field(
     if instantiated_types.contains_key(&field.field_type.name) {
         new_field.field_type = Box::from(instantiated_types[&field.field_type.name].clone());
     }
-    return new_field;
+    new_field
 }

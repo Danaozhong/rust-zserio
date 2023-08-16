@@ -27,9 +27,9 @@ pub fn new_type(
     is_optional: bool,
     array: &Option<Array>,
 ) {
-    let native_type = get_fundamental_type(&type_reference);
+    let native_type = get_fundamental_type(type_reference);
     let fund_type = native_type.fundamental_type;
-    let field_name = convert_field_name(&name);
+    let field_name = convert_field_name(name);
     let rust_type = ztype_to_rust_type(type_reference);
 
     if is_optional {

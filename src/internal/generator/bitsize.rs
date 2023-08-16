@@ -38,104 +38,100 @@ pub fn bitsize_type_reference(
         } else if type_reference.name == "bool" {
             // boolean
             function.line("end_position += 1;");
+        } else if let Some(node_idx) = context_node_index {
+            // packed bitsize
+            function.line(format!(
+                "end_position += context_node.children[{}].context.bitsize_of(&{}, end_position, &{});",
+                node_idx,
+                initialize_array_trait(type_reference),
+                field_name,
+            ));
+        } else if type_reference.bits != 0 {
+            function.line(format!("end_position += {};", type_reference.bits));
         } else {
-            if let Some(node_idx) = context_node_index {
-                // packed bitsize
-                function.line(format!(
-                    "end_position += context_node.children[{}].context.bitsize_of(&{}, end_position, &{});",
-                    node_idx,
-                    initialize_array_trait(&type_reference),
-                    field_name,
-                ));
-            } else {
-                if type_reference.bits != 0 {
-                    function.line(format!("end_position += {};", type_reference.bits));
-                } else {
-                    match type_reference.name.as_str() {
-                        "uint8" => {
-                            function.line("end_position += 8;");
-                        }
-                        "uint16" => {
-                            function.line("end_position += 16;");
-                        }
-                        "uint32" => {
-                            function.line("end_position += 32;");
-                        }
-                        "uint64" => {
-                            function.line("end_position += 64;");
-                        }
-                        "int8" => {
-                            function.line("end_position += 8;");
-                        }
-                        "int16" => {
-                            function.line("end_position += 16;");
-                        }
-                        "int32" => {
-                            function.line("end_position += 32;");
-                        }
-                        "int64" => {
-                            function.line("end_position += 64;");
-                        }
-                        "float16" => {
-                            function.line("end_position += 16;");
-                        }
-                        "float32" => {
-                            function.line("end_position += 32;");
-                        }
-                        "float64" => {
-                            function.line("end_position += 64;");
-                        }
-                        "varint" => {
-                            function.line(format!(
-                                "end_position += ztype::signed_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varint16" => {
-                            function.line(format!(
-                                "end_position += ztype::signed_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varint32" => {
-                            function.line(format!(
-                                "end_position += ztype::signed_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varint64" => {
-                            function.line(format!(
-                                "end_position += ztype::signed_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varuint" => {
-                            function.line(format!(
-                                "end_position += ztype::unsigned_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varuint16" => {
-                            function.line(format!(
-                                "end_position += ztype::unsigned_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varuint32" => {
-                            function.line(format!(
-                                "end_position += ztype::unsigned_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        "varuint64" => {
-                            function.line(format!(
-                                "end_position += ztype::unsigned_bit_size({});",
-                                field_name
-                            ));
-                        }
-                        _ => panic!("failed"),
-                    }
+            match type_reference.name.as_str() {
+                "uint8" => {
+                    function.line("end_position += 8;");
                 }
+                "uint16" => {
+                    function.line("end_position += 16;");
+                }
+                "uint32" => {
+                    function.line("end_position += 32;");
+                }
+                "uint64" => {
+                    function.line("end_position += 64;");
+                }
+                "int8" => {
+                    function.line("end_position += 8;");
+                }
+                "int16" => {
+                    function.line("end_position += 16;");
+                }
+                "int32" => {
+                    function.line("end_position += 32;");
+                }
+                "int64" => {
+                    function.line("end_position += 64;");
+                }
+                "float16" => {
+                    function.line("end_position += 16;");
+                }
+                "float32" => {
+                    function.line("end_position += 32;");
+                }
+                "float64" => {
+                    function.line("end_position += 64;");
+                }
+                "varint" => {
+                    function.line(format!(
+                        "end_position += ztype::signed_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varint16" => {
+                    function.line(format!(
+                        "end_position += ztype::signed_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varint32" => {
+                    function.line(format!(
+                        "end_position += ztype::signed_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varint64" => {
+                    function.line(format!(
+                        "end_position += ztype::signed_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varuint" => {
+                    function.line(format!(
+                        "end_position += ztype::unsigned_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varuint16" => {
+                    function.line(format!(
+                        "end_position += ztype::unsigned_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varuint32" => {
+                    function.line(format!(
+                        "end_position += ztype::unsigned_bit_size({});",
+                        field_name
+                    ));
+                }
+                "varuint64" => {
+                    function.line(format!(
+                        "end_position += ztype::unsigned_bit_size({});",
+                        field_name
+                    ));
+                }
+                _ => panic!("failed"),
             }
         }
     }
@@ -148,9 +144,7 @@ pub fn bitsize_field(function: &mut Function, field: &Field, context_node_index:
 
     if field.is_optional {
         function.line("end_position += 1;");
-        function.line(format!("match {} {{", field_name));
-        function.line("None => {}, ");
-        function.line("Some(x) => {");
+        function.line(format!("if let Some(x) = {} {{", field_name));
         field_name = "x".into();
     }
 
@@ -172,7 +166,6 @@ pub fn bitsize_field(function: &mut Function, field: &Field, context_node_index:
     if field.is_optional {
         // in case the field is optional, end the if condition which checks
         // if the field is set.
-        function.line("},");
-        function.line("};");
+        function.line("}");
     }
 }

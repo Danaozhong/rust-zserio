@@ -15,7 +15,7 @@ pub fn decode_type(
     field_type: &TypeReference,
     context_node_index: Option<u8>,
 ) {
-    let native_type = get_fundamental_type(&field_type);
+    let native_type = get_fundamental_type(field_type);
     let fund_type = native_type.fundamental_type;
 
     if native_type.is_marshaler {
@@ -41,37 +41,35 @@ pub fn decode_type(
         } else if fund_type.name == "bool" {
             // boolean
             function.line(format!("{} = reader.read_bool();", lvalue_field_name));
+        } else if let Some(node_idx) = context_node_index {
+            // packed decoding
+            function.line(format!(
+                "{} = context_node.children[{}].context.read(&{}, reader);",
+                lvalue_field_name,
+                node_idx,
+                initialize_array_trait(&fund_type),
+            ));
         } else {
-            if let Some(node_idx) = context_node_index {
-                // packed decoding
-                function.line(format!(
-                    "{} = context_node.children[{}].context.read(&{}, reader);",
-                    lvalue_field_name,
-                    node_idx,
-                    initialize_array_trait(&fund_type),
-                ));
-            } else {
-                // nonpacked decoding
-                if fund_type.bits != 0 {
-                    if fund_type.name == "int" {
-                        function.line(format!(
-                            "{} = ztype::read_signed_bits(reader, {});",
-                            lvalue_field_name, fund_type.bits
-                        ));
-                    } else {
-                        function.line(format!(
-                            "{} = ztype::read_unsigned_bits(reader, {});",
-                            lvalue_field_name, fund_type.bits
-                        ));
-                    }
-                } else {
-                    let rust_type_name = zserio_to_rust_type(&fund_type.name)
-                        .expect("failed to determine native type");
+            // nonpacked decoding
+            if fund_type.bits != 0 {
+                if fund_type.name == "int" {
                     function.line(format!(
-                        "{} = ztype::read_{}(reader);",
-                        lvalue_field_name, rust_type_name
+                        "{} = ztype::read_signed_bits(reader, {});",
+                        lvalue_field_name, fund_type.bits
+                    ));
+                } else {
+                    function.line(format!(
+                        "{} = ztype::read_unsigned_bits(reader, {});",
+                        lvalue_field_name, fund_type.bits
                     ));
                 }
+            } else {
+                let rust_type_name =
+                    zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
+                function.line(format!(
+                    "{} = ztype::read_{}(reader);",
+                    lvalue_field_name, rust_type_name
+                ));
             }
         }
     } else {

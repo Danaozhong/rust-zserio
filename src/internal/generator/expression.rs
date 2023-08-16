@@ -7,8 +7,8 @@ use crate::internal::generator::types::{
 };
 use crate::internal::parser::gen::zseriolexer::DECIMAL_LITERAL;
 use crate::internal::parser::gen::zserioparser::{
-    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LPAREN, LSHIFT, LT, MINUS, MODULO,
-    MULTIPLY, NE, OR, PLUS, QUESTIONMARK, RPAREN, RSHIFT, TILDE, XOR,
+    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, LE, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE,
+    OR, PLUS, QUESTIONMARK, RPAREN, RSHIFT, TILDE, XOR,
 };
 
 pub struct ExpressionGenerationResult {
@@ -19,14 +19,14 @@ pub struct ExpressionGenerationResult {
 
 pub fn generate_expression(expression: &Expression) -> String {
     assert!(expression.evaluation_state == EvaluationState::Completed);
-    return match expression.expression_type {
+    match expression.expression_type {
         LPAREN => format!(
             "({})",
-            generate_expression(&expression.operand1.as_ref().unwrap())
+            generate_expression(expression.operand1.as_ref().unwrap())
         ),
         RPAREN => format!(
             "{}()",
-            generate_expression(&expression.operand1.as_ref().unwrap())
+            generate_expression(expression.operand1.as_ref().unwrap())
         ),
         DOT => generate_dot_expression(expression),
         EQ | GE | GT | LE | LT | NE => generate_comparison_expression(expression),
@@ -41,13 +41,13 @@ pub fn generate_expression(expression: &Expression) -> String {
         0xFFFFF => (), // Ignore
          */
         _ => panic!("unsupported expression type"),
-    };
+    }
 }
 
 fn generate_arithmetic_expression(expression: &Expression) -> String {
-    return format!(
+    format!(
         "{} {} {}",
-        generate_expression(&expression.operand1.as_ref().unwrap()),
+        generate_expression(expression.operand1.as_ref().unwrap()),
         match expression.expression_type {
             PLUS => "+",
             MINUS => "-",
@@ -56,8 +56,8 @@ fn generate_arithmetic_expression(expression: &Expression) -> String {
             MODULO => "%",
             _ => panic!("unexpected arithmetic expression operator"),
         },
-        generate_expression(&expression.operand2.as_ref().unwrap()),
-    );
+        generate_expression(expression.operand2.as_ref().unwrap()),
+    )
 }
 
 fn generate_dot_expression(expression: &Expression) -> String {
@@ -124,30 +124,30 @@ if {} {{
 }} else {{
     {}
 }}",
-        generate_expression(&expression.operand1.as_ref().unwrap()),
-        generate_expression(&expression.operand2.as_ref().unwrap()),
-        generate_expression(&expression.operand3.as_ref().unwrap()),
+        generate_expression(expression.operand1.as_ref().unwrap()),
+        generate_expression(expression.operand2.as_ref().unwrap()),
+        generate_expression(expression.operand3.as_ref().unwrap()),
     )
 }
 
 fn generate_logical_negation(expression: &Expression) -> String {
     format!(
         "!{}",
-        generate_expression(&expression.operand1.as_ref().unwrap())
+        generate_expression(expression.operand1.as_ref().unwrap())
     )
 }
 
 fn generate_bitwise_negation(expression: &Expression) -> String {
     format!(
         "~{}",
-        generate_expression(&expression.operand1.as_ref().unwrap())
+        generate_expression(expression.operand1.as_ref().unwrap())
     )
 }
 
 fn generate_bitwise_expression(expression: &Expression) -> String {
-    return format!(
+    format!(
         "{} {} {}",
-        generate_expression(&expression.operand1.as_ref().unwrap()),
+        generate_expression(expression.operand1.as_ref().unwrap()),
         match expression.expression_type {
             AND => "&",
             OR => "|",
@@ -156,14 +156,14 @@ fn generate_bitwise_expression(expression: &Expression) -> String {
             RSHIFT => ">>",
             _ => panic!("unexpected bitwise expression operator"),
         },
-        generate_expression(&expression.operand2.as_ref().unwrap()),
-    );
+        generate_expression(expression.operand2.as_ref().unwrap()),
+    )
 }
 
 fn generate_comparison_expression(expression: &Expression) -> String {
-    return format!(
+    format!(
         "{} {} {}",
-        generate_expression(&expression.operand1.as_ref().unwrap()),
+        generate_expression(expression.operand1.as_ref().unwrap()),
         match expression.expression_type {
             EQ => "==",
             LE => "<=",
@@ -173,8 +173,8 @@ fn generate_comparison_expression(expression: &Expression) -> String {
             NE => "!=",
             _ => panic!("unexpected comparison expression operator"),
         },
-        generate_expression(&expression.operand2.as_ref().unwrap()),
-    );
+        generate_expression(expression.operand2.as_ref().unwrap()),
+    )
 }
 
 fn generate_literal_expression(expression: &Expression) -> String {

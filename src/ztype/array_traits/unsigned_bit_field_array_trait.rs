@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_cast)] // The duplicate_item macro will cause unnecessary cast warnings that are hard to fix
+
 use crate::ztype::array_traits::array_trait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 use crate::ztype::read_unsigned_bits;

@@ -6,11 +6,11 @@ pub struct ExternType {
     pub data_blob: Vec<u8>,
 }
 
-pub fn read_extern(bit_reader: &mut BitReader) -> ExternType {
+pub fn read_extern(_bit_reader: &mut BitReader) -> ExternType {
     ExternType {
         bit_size: 0,
         data_blob: vec![],
     }
 }
 
-pub fn write_extern(writer: &mut BitWriter, extern_type: &ExternType) {}
+pub fn write_extern(_writer: &mut BitWriter, _extern_type: &ExternType) {}

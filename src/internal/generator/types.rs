@@ -2,7 +2,7 @@ use crate::internal::ast::type_reference::TypeReference;
 use convert_case::{Case, Casing};
 use std::result::Result;
 
-const RESERVED_RUST_KEYWORDS: &'static [&'static str] = &["type", "struct"];
+const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct"];
 
 pub fn to_rust_module_name(name: &String) -> String {
     name.to_case(Case::Snake)
@@ -38,11 +38,7 @@ pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
 }
 
 pub fn custom_type_to_rust_type(name: &String) -> String {
-    format!(
-        "{}::{}",
-        to_rust_module_name(&name),
-        to_rust_type_name(&name)
-    )
+    format!("{}::{}", to_rust_module_name(name), to_rust_type_name(name))
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {

@@ -11,9 +11,8 @@ use crate::internal::generator::{
     types::to_rust_module_name, types::to_rust_type_name, types::ztype_to_rust_type,
     zstruct::generate_struct_member_for_field,
 };
-use std::cell::RefCell;
+
 use std::path::Path;
-use std::rc::Rc;
 
 pub fn generate_choice(
     scope: &mut Scope,
@@ -77,9 +76,9 @@ pub fn generate_choice(
     }
     new_fn.line("}");
 
-    generate_zserio_read(choice_impl, &zchoice);
-    generate_zserio_write(choice_impl, &zchoice);
-    generate_zserio_bitsize(choice_impl, &zchoice);
+    generate_zserio_read(choice_impl, zchoice);
+    generate_zserio_write(choice_impl, zchoice);
+    generate_zserio_bitsize(choice_impl, zchoice);
 
     // Generate all the zserio functions.
     let pub_impl = scope.new_impl(&rust_type_name);
@@ -104,7 +103,7 @@ pub fn generate_choice_match_construct(
     for case in &zchoice.cases {
         let mut case_expressions = vec![];
         for case_expr in &case.conditions {
-            case_expressions.push(generate_expression(&*case_expr.as_ref().borrow()));
+            case_expressions.push(generate_expression(&case_expr.as_ref().borrow()));
         }
         let selector_expression_evaluation = case_expressions.join(" | ");
 

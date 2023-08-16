@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use crate::internal::ast::type_reference::TypeReference;
-use crate::internal::compiler::symbol_scope::{ModelScope, PackageScope, Symbol};
+use crate::internal::compiler::symbol_scope::{PackageScope, Symbol};
 use std::cell::RefCell;
 use std::rc::Rc;
 
