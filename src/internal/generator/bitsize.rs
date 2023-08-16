@@ -38,6 +38,8 @@ pub fn bitsize_type_reference(
         } else if type_reference.name == "bool" {
             // boolean
             function.line("end_position += 1;");
+        } else if type_reference.bits != 0 {
+            function.line(format!("end_position += {};", type_reference.bits));
         } else if let Some(node_idx) = context_node_index {
             // packed bitsize
             function.line(format!(
@@ -46,68 +48,52 @@ pub fn bitsize_type_reference(
                 initialize_array_trait(type_reference),
                 field_name,
             ));
-        } else if type_reference.bits != 0 {
-            function.line(format!("end_position += {};", type_reference.bits));
         } else {
-            if let Some(node_idx) = context_node_index {
-                // packed bitsize
-                function.line(format!(
-                    "end_position += context_node.children[{}].context.bitsize_of(&{}, end_position, &{});",
-                    node_idx,
-                    initialize_array_trait(&type_reference),
-                    field_name,
-                ));
-            } else {
-                if type_reference.bits != 0 {
-                    function.line(format!("end_position += {};", type_reference.bits));
-                } else {
-                    let bit_length = match type_reference.name.as_str() {
-                        "uint8" => String::from("8"),
-                        "uint16" => String::from("16"),
-                        "uint32" => String::from("32"),
-                        "uint64" => String::from("64"),
-                        "int8" => String::from("8"),
-                        "int16" => String::from("16"),
-                        "int32" => String::from("32"),
-                        "int64" => String::from("64"),
-                        "float16" => String::from("16"),
-                        "float32" => String::from("32"),
-                        "float64" => String::from("64"),
-                        "varint" => {
-                            format!("ztype::signed_bit_size({})", field_name)
-                        }
-                        "varint16" => {
-                            format!("ztype::signed_bit_size({})", field_name)
-                        }
-                        "varint32" => {
-                            format!("ztype::signed_bit_size({})", field_name)
-                        }
-                        "varint64" => {
-                            format!("ztype::signed_bit_size({})", field_name)
-                        }
-                        "varuint" => {
-                            format!("ztype::unsigned_bit_size({})", field_name)
-                        }
-                        "varuint16" => {
-                            format!("ztype::unsigned_bit_size({})", field_name)
-                        }
-                        "varuint32" => {
-                            format!("ztype::unsigned_bit_size({})", field_name)
-                        }
-                        "varuint64" => {
-                            format!("ztype::unsigned_bit_size({})", field_name)
-                        }
-                        "varsize" => {
-                            format!("ztype::unsigned_bit_size({})", field_name)
-                        }
-                        "int" | "bit" => {
-                            format!("{}", type_reference.bits)
-                        }
-                        _ => panic!("failed"),
-                    };
-                    function.line(format!("end_position += {};", bit_length,));
+            let bit_length = match type_reference.name.as_str() {
+                "uint8" => String::from("8"),
+                "uint16" => String::from("16"),
+                "uint32" => String::from("32"),
+                "uint64" => String::from("64"),
+                "int8" => String::from("8"),
+                "int16" => String::from("16"),
+                "int32" => String::from("32"),
+                "int64" => String::from("64"),
+                "float16" => String::from("16"),
+                "float32" => String::from("32"),
+                "float64" => String::from("64"),
+                "varint" => {
+                    format!("ztype::signed_bit_size({})", field_name)
                 }
-            }
+                "varint16" => {
+                    format!("ztype::signed_bit_size({})", field_name)
+                }
+                "varint32" => {
+                    format!("ztype::signed_bit_size({})", field_name)
+                }
+                "varint64" => {
+                    format!("ztype::signed_bit_size({})", field_name)
+                }
+                "varuint" => {
+                    format!("ztype::unsigned_bit_size({})", field_name)
+                }
+                "varuint16" => {
+                    format!("ztype::unsigned_bit_size({})", field_name)
+                }
+                "varuint32" => {
+                    format!("ztype::unsigned_bit_size({})", field_name)
+                }
+                "varuint64" => {
+                    format!("ztype::unsigned_bit_size({})", field_name)
+                }
+                "varsize" => {
+                    format!("ztype::unsigned_bit_size({})", field_name)
+                }
+                "int" | "bit" => {
+                    format!("{}", type_reference.bits)
+                }
+                _ => panic!("failed"),
+            };
+            function.line(format!("end_position += {};", bit_length,));
         }
     }
 }

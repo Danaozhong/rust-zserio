@@ -32,7 +32,7 @@ pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
     if ztype.is_builtin {
         // the type is a zserio built-in type, such as int32, string, bool
         return zserio_to_rust_type(&ztype.name)
-            .expect(format!("type mapping failed {:?}", &ztype.name).as_str());
+            .unwrap_or_else(|_| panic!("type mapping failed {:?}", &ztype.name));
     }
     // the type is a custom type, defined in some zserio file.
     custom_type_to_rust_type(&ztype.name)
