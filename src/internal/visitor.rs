@@ -1358,7 +1358,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         };
         let mut package = "".into();
         if name.contains('.') {
-            let (new_name, new_package) = name.rsplit_once('.').unwrap();
+            let (new_package, new_name) = name.rsplit_once('.').unwrap();
             package = new_package.into();
             name = new_name.into();
         }
