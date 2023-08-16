@@ -75,9 +75,8 @@ pub fn encode_field(function: &mut Function, field: &Field, context_node_index: 
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
     if field.is_optional {
-        function.line(format!("match {} {{", field_name));
-        function.line("Some(x) => {");
-        function.line("let _ = writer.write_bool(true);");
+        function.line(format!("if let Some(x) = {} {{", field_name));
+        function.line("writer.write_bool(true).expect(\"failed to write bool\");");
         field_name = "x".into();
     }
 
@@ -97,9 +96,9 @@ pub fn encode_field(function: &mut Function, field: &Field, context_node_index: 
     }
 
     if field.is_optional {
-        function.line("},");
+        function.line("} else {");
         // write a "0" if the field is not set.
-        function.line("None => writer.write_bool(false).unwrap(), ");
-        function.line("};");
+        function.line("writer.write_bool(false).expect(\"failed to write bool\");");
+        function.line("}");
     }
 }

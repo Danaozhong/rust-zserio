@@ -144,9 +144,7 @@ pub fn bitsize_field(function: &mut Function, field: &Field, context_node_index:
 
     if field.is_optional {
         function.line("end_position += 1;");
-        function.line(format!("match {} {{", field_name));
-        function.line("None => {}, ");
-        function.line("Some(x) => {");
+        function.line(format!("if let Some(x) = {} {{", field_name));
         field_name = "x".into();
     }
 
@@ -168,7 +166,6 @@ pub fn bitsize_field(function: &mut Function, field: &Field, context_node_index:
     if field.is_optional {
         // in case the field is optional, end the if condition which checks
         // if the field is set.
-        function.line("},");
-        function.line("};");
+        function.line("}");
     }
 }
