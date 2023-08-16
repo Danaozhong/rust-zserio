@@ -52,7 +52,7 @@ pub fn add_struct_to_scope(z_struct: &Rc<RefCell<ZStruct>>, package_scope: &mut 
     for function in &z_struct.borrow().functions {
         local_symbols.insert(
             function.as_ref().borrow().name.clone(),
-            Symbol::Function((function.clone())),
+            Symbol::Function(function.clone()),
         );
     }
 

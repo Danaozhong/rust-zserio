@@ -90,7 +90,7 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = to_rust_type_name(&zenum.name);
     let temp_var = format!(
         "let v: {}",
-        zserio_to_rust_type(&zenum.enum_type.name.as_str()).unwrap()
+        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
     );
 
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
@@ -122,7 +122,7 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
 fn generate_zserio_write(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = format!(
         "(*self as {})",
-        zserio_to_rust_type(&zenum.enum_type.name.as_str()).unwrap()
+        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
     );
 
     let zserio_write_fn = impl_codegen.new_fn("zserio_write");
@@ -145,7 +145,7 @@ fn generate_zserio_write(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
 fn generate_zserio_bitsize(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = format!(
         "(*self as {})",
-        zserio_to_rust_type(&zenum.enum_type.name.as_str()).unwrap()
+        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
     );
 
     let bitsize_fn = impl_codegen.new_fn("zserio_bitsize");

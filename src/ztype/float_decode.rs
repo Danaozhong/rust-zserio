@@ -4,7 +4,7 @@ use half::f16;
 pub fn read_bytes(reader: &mut BitReader, num_bytes: u32) -> Vec<u8> {
     let mut result = vec![];
 
-    for i in 0..num_bytes {
+    for _ in 0..num_bytes {
         result.push(reader.read_u8(8).unwrap());
     }
     result

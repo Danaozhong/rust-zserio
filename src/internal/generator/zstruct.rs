@@ -120,7 +120,7 @@ fn generate_zserio_write(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefCel
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
 
-    instantiate_zserio_arrays(zserio_write_fn, &fields, false);
+    instantiate_zserio_arrays(zserio_write_fn, fields, false);
     for field_rc in fields {
         let field = field_rc.borrow();
         encode_field(zserio_write_fn, &field, None);
@@ -130,7 +130,7 @@ fn generate_zserio_write(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefCel
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
-    instantiate_zserio_arrays(zserio_write_packed_fn, &fields, true);
+    instantiate_zserio_arrays(zserio_write_packed_fn, fields, true);
     for field in fields {
         encode_field(zserio_write_packed_fn, &field.borrow(), Option::from(0)); // TODO node index
     }
@@ -141,7 +141,7 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefC
     bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
-    instantiate_zserio_arrays(bitsize_fn, &fields, false);
+    instantiate_zserio_arrays(bitsize_fn, fields, false);
     bitsize_fn.line("let mut end_position = bit_position;");
     for field in fields {
         bitsize_field(bitsize_fn, &field.borrow(), None);
@@ -153,7 +153,7 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, fields: &Vec<Rc<RefC
     bitsize_packed_fn.arg_ref_self();
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
-    instantiate_zserio_arrays(bitsize_packed_fn, &fields, true);
+    instantiate_zserio_arrays(bitsize_packed_fn, fields, true);
     bitsize_packed_fn.line("let mut end_position = bit_position;");
     for field in fields {
         bitsize_field(bitsize_packed_fn, &field.borrow(), Option::from(0));

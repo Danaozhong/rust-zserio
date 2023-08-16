@@ -102,9 +102,8 @@ impl ModelScope {
         let package_scope = self.package_scopes.get(&evaluation_scope.package).unwrap();
 
         // Try if the symbol can be found in the current package.
-        match package_scope.resolve_symbol(name, evaluation_scope) {
-            Some(symbol) => return symbol,
-            _ => (),
+        if let Some(symbol) = package_scope.resolve_symbol(name, evaluation_scope) {
+            return symbol;
         }
 
         // Try to find the symbol in the imported packages.
@@ -113,13 +112,13 @@ impl ModelScope {
             imports_to_process.push(reference);
         }
 
-        while imports_to_process.len() > 0 {
+        while !imports_to_process.is_empty() {
             let mut new_imports_to_process = vec![];
 
             for import in imports_to_process {
                 let package_name = import.package_dir.join(".");
                 let imported_package = self.package_scopes.get(&package_name).unwrap();
-                match imported_package.resolve_symbol(
+                if let Some(symbol) = imported_package.resolve_symbol(
                     name,
                     &ScopeLocation {
                         package: package_name,
@@ -127,8 +126,7 @@ impl ModelScope {
                         symbol_name: None,
                     },
                 ) {
-                    Some(symbol) => return symbol,
-                    _ => (),
+                    return symbol;
                 }
 
                 // If the symbol was not found in one of the current imports,
@@ -185,31 +183,24 @@ impl PackageScope {
     ) -> Option<SymbolReference> {
         // first, search for the symbol within the current symbol (e.g. struct, enum, etc)
         if let Some(symbol_name) = &evaluation_scope.symbol_name {
-            match self.local_symbols.get(symbol_name) {
-                Some(symbol_scope) => match symbol_scope.get(name) {
-                    Some(symbol) => {
-                        return Option::from(SymbolReference {
-                            symbol: symbol.clone(),
-                            name: get_symbol_name(symbol),
-                            package: self.name.clone(),
-                        });
-                    }
-                    _ => (),
-                },
-                _ => (),
+            if let Some(symbol_scope) = self.local_symbols.get(symbol_name) {
+                if let Some(symbol) = symbol_scope.get(name) {
+                    return Option::from(SymbolReference {
+                        symbol: symbol.clone(),
+                        name: get_symbol_name(symbol),
+                        package: self.name.clone(),
+                    });
+                }
             }
         }
 
         // second, search in the package scope
-        match self.file_symbols.get(name) {
-            Some(symbol) => {
-                return Option::from(SymbolReference {
-                    symbol: symbol.clone(),
-                    name: get_symbol_name(symbol),
-                    package: self.name.clone(),
-                })
-            }
-            _ => (),
+        if let Some(symbol) = self.file_symbols.get(name) {
+            return Option::from(SymbolReference {
+                symbol: symbol.clone(),
+                name: get_symbol_name(symbol),
+                package: self.name.clone(),
+            });
         }
         // The symbol was not found in the current package.
         None

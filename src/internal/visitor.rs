@@ -84,7 +84,7 @@ pub enum ZserioTreeReturnType {
     Union(Box<ZUnion>),
     EnumItem(Box<ZEnumItem>),
     Expression(Box<Expression>),
-    Expressions(Vec<Box<Expression>>),
+    Expressions(Vec<Expression>),
     Field(Box<Field>),
     TypeReference(Box<TypeReference>),
     TypeReferences(Vec<TypeReference>),
@@ -159,7 +159,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut package = Box::new(ZPackage {
             name: package_name,
             comment: "".into(),
-            imports: imports,
+            imports,
             structs: HashMap::new(),
             zchoices: HashMap::new(),
             zunions: vec![],
@@ -231,7 +231,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
 
         let symbol_name = match ctx.MULTIPLY() {
-            None => Option::from(import_paths.pop()),
+            None => import_paths.pop(),
             _is_set => None,
         };
         ZserioTreeReturnType::Import(Box::new(ZImport {
@@ -287,7 +287,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         };
         ZserioTreeReturnType::Subtype(Box::new(Subtype {
             name: ctx.id().unwrap().get_text(),
-            zserio_type: zserio_type,
+            zserio_type,
         }))
     }
 
@@ -295,24 +295,25 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         &mut self,
         ctx: &InstantiateDeclarationContext<'_>,
     ) -> Self::Return {
-        let zserio_type;
-        match ZserioParserVisitorCompat::visit_typeReference(self, &ctx.typeReference().unwrap()) {
-            ZserioTreeReturnType::TypeReference(t) => zserio_type = t,
+        let zserio_type = match ZserioParserVisitorCompat::visit_typeReference(
+            self,
+            &ctx.typeReference().unwrap(),
+        ) {
+            ZserioTreeReturnType::TypeReference(t) => t,
             _ => panic!("should not happen"),
         };
         ZserioTreeReturnType::InstantiateType(Box::new(InstantiateType {
             name: ctx.id().unwrap().get_text(),
-            zserio_type: zserio_type,
+            zserio_type,
         }))
     }
 
     fn visit_bitmaskDeclaration(&mut self, ctx: &BitmaskDeclarationContext<'_>) -> Self::Return {
-        let zserio_type;
-        match ZserioParserVisitorCompat::visit_typeInstantiation(
+        let zserio_type = match ZserioParserVisitorCompat::visit_typeInstantiation(
             self,
             &ctx.typeInstantiation().unwrap(),
         ) {
-            ZserioTreeReturnType::TypeReference(t) => zserio_type = t,
+            ZserioTreeReturnType::TypeReference(t) => t,
             _ => panic!("should not happen"),
         };
         let mut values = vec![];
@@ -324,8 +325,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
         ZserioTreeReturnType::BitmaskType(Box::new(ZBitmaskType {
             name: ctx.id().unwrap().get_text(),
-            zserio_type: zserio_type,
-            values: values,
+            zserio_type,
+            values,
         }))
     }
 
@@ -411,7 +412,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             field: None,
         };
         for choice_case in ctx.choiceCase_all() {
-            match self.visit_choiceCase(&*choice_case) {
+            match self.visit_choiceCase(&choice_case) {
                 ZserioTreeReturnType::Expression(expr) => {
                     choice_cases.conditions.push(Rc::from(RefCell::from(*expr)))
                 }
@@ -431,9 +432,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_choiceCase(&mut self, ctx: &ChoiceCaseContext<'_>) -> Self::Return {
         match self.visit(&*ctx.expression().unwrap()) {
-            ZserioTreeReturnType::Expression(expr) => {
-                return ZserioTreeReturnType::Expression(expr)
-            }
+            ZserioTreeReturnType::Expression(expr) => ZserioTreeReturnType::Expression(expr),
             _ => panic!("wrong type returned from expression"),
         }
     }
@@ -458,7 +457,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         &mut self,
         ctx: &ChoiceFieldDefinitionContext<'_>,
     ) -> Self::Return {
-        self.visit_fieldTypeId(&*ctx.fieldTypeId().unwrap())
+        self.visit_fieldTypeId(&ctx.fieldTypeId().unwrap())
     }
     fn visit_choiceDeclaration(&mut self, ctx: &ChoiceDeclarationContext<'_>) -> Self::Return {
         let mut choice = Box::new(ZChoice {
@@ -491,7 +490,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         // visit all the cases of the choice
         for choice_case_ctx in ctx.choiceCases_all() {
-            match self.visit_choiceCases(&*choice_case_ctx) {
+            match self.visit_choiceCases(&choice_case_ctx) {
                 ZserioTreeReturnType::ChoiceCase(choice_case) => choice.cases.push(choice_case),
                 _ => panic!("should not happen"),
             };
@@ -682,14 +681,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_parameterDefinition(&mut self, ctx: &ParameterDefinitionContext<'_>) -> Self::Return {
-        let zserio_type;
-        match self.visit(&*ctx.typeReference().unwrap()) {
-            ZserioTreeReturnType::TypeReference(t) => zserio_type = t,
+        let zserio_type = match self.visit(&*ctx.typeReference().unwrap()) {
+            ZserioTreeReturnType::TypeReference(t) => t,
             _ => panic!(),
-        }
+        };
         ZserioTreeReturnType::Parameter(Parameter {
             name: ctx.id().unwrap().get_text(),
-            zserio_type: zserio_type,
+            zserio_type,
         })
     }
 
@@ -786,7 +784,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_indexExpression(&mut self, ctx: &IndexExpressionContext<'_>) -> Self::Return {
         let expression = Box::new(Expression {
             expression_type: ctx.INDEX().unwrap().symbol.token_type,
-            text: ctx.INDEX().unwrap().get_text().into(),
+            text: ctx.INDEX().unwrap().get_text(),
             flag: ExpressionFlag::None,
             operand1: None,
             operand2: None,
@@ -874,7 +872,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 i32::from_str_radix(literal_text.as_str(), 8).expect("Not an octal number!"),
             ),
             _ if literal_ctx.BINARY_LITERAL().is_some() => ExpressionType::Integer(
-                i32::from_str_radix(literal_text.trim_end_matches("b"), 2)
+                i32::from_str_radix(literal_text.trim_end_matches('b'), 2)
                     .expect("Not a binary number!"),
             ),
             _ if literal_ctx.STRING_LITERAL().is_some() => {
@@ -895,7 +893,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         };
         let expression_type = literal_ctx.start().token_type;
         ZserioTreeReturnType::Expression(Box::new(Expression {
-            expression_type: expression_type,
+            expression_type,
             symbol: None,
             text: literal_text,
             flag: ExpressionFlag::None,
@@ -1299,7 +1297,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                     for expression in e {
                         type_reference
                             .type_arguments
-                            .push(Rc::from(RefCell::from(*expression)))
+                            .push(Rc::from(RefCell::from(expression)))
                     }
                 }
                 _ => panic!(),
@@ -1404,8 +1402,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_typeArguments(&mut self, ctx: &TypeArgumentsContext<'_>) -> Self::Return {
         let mut type_arguments = Vec::new();
         for type_arg_ctx in ctx.typeArgument_all() {
-            match ZserioParserVisitorCompat::visit_typeArgument(self, &*type_arg_ctx) {
-                ZserioTreeReturnType::Expression(t) => type_arguments.push(t),
+            match ZserioParserVisitorCompat::visit_typeArgument(self, &type_arg_ctx) {
+                ZserioTreeReturnType::Expression(t) => type_arguments.push(*t),
                 _ => panic!(),
             }
         }

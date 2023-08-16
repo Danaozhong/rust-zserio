@@ -8,9 +8,7 @@ use crate::internal::parser::gen::zserioparser::{
 };
 
 use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
-use std::mem;
 use std::rc::Rc;
 use std::string::String;
 
@@ -427,7 +425,6 @@ impl Expression {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
                 (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
-                    let result;
                     let mut v1 = *value1;
                     let mut v2 = *value2;
                     if !op1.fully_resolved {
@@ -436,14 +433,14 @@ impl Expression {
                     if !op2.fully_resolved {
                         v2 = 1;
                     }
-                    match self.expression_type {
-                        PLUS => result = v1 + v2,
-                        MINUS => result = v1 - v2,
-                        MULTIPLY => result = v1 * v2,
-                        DIVIDE => result = v1 / v2,
-                        MODULO => result = v1 % v2,
+                    let result = match self.expression_type {
+                        PLUS => v1 + v2,
+                        MINUS => v1 - v2,
+                        MULTIPLY => v1 * v2,
+                        DIVIDE => v1 / v2,
+                        MODULO => v1 % v2,
                         _ => panic!("unexpected integer arithmetic expression"),
-                    }
+                    };
                     self.result_type = ExpressionType::Integer(result);
                 }
                 // Float arithmetic expressions can be mixed with integer types.
@@ -505,15 +502,14 @@ impl Expression {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
                 (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
-                    let result;
-                    match self.expression_type {
-                        AND => result = value1 & value2,
-                        OR => result = value1 | value2,
-                        XOR => result = value1 ^ value2,
-                        LSHIFT => result = value1 << value2,
-                        RSHIFT => result = value1 >> value2,
+                    let result = match self.expression_type {
+                        AND => value1 & value2,
+                        OR => value1 | value2,
+                        XOR => value1 ^ value2,
+                        LSHIFT => value1 << value2,
+                        RSHIFT => value1 >> value2,
                         _ => panic!("unexpected bitwise expression"),
-                    }
+                    };
                     self.result_type = ExpressionType::Integer(result);
                 }
                 (ExpressionType::BitMask(_), ExpressionType::Integer(_))
@@ -597,21 +593,11 @@ fn symbol_to_expression_type(
                 scope,
             );
         }
-        Symbol::Bitmask(z_bitmask) => {
-            return ExpressionType::BitMask(z_bitmask.clone());
-        }
-        Symbol::Union(_) => {
-            return ExpressionType::Compound;
-        }
-        Symbol::Struct(_) => {
-            return ExpressionType::Compound;
-        }
-        Symbol::Choice(_) => {
-            return ExpressionType::Compound;
-        }
-        Symbol::Enum(z_enum) => {
-            return ExpressionType::Enum(z_enum.clone());
-        }
+        Symbol::Bitmask(z_bitmask) => ExpressionType::BitMask(z_bitmask.clone()),
+        Symbol::Union(_) => ExpressionType::Compound,
+        Symbol::Struct(_) => ExpressionType::Compound,
+        Symbol::Choice(_) => ExpressionType::Compound,
+        Symbol::Enum(z_enum) => ExpressionType::Enum(z_enum.clone()),
         Symbol::Field(field) => {
             return type_reference_to_expression_type(&field.borrow().field_type, scope);
         }
@@ -630,10 +616,7 @@ fn symbol_to_expression_type(
                 scope,
             );
         }
-        Symbol::Function(z_function) => {
-            return ExpressionType::Function(z_function.clone());
-        }
-        _ => panic!("unexpected symbol type {:?}", symbol_reference.symbol),
+        Symbol::Function(z_function) => ExpressionType::Function(z_function.clone()),
     }
 }
 
@@ -647,7 +630,7 @@ fn type_reference_to_expression_type(
         // not the actual value. Since this value is not hard-coded,
         // it will be retrieved after code generation.
         if type_ref.name.as_str() == "string" {
-            return ExpressionType::String("".into());
+            ExpressionType::String("".into())
         } else if type_ref.name.as_str() == "bool" {
             return ExpressionType::Bool(false);
         } else if type_ref.name.starts_with("float") {
@@ -665,6 +648,6 @@ fn type_reference_to_expression_type(
         }
     } else {
         // Resolve the symbol recursively, until a fundamental type is found.
-        return symbol_to_expression_type(&scope.resolve_symbol(&type_ref.name), scope);
+        symbol_to_expression_type(&scope.resolve_symbol(&type_ref.name), scope)
     }
 }
