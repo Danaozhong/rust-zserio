@@ -96,3 +96,9 @@ struct Block(BlockHeader header)
     header.offset:
     int64 items[header.numItems];
 };
+
+struct ExternTestCase
+{
+    extern externBuffer;
+    bytes byteBuffer;
+};

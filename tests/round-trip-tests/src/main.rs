@@ -7,7 +7,8 @@ pub mod reference_modules {
 }
 
 use crate::reference_modules::core::types::{
-    basic_choice::BasicChoice, color::Color, some_enum::SomeEnum, value_wrapper,
+    basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
+    value_wrapper,
 };
 
 use bitreader::BitReader;
@@ -21,6 +22,7 @@ fn main() {
     test_choice();
     test_template_instantiation();
     test_functions_in_instantiated_templates();
+    test_extern_type();
 }
 
 fn test_structure() {
@@ -131,4 +133,32 @@ fn test_functions_in_instantiated_templates() {
     z_struct.parameter = 15;
     z_struct.field.value = 32;
     assert!(z_struct.get_value() == 64);
+}
+
+/// This test case tests that extern types (that store bit buffers) and bytes types (that store
+/// byte buffers) can be serialized and deserialized without changes.
+fn test_extern_type() {
+    let mut extern_test_struct = ExternTestCase::new();
+
+    // fill the extern buffer with three bytes and three bits
+    extern_test_struct.extern_buffer.data_blob = vec![0xf1, 0xaa, 0x12, 0xe0];
+    extern_test_struct.extern_buffer.bit_size = 3 * 8 + 3;
+
+    // fill the bytes buffer with four bytes
+    extern_test_struct.byte_buffer.data_blob = vec![0xf1, 0xaa, 0x12, 0xf1];
+    extern_test_struct.byte_buffer.byte_size = 4;
+
+    // serialize
+    let mut bitwriter = BitWriter::new();
+    extern_test_struct.zserio_write(&mut bitwriter);
+    bitwriter.close().expect("failed to close bit stream");
+    let serialized_bytes = bitwriter.data();
+
+    // deserialize
+    let mut other_struct = ExternTestCase::new();
+    let mut bitreader = BitReader::new(serialized_bytes);
+    other_struct.zserio_read(&mut bitreader);
+
+    assert!(other_struct.byte_buffer == extern_test_struct.byte_buffer);
+    assert!(other_struct.extern_buffer == extern_test_struct.extern_buffer);
 }
