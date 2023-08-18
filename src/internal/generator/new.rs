@@ -46,6 +46,16 @@ pub fn new_type(
         } else if fund_type.name == "bool" {
             // boolean
             function.line(format!("{}: false,", field_name));
+        } else if type_reference.name == "extern" {
+            function.line(format!(
+                "{}: ztype::ExternType{{ bit_size: 0, data_blob: vec![] }},",
+                field_name
+            ));
+        } else if type_reference.name == "bytes" {
+            function.line(format!(
+                "{}: ztype::BytesType{{ byte_size: 0, data_blob: vec![] }},",
+                field_name
+            ));
         } else {
             // must be an integer type
             function.line(format!("{}: 0,", field_name));

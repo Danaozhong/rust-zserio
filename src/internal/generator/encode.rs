@@ -32,11 +32,16 @@ pub fn encode_type(
                 field_name
             ));
         } else if fund_type.name == "extern" {
-            // TODO
+            // Write a bit buffer (extern type)
+            function.line(format!(
+                "ztype::write_extern_type(writer, &{});",
+                field_name
+            ));
         } else if fund_type.name == "bytes" {
-            // TODO
+            // Write a byte buffer (bytes type)
+            function.line(format!("ztype::write_bytes_type(writer, &{});", field_name));
         } else if fund_type.name == "bool" {
-            // boolean
+            // Write a single boolean type
             function.line(format!(
                 "let _ = writer.write_bool({}).unwrap();",
                 field_name

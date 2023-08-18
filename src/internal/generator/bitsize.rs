@@ -36,9 +36,9 @@ pub fn bitsize_type_reference(
                 field_name
             ));
         } else if type_reference.name == "extern" {
-            // TODO
+            function.line(format!("end_position += {}.bit_size;", field_name));
         } else if type_reference.name == "bytes" {
-            // TODO
+            function.line(format!("end_position += {}.byte_size * 8;", field_name));
         } else if type_reference.name == "bool" {
             // boolean
             function.line("end_position += 1;");
