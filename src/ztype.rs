@@ -45,6 +45,10 @@ pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
 pub use self::traits::ZserioPackableOject;
+
+pub use self::bytes_type::{read_bytes_type, write_bytes_type, BytesType};
+pub use self::extern_type::{read_extern_type, write_extern_type, ExternType};
+
 pub mod bits_decode;
 pub mod bits_encode;
 pub mod string_decode;
