@@ -15,6 +15,8 @@ pub use self::bits_encode::write_u8;
 
 pub use self::bits_encode::write_signed_bits;
 pub use self::bits_encode::write_unsigned_bits;
+pub use self::varuint_encode::write_varsize;
+pub use self::varuint_encode::write_varuint;
 
 pub use self::bits_decode::read_i16;
 pub use self::bits_decode::read_i32;
@@ -43,6 +45,10 @@ pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
 pub use self::traits::ZserioPackableOject;
+
+pub use self::bytes_type::{read_bytes_type, write_bytes_type, BytesType};
+pub use self::extern_type::{read_extern_type, write_extern_type, ExternType};
+
 pub mod bits_decode;
 pub mod bits_encode;
 pub mod string_decode;
@@ -56,7 +62,10 @@ pub mod array;
 pub mod array_traits;
 pub mod bit_alignment;
 
+pub mod bytes_type;
 pub mod extern_type;
 pub mod float_decode;
 pub mod float_encode;
+pub mod reader;
 pub mod traits;
+pub mod writer;

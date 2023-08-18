@@ -15,6 +15,12 @@ pub trait ZserioParserVisitor<'input>: ParseTreeVisitor<'input,ZserioParserConte
 	fn visit_packageDeclaration(&mut self, ctx: &PackageDeclarationContext<'input>) { self.visit_children(ctx) }
 
 	/**
+	 * Visit a parse tree produced by {@link ZserioParser#compatibilityVersionDirective}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_compatibilityVersionDirective(&mut self, ctx: &CompatibilityVersionDirectiveContext<'input>) { self.visit_children(ctx) }
+
+	/**
 	 * Visit a parse tree produced by {@link ZserioParser#packageNameDefinition}.
 	 * @param ctx the parse tree
 	 */
@@ -405,6 +411,13 @@ pub trait ZserioParserVisitor<'input>: ParseTreeVisitor<'input,ZserioParserConte
 	fn visit_logicalOrExpression(&mut self, ctx: &LogicalOrExpressionContext<'input>) { self.visit_children(ctx) }
 
 	/**
+	 * Visit a parse tree produced by the {@code isSetExpression}
+	 * labeled alternative in {@link ZserioParser#expression}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_isSetExpression(&mut self, ctx: &IsSetExpressionContext<'input>) { self.visit_children(ctx) }
+
+	/**
 	 * Visit a parse tree produced by the {@code bitwiseOrExpression}
 	 * labeled alternative in {@link ZserioParser#expression}.
 	 * @param ctx the parse tree
@@ -576,6 +589,12 @@ pub trait ZserioParserVisitor<'input>: ParseTreeVisitor<'input,ZserioParserConte
 	 */
 	fn visit_externType(&mut self, ctx: &ExternTypeContext<'input>) { self.visit_children(ctx) }
 
+	/**
+	 * Visit a parse tree produced by {@link ZserioParser#bytesType}.
+	 * @param ctx the parse tree
+	 */
+	fn visit_bytesType(&mut self, ctx: &BytesTypeContext<'input>) { self.visit_children(ctx) }
+
 }
 
 pub trait ZserioParserVisitorCompat<'input>:ParseTreeVisitorCompat<'input, Node= ZserioParserContextType>{
@@ -584,6 +603,14 @@ pub trait ZserioParserVisitorCompat<'input>:ParseTreeVisitorCompat<'input, Node=
 	 * @param ctx the parse tree
 	 */
 		fn visit_packageDeclaration(&mut self, ctx: &PackageDeclarationContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
+	/**
+	 * Visit a parse tree produced by {@link ZserioParser#compatibilityVersionDirective}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_compatibilityVersionDirective(&mut self, ctx: &CompatibilityVersionDirectiveContext<'input>) -> Self::Return {
 			self.visit_children(ctx)
 		}
 
@@ -1104,6 +1131,15 @@ pub trait ZserioParserVisitorCompat<'input>:ParseTreeVisitorCompat<'input, Node=
 		}
 
 	/**
+	 * Visit a parse tree produced by the {@code isSetExpression}
+	 * labeled alternative in {@link ZserioParser#expression}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_isSetExpression(&mut self, ctx: &IsSetExpressionContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
+	/**
 	 * Visit a parse tree produced by the {@code bitwiseOrExpression}
 	 * labeled alternative in {@link ZserioParser#expression}.
 	 * @param ctx the parse tree
@@ -1329,6 +1365,14 @@ pub trait ZserioParserVisitorCompat<'input>:ParseTreeVisitorCompat<'input, Node=
 			self.visit_children(ctx)
 		}
 
+	/**
+	 * Visit a parse tree produced by {@link ZserioParser#bytesType}.
+	 * @param ctx the parse tree
+	 */
+		fn visit_bytesType(&mut self, ctx: &BytesTypeContext<'input>) -> Self::Return {
+			self.visit_children(ctx)
+		}
+
 }
 
 impl<'input,T> ZserioParserVisitor<'input> for T
@@ -1337,6 +1381,11 @@ where
 {
 	fn visit_packageDeclaration(&mut self, ctx: &PackageDeclarationContext<'input>){
 		let result = <Self as ZserioParserVisitorCompat>::visit_packageDeclaration(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
+	fn visit_compatibilityVersionDirective(&mut self, ctx: &CompatibilityVersionDirectiveContext<'input>){
+		let result = <Self as ZserioParserVisitorCompat>::visit_compatibilityVersionDirective(self, ctx);
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
 	}
 
@@ -1655,6 +1704,11 @@ where
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
 	}
 
+	fn visit_isSetExpression(&mut self, ctx: &IsSetExpressionContext<'input>){
+		let result = <Self as ZserioParserVisitorCompat>::visit_isSetExpression(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
 	fn visit_bitwiseOrExpression(&mut self, ctx: &BitwiseOrExpressionContext<'input>){
 		let result = <Self as ZserioParserVisitorCompat>::visit_bitwiseOrExpression(self, ctx);
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
@@ -1787,6 +1841,11 @@ where
 
 	fn visit_externType(&mut self, ctx: &ExternTypeContext<'input>){
 		let result = <Self as ZserioParserVisitorCompat>::visit_externType(self, ctx);
+        *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
+	}
+
+	fn visit_bytesType(&mut self, ctx: &BytesTypeContext<'input>){
+		let result = <Self as ZserioParserVisitorCompat>::visit_bytesType(self, ctx);
         *<Self as ParseTreeVisitorCompat>::temp_result(self) = result;
 	}
 

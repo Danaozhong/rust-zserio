@@ -38,6 +38,16 @@ pub fn decode_type(
                 "{} = ztype::read_string(reader);",
                 lvalue_field_name
             ));
+        } else if fund_type.name == "extern" {
+            function.line(format!(
+                "{} = ztype::read_extern_type(reader);",
+                lvalue_field_name
+            ));
+        } else if fund_type.name == "bytes" {
+            function.line(format!(
+                "{} = ztype::read_bytes_type(reader);",
+                lvalue_field_name
+            ));
         } else if fund_type.name == "bool" {
             // boolean
             function.line(format!("{} = reader.read_bool();", lvalue_field_name));

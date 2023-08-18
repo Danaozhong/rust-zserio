@@ -15,6 +15,16 @@ fn enter_packageDeclaration(&mut self, _ctx: &PackageDeclarationContext<'input>)
  */
 fn exit_packageDeclaration(&mut self, _ctx: &PackageDeclarationContext<'input>) { }
 /**
+ * Enter a parse tree produced by {@link ZserioParser#compatibilityVersionDirective}.
+ * @param ctx the parse tree
+ */
+fn enter_compatibilityVersionDirective(&mut self, _ctx: &CompatibilityVersionDirectiveContext<'input>) { }
+/**
+ * Exit a parse tree produced by {@link ZserioParser#compatibilityVersionDirective}.
+ * @param ctx the parse tree
+ */
+fn exit_compatibilityVersionDirective(&mut self, _ctx: &CompatibilityVersionDirectiveContext<'input>) { }
+/**
  * Enter a parse tree produced by {@link ZserioParser#packageNameDefinition}.
  * @param ctx the parse tree
  */
@@ -669,6 +679,18 @@ fn enter_logicalOrExpression(&mut self, _ctx: &LogicalOrExpressionContext<'input
  */
 fn exit_logicalOrExpression(&mut self, _ctx: &LogicalOrExpressionContext<'input>) { }
 /**
+ * Enter a parse tree produced by the {@code isSetExpression}
+ * labeled alternative in {@link ZserioParser#expression}.
+ * @param ctx the parse tree
+ */
+fn enter_isSetExpression(&mut self, _ctx: &IsSetExpressionContext<'input>) { }
+/**
+ * Exit a parse tree produced by the {@code isSetExpression}
+ * labeled alternative in {@link ZserioParser#expression}.
+ * @param ctx the parse tree
+ */
+fn exit_isSetExpression(&mut self, _ctx: &IsSetExpressionContext<'input>) { }
+/**
  * Enter a parse tree produced by the {@code bitwiseOrExpression}
  * labeled alternative in {@link ZserioParser#expression}.
  * @param ctx the parse tree
@@ -958,6 +980,16 @@ fn enter_externType(&mut self, _ctx: &ExternTypeContext<'input>) { }
  * @param ctx the parse tree
  */
 fn exit_externType(&mut self, _ctx: &ExternTypeContext<'input>) { }
+/**
+ * Enter a parse tree produced by {@link ZserioParser#bytesType}.
+ * @param ctx the parse tree
+ */
+fn enter_bytesType(&mut self, _ctx: &BytesTypeContext<'input>) { }
+/**
+ * Exit a parse tree produced by {@link ZserioParser#bytesType}.
+ * @param ctx the parse tree
+ */
+fn exit_bytesType(&mut self, _ctx: &BytesTypeContext<'input>) { }
 
 }
 

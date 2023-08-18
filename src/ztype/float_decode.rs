@@ -1,14 +1,6 @@
+use crate::ztype::reader::read_bytes;
 use bitreader::BitReader;
 use half::f16;
-
-pub fn read_bytes(reader: &mut BitReader, num_bytes: u32) -> Vec<u8> {
-    let mut result = vec![];
-
-    for _ in 0..num_bytes {
-        result.push(reader.read_u8(8).unwrap());
-    }
-    result
-}
 
 pub fn read_f64(reader: &mut BitReader) -> f64 {
     f64::from_be_bytes(
