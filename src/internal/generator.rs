@@ -10,6 +10,7 @@ pub mod native_type;
 pub mod new;
 pub mod package;
 pub mod preamble;
+pub mod subtype;
 pub mod types;
 pub mod zchoice;
 pub mod zenum;
