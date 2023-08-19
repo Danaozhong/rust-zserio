@@ -2,8 +2,8 @@ use crate::internal::generator::file_generator::write_to_file;
 
 use crate::internal::ast::package::ZPackage;
 use crate::internal::generator::{
-    preamble::get_default_scope, types::to_rust_module_name, zchoice::generate_choice,
-    zenum::generate_enum, zstruct::generate_struct,
+    preamble::get_default_scope, subtype::generate_subtype, types::to_rust_module_name,
+    zchoice::generate_choice, zenum::generate_enum, zstruct::generate_struct,
 };
 use std::path::Path;
 
@@ -55,6 +55,18 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
         ));
     }
 
+    // Generate the subtypes
+    for zsubtype_ref in &package.subtypes {
+        let zsubtype = zsubtype_ref.borrow();
+        let mut scope = get_default_scope(package);
+        module_names.push(generate_subtype(
+            &mut scope,
+            &zsubtype,
+            package_directory,
+            &package_name,
+        ));
+    }
+
     // Finally, generate the mod file for each package.
     // For now, this is using raw string concatination, as codegen does not support
     // module declarations.
@@ -69,5 +81,6 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     for module_name in module_names {
         mod_file_content += format!("pub mod {};\n", module_name).as_str();
     }
+
     write_to_file(&mod_file_content, package_directory, &package_name, "mod");
 }

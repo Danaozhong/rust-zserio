@@ -4,12 +4,18 @@ pub mod reference_modules {
         pub mod templates;
         pub mod types;
     }
+    pub mod type_lookup_test {
+        pub mod other_ztype;
+        pub mod unrelated_ztype;
+        pub mod ztype;
+    }
 }
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
     value_wrapper,
 };
+use crate::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
 
 use bitreader::BitReader;
 use reference_modules::core::instantiations::instantiated_template_struct;
@@ -23,6 +29,7 @@ fn main() {
     test_template_instantiation();
     test_functions_in_instantiated_templates();
     test_extern_type();
+    test_type_lookup();
 }
 
 fn test_structure() {
@@ -161,4 +168,16 @@ fn test_extern_type() {
 
     assert!(other_struct.byte_buffer == extern_test_struct.byte_buffer);
     assert!(other_struct.extern_buffer == extern_test_struct.extern_buffer);
+}
+
+fn test_type_lookup() {
+    let mut ztype_struct = ZTypeStruct::new();
+    // If this line compiles, the test is already successful. That means that the correct type
+    // got looked up (integer).
+    ztype_struct.ztype.ztype = 16;
+
+    // To be extra safe, serialize it to make sure it doesn't crash on serialization.
+    let mut bitwriter = BitWriter::new();
+    ztype_struct.zserio_write(&mut bitwriter);
+    bitwriter.close().expect("failed to close bit stream");
 }
