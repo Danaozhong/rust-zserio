@@ -4,6 +4,11 @@ pub mod reference_modules {
         pub mod templates;
         pub mod types;
     }
+    pub mod type_lookup_test {
+        pub mod other_ztype;
+        pub mod unrelated_ztype;
+        pub mod ztype;
+    }
 }
 
 use crate::reference_modules::core::types::{
@@ -23,6 +28,7 @@ fn main() {
     test_template_instantiation();
     test_functions_in_instantiated_templates();
     test_extern_type();
+    test_type_lookup();
 }
 
 fn test_structure() {
@@ -161,4 +167,8 @@ fn test_extern_type() {
 
     assert!(other_struct.byte_buffer == extern_test_struct.byte_buffer);
     assert!(other_struct.extern_buffer == extern_test_struct.extern_buffer);
+}
+
+fn test_type_lookup() {
+    // TODO
 }
