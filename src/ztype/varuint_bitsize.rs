@@ -1,5 +1,21 @@
-pub fn varsize_bitsize(v: u64) -> u8 {
-    unsigned_bitsize(v, 5)
+pub fn varuint16_bitsize(v: u16) -> u8 {
+    unsigned_bitsize(v as u64, 2)
+}
+
+pub fn varuint32_bitsize(v: u32) -> u8 {
+    unsigned_bitsize(v as u64, 4)
+}
+
+pub fn varuint64_bitsize(v: u64) -> u8 {
+    unsigned_bitsize(v, 8)
+}
+
+pub fn varuint_bitsize(v: u64) -> u8 {
+    unsigned_bitsize(v, 9)
+}
+
+pub fn varsize_bitsize(v: u32) -> u8 {
+    unsigned_bitsize(v as u64, 5)
 }
 
 pub fn unsigned_bitsize(v: u64, max_bytes: u8) -> u8 {

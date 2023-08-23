@@ -588,13 +588,17 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
         for field_context in ctx.unionFieldDefinition_all() {
             match self.visit(&*field_context) {
-                ZserioTreeReturnType::Field(f) => zserio_union.fields.push(*f),
+                ZserioTreeReturnType::Field(f) => {
+                    zserio_union.fields.push(Rc::from(RefCell::from(*f)))
+                }
                 _ => println!(),
             }
         }
         for function_ctx in ctx.functionDefinition_all() {
             match ZserioParserVisitorCompat::visit_functionDefinition(self, &function_ctx) {
-                ZserioTreeReturnType::Function(f) => zserio_union.functions.push(f),
+                ZserioTreeReturnType::Function(f) => {
+                    zserio_union.functions.push(Rc::from(RefCell::from(f)))
+                }
                 _ => panic!(),
             }
         }

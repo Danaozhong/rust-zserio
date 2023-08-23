@@ -1,13 +1,16 @@
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
-use crate::internal::generator::native_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::expression::generate_expression;
 use crate::internal::generator::types::ztype_to_rust_type;
 use codegen::Function;
+use convert_case::{Case, Casing};
 use std::cell::RefCell;
 use std::rc::Rc;
 
 pub fn array_type_name(name: &String) -> String {
-    String::from("zs_array_") + name
+    String::from("zs_array_") + &name.to_case(Case::Snake)
 }
 
 pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
@@ -53,22 +56,30 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
     // check if the array traits need initialization
     if zserio_type.is_builtin {
         // Initialize the signed/unsigned bitfield array traits
-        let mut bits = zserio_type.bits;
-        if bits == 0 {
-            match zserio_type.name.as_str() {
-                "int8" => bits = 8,
-                "int16" => bits = 16,
-                "int32" => bits = 32,
-                "int64" => bits = 64,
-                "uint8" => bits = 8,
-                "uint16" => bits = 16,
-                "uint32" => bits = 32,
-                "uint64" => bits = 64,
-                _ => bits = 0,
+        if let Some(length_expression) = &zserio_type.length_expression {
+            code_str += format!(
+                "num_bits: ({}) as u8,\n",
+                generate_expression(&length_expression.borrow())
+            )
+            .as_str();
+        } else {
+            let mut bits = zserio_type.bits;
+            if bits == 0 {
+                match zserio_type.name.as_str() {
+                    "int8" => bits = 8,
+                    "int16" => bits = 16,
+                    "int32" => bits = 32,
+                    "int64" => bits = 64,
+                    "uint8" => bits = 8,
+                    "uint16" => bits = 16,
+                    "uint32" => bits = 32,
+                    "uint64" => bits = 64,
+                    _ => bits = 0,
+                }
             }
-        }
-        if bits != 0 {
-            code_str += format!("num_bits: {},\n", bits).as_str();
+            if bits != 0 {
+                code_str += format!("num_bits: {},\n", bits).as_str();
+            }
         }
     }
 
@@ -77,8 +88,17 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
     code_str
 }
 
-pub fn instantiate_zserio_array(function: &mut Function, field: &Field, force_packed: bool) {
-    let native_type = get_fundamental_type(&field.field_type);
+pub fn instantiate_zserio_array(
+    scope: &ModelScope,
+    function: &mut Function,
+    field: &Field,
+    force_packed: bool,
+) {
+    if field.array.is_none() {
+        return;
+    }
+
+    let native_type = get_fundamental_type(&field.field_type, scope);
     let fund_type = native_type.fundamental_type;
     let rust_type = ztype_to_rust_type(field.field_type.as_ref());
     // also initialize the array part
@@ -105,13 +125,12 @@ pub fn instantiate_zserio_array(function: &mut Function, field: &Field, force_pa
 }
 
 pub fn instantiate_zserio_arrays(
+    scope: &ModelScope,
     function: &mut Function,
     fields: &Vec<Rc<RefCell<Field>>>,
     force_packed: bool,
 ) {
     for field in fields {
-        if field.borrow().array.is_some() {
-            instantiate_zserio_array(function, &field.borrow(), force_packed);
-        }
+        instantiate_zserio_array(scope, function, &field.borrow(), force_packed);
     }
 }

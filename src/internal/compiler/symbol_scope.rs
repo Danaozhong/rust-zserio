@@ -1,20 +1,18 @@
-use crate::internal::{
-    ast::{
-        field::Field,
-        package::{ZImport, ZPackage},
-        parameter::Parameter,
-        zbitmask::{add_bitmask_to_scope, ZBitmaskType},
-        zchoice::add_choice_to_scope,
-        zchoice::ZChoice,
-        zconst::{add_const_to_scope, ZConst},
-        zenum::{add_enum_to_scope, ZEnum},
-        zfunction::ZFunction,
-        zstruct::add_struct_to_scope,
-        zstruct::ZStruct,
-        zsubtype::{add_subtype_to_scope, Subtype},
-        zunion::ZUnion,
-    },
-    model::Model,
+use crate::internal::ast::{
+    field::Field,
+    package::{ZImport, ZPackage},
+    parameter::Parameter,
+    type_reference::TypeReference,
+    zbitmask::{add_bitmask_to_scope, ZBitmaskType},
+    zchoice::add_choice_to_scope,
+    zchoice::ZChoice,
+    zconst::{add_const_to_scope, ZConst},
+    zenum::{add_enum_to_scope, ZEnum},
+    zfunction::ZFunction,
+    zstruct::add_struct_to_scope,
+    zstruct::ZStruct,
+    zsubtype::{add_subtype_to_scope, Subtype},
+    zunion::{add_zunion_to_scope, ZUnion},
 };
 
 use std::cell::RefCell;
@@ -77,12 +75,12 @@ pub struct ModelScope {
 }
 
 impl ModelScope {
-    pub fn build_scope(model: &Model) -> Self {
+    pub fn build_scope(packages: &HashMap<String, ZPackage>) -> Self {
         let mut scope = ModelScope {
             package_scopes: HashMap::new(),
             scope_stack: vec![],
         };
-        for package in model.packages.values() {
+        for package in packages.values() {
             scope
                 .package_scopes
                 .insert(package.name.clone(), PackageScope::build_scope(package));
@@ -97,12 +95,26 @@ impl ModelScope {
             .unwrap()
     }
 
-    pub fn resolve_symbol(&self, name: &String) -> SymbolReference {
+    pub fn get_symbol(&self, type_ref: &TypeReference) -> SymbolReference {
+        match self.package_scopes.get(&type_ref.package) {
+            Some(package_scope) => package_scope.get_symbol(&type_ref.name),
+            _ => panic!(""),
+        }
+    }
+
+    /// This function resolves a symbol based on the imports in the current package.
+    pub fn resolve_symbol(
+        &self,
+        name: &String,
+        ignore_symbol_local_scopes: bool,
+    ) -> SymbolReference {
         let evaluation_scope = self.scope_stack.last().unwrap();
         let package_scope = self.package_scopes.get(&evaluation_scope.package).unwrap();
 
         // Try if the symbol can be found in the current package.
-        if let Some(symbol) = package_scope.resolve_symbol(name, evaluation_scope) {
+        if let Some(symbol) =
+            package_scope.resolve_symbol(name, ignore_symbol_local_scopes, evaluation_scope)
+        {
             return symbol;
         }
 
@@ -120,6 +132,7 @@ impl ModelScope {
                 let imported_package = self.package_scopes.get(&package_name).unwrap();
                 if let Some(symbol) = imported_package.resolve_symbol(
                     name,
+                    ignore_symbol_local_scopes,
                     &ScopeLocation {
                         package: package_name,
                         import_symbol: import.symbol_name.clone(),
@@ -165,6 +178,9 @@ impl PackageScope {
         for zchoice in package.zchoices.values() {
             add_choice_to_scope(zchoice, &mut scope);
         }
+        for zunion in &package.zunions {
+            add_zunion_to_scope(zunion, &mut scope);
+        }
         for zenum in &package.enums {
             add_enum_to_scope(zenum, &mut scope);
         }
@@ -175,21 +191,36 @@ impl PackageScope {
         scope
     }
 
+    pub fn get_symbol(&self, name: &String) -> SymbolReference {
+        match self.file_symbols.get(name) {
+            Some(symbol) => SymbolReference {
+                symbol: symbol.clone(),
+                name: get_symbol_name(symbol),
+                package: self.name.clone(),
+            },
+            _ => panic!(""),
+        }
+    }
+
     /// Searches for a symbol within the current scope.
     pub fn resolve_symbol(
         &self,
         name: &String,
+        ignore_symbol_local_scopes: bool,
         evaluation_scope: &ScopeLocation,
     ) -> Option<SymbolReference> {
-        // first, search for the symbol within the current symbol (e.g. struct, enum, etc)
-        if let Some(symbol_name) = &evaluation_scope.symbol_name {
-            if let Some(symbol_scope) = self.local_symbols.get(symbol_name) {
-                if let Some(symbol) = symbol_scope.get(name) {
-                    return Option::from(SymbolReference {
-                        symbol: symbol.clone(),
-                        name: get_symbol_name(symbol),
-                        package: self.name.clone(),
-                    });
+        if !ignore_symbol_local_scopes {
+            // Unless explicitly ignored, search for the symbol within
+            // the current symbol (e.g. struct, enum, etc)
+            if let Some(symbol_name) = &evaluation_scope.symbol_name {
+                if let Some(symbol_scope) = self.local_symbols.get(symbol_name) {
+                    if let Some(symbol) = symbol_scope.get(name) {
+                        return Option::from(SymbolReference {
+                            symbol: symbol.clone(),
+                            name: get_symbol_name(symbol),
+                            package: self.name.clone(),
+                        });
+                    }
                 }
             }
         }

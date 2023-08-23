@@ -1,13 +1,19 @@
 use crate::internal::generator::file_generator::write_to_file;
 
 use crate::internal::ast::package::ZPackage;
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     preamble::get_default_scope, subtype::generate_subtype, types::to_rust_module_name,
     zchoice::generate_choice, zenum::generate_enum, zstruct::generate_struct,
 };
 use std::path::Path;
 
-pub fn generate_package(package: &ZPackage, package_directory: &Path) {
+pub fn generate_package(
+    symbol_scope: &ModelScope,
+    package: &ZPackage,
+    package_directory: &Path,
+    root_package: &String,
+) {
     let package_name = to_rust_module_name(&package.name);
     let mut module_names = Vec::new();
 
@@ -18,9 +24,10 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
         if !z_struct.template_parameters.is_empty() {
             continue;
         }
-        let mut scope = get_default_scope(package);
+        let mut gen_scope = get_default_scope(package, root_package);
         module_names.push(generate_struct(
-            &mut scope,
+            symbol_scope,
+            &mut gen_scope,
             &z_struct,
             package_directory,
             &package_name,
@@ -34,9 +41,10 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
         if !z_choice.template_parameters.is_empty() {
             continue;
         }
-        let mut scope = get_default_scope(package);
+        let mut gen_scope = get_default_scope(package, root_package);
         module_names.push(generate_choice(
-            &mut scope,
+            symbol_scope,
+            &mut gen_scope,
             &z_choice,
             package_directory,
             &package_name,
@@ -46,9 +54,10 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // Generate the rust code for Enums.
     for z_enum_ref_cell in &package.enums {
         let z_enum = z_enum_ref_cell.borrow();
-        let mut scope = get_default_scope(package);
+        let mut gen_scope = get_default_scope(package, root_package);
         module_names.push(generate_enum(
-            &mut scope,
+            symbol_scope,
+            &mut gen_scope,
             &z_enum,
             package_directory,
             &package_name,
@@ -58,9 +67,9 @@ pub fn generate_package(package: &ZPackage, package_directory: &Path) {
     // Generate the subtypes
     for zsubtype_ref in &package.subtypes {
         let zsubtype = zsubtype_ref.borrow();
-        let mut scope = get_default_scope(package);
+        let mut codegen_scope = get_default_scope(package, root_package);
         module_names.push(generate_subtype(
-            &mut scope,
+            &mut codegen_scope,
             &zsubtype,
             package_directory,
             &package_name,

@@ -241,7 +241,7 @@ impl Expression {
             ),
         };
 
-        let compound_symbol = scope.resolve_symbol(&type_ref.name);
+        let compound_symbol = scope.get_symbol(&type_ref);
         scope.scope_stack.push(ScopeLocation {
             package: compound_symbol.package.clone(),
             import_symbol: None,
@@ -251,7 +251,7 @@ impl Expression {
         // resolve the symbol that belongs to the compound expression.
         // it can be <struct>.<field>, for example.
         let compound_symbol: SymbolReference =
-            scope.resolve_symbol(&self.operand2.as_ref().unwrap().text);
+            scope.resolve_symbol(&self.operand2.as_ref().unwrap().text, false);
 
         self.result_type = symbol_to_expression_type(&compound_symbol, scope);
         self.symbol = Option::from(compound_symbol.symbol.clone());
@@ -575,7 +575,7 @@ impl Expression {
             // value will be evaluated when the complete dot expression is evaluated.
             return;
         }
-        let symbol_reference = scope.resolve_symbol(&self.text);
+        let symbol_reference = scope.resolve_symbol(&self.text, false);
         self.symbol = Option::from(symbol_reference.symbol.clone());
         self.result_type = symbol_to_expression_type(&symbol_reference, scope);
         self.fully_resolved = false;
@@ -648,6 +648,6 @@ fn type_reference_to_expression_type(
         }
     } else {
         // Resolve the symbol recursively, until a fundamental type is found.
-        symbol_to_expression_type(&scope.resolve_symbol(&type_ref.name), scope)
+        symbol_to_expression_type(&scope.resolve_symbol(&type_ref.name, true), scope)
     }
 }

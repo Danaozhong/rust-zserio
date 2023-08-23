@@ -6,7 +6,7 @@ use rust_bitwriter::BitWriter;
 
 #[derive(PartialEq)]
 pub struct BytesType {
-    pub byte_size: u64,
+    pub byte_size: u32,
     pub data_blob: Vec<u8>,
 }
 
@@ -15,7 +15,7 @@ pub fn read_bytes_type(bit_reader: &mut BitReader) -> BytesType {
     let byte_size = read_varsize(bit_reader);
     BytesType {
         byte_size,
-        data_blob: read_bytes(bit_reader, byte_size as u32),
+        data_blob: read_bytes(bit_reader, byte_size),
     }
 }
 

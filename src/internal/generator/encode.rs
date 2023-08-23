@@ -1,18 +1,19 @@
 use codegen::Function;
 
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
-use crate::internal::generator::native_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type};
-
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 
 pub fn encode_type(
+    scope: &ModelScope,
     function: &mut Function,
     field_name: &String,
     field_type: &TypeReference,
     context_node_index: Option<u8>,
 ) {
-    let native_type = get_fundamental_type(field_type);
+    let native_type = get_fundamental_type(field_type, scope);
     let fund_type = native_type.fundamental_type;
     if native_type.is_marshaler {
         if let Some(node_idx) = context_node_index {
@@ -80,7 +81,12 @@ pub fn encode_type(
     }
 }
 
-pub fn encode_field(function: &mut Function, field: &Field, context_node_index: Option<u8>) {
+pub fn encode_field(
+    scope: &ModelScope,
+    function: &mut Function,
+    field: &Field,
+    context_node_index: Option<u8>,
+) {
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
     if field.is_optional {
@@ -101,7 +107,13 @@ pub fn encode_field(function: &mut Function, field: &Field, context_node_index: 
             field_name
         ));
     } else {
-        encode_type(function, &field_name, &field.field_type, context_node_index);
+        encode_type(
+            scope,
+            function,
+            &field_name,
+            &field.field_type,
+            context_node_index,
+        );
     }
 
     if field.is_optional {

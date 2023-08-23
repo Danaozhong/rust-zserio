@@ -1,6 +1,7 @@
 use codegen::Scope;
 
 use crate::internal::ast::{expression::ExpressionType, zenum::ZEnum};
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     bitsize::bitsize_type_reference, decode::decode_type, encode::encode_type,
     file_generator::write_to_file, preamble::add_standard_imports,
@@ -9,13 +10,19 @@ use crate::internal::generator::{
 };
 use std::path::Path;
 
-pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name: &str) -> String {
+pub fn generate_enum(
+    scope: &ModelScope,
+    gen_scope: &mut Scope,
+    zenum: &ZEnum,
+    path: &Path,
+    package_name: &str,
+) -> String {
     let rust_module_name = to_rust_module_name(&zenum.name);
     let rust_type_name = to_rust_type_name(&zenum.name);
-    add_standard_imports(scope);
+    add_standard_imports(gen_scope);
 
     // generate the struct itself
-    let gen_enum = scope.new_enum(&rust_type_name);
+    let gen_enum = gen_scope.new_enum(&rust_type_name);
     gen_enum.vis("pub");
     gen_enum.derive("Copy");
     gen_enum.derive("Clone");
@@ -37,7 +44,7 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
         enum_value += 1;
     }
 
-    let enum_impl = scope.new_impl(&rust_type_name);
+    let enum_impl = gen_scope.new_impl(&rust_type_name);
     // Generate a function to create a new instance of the enum from an integer type
     let from_int_fn = enum_impl.new_fn("from_int");
     from_int_fn.arg("v", "i64");
@@ -65,7 +72,7 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
 
     from_int_fn.line("}");
 
-    let z_impl = scope.new_impl(&rust_type_name);
+    let z_impl = gen_scope.new_impl(&rust_type_name);
     z_impl.impl_trait("ztype::ZserioPackableOject");
 
     // Generate a function to create a new instance of the enum
@@ -78,15 +85,20 @@ pub fn generate_enum(scope: &mut Scope, zenum: &ZEnum, path: &Path, package_name
     ));
 
     // generate the functions to serialize/deserialize
-    generate_zserio_read(z_impl, zenum);
-    generate_zserio_write(z_impl, zenum);
-    generate_zserio_bitsize(z_impl, zenum);
+    generate_zserio_read(scope, z_impl, zenum);
+    generate_zserio_write(scope, z_impl, zenum);
+    generate_zserio_bitsize(scope, z_impl, zenum);
 
-    write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
+    write_to_file(
+        &gen_scope.to_string(),
+        path,
+        package_name,
+        &rust_module_name,
+    );
     rust_module_name
 }
 
-fn generate_zserio_read(struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
+fn generate_zserio_read(scope: &ModelScope, struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = to_rust_type_name(&zenum.name);
     let temp_var = format!(
         "let v: {}",
@@ -97,6 +109,7 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
     decode_type(
+        scope,
         zserio_read_fn,
         &temp_var,
         &String::from(""),
@@ -110,6 +123,7 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
     decode_type(
+        scope,
         zserio_read_packed_fn,
         &temp_var,
         &String::from(""),
@@ -119,7 +133,7 @@ fn generate_zserio_read(struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
     zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64);",));
 }
 
-fn generate_zserio_write(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
+fn generate_zserio_write(scope: &ModelScope, impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = format!(
         "(*self as {})",
         zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
@@ -128,13 +142,20 @@ fn generate_zserio_write(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     let zserio_write_fn = impl_codegen.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
-    encode_type(zserio_write_fn, &rust_type_name, &zenum.enum_type, None);
+    encode_type(
+        scope,
+        zserio_write_fn,
+        &rust_type_name,
+        &zenum.enum_type,
+        None,
+    );
 
     let zserio_write_packed_fn = impl_codegen.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
     encode_type(
+        scope,
         zserio_write_packed_fn,
         &rust_type_name,
         &zenum.enum_type,
@@ -142,7 +163,7 @@ fn generate_zserio_write(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     );
 }
 
-fn generate_zserio_bitsize(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
+fn generate_zserio_bitsize(scope: &ModelScope, impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = format!(
         "(*self as {})",
         zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
@@ -153,7 +174,14 @@ fn generate_zserio_bitsize(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
-    bitsize_type_reference(bitsize_fn, &rust_type_name, false, &zenum.enum_type, None);
+    bitsize_type_reference(
+        scope,
+        bitsize_fn,
+        &rust_type_name,
+        false,
+        &zenum.enum_type,
+        None,
+    );
     bitsize_fn.line("end_position - bit_position");
 
     let bitsize_packed_fn = impl_codegen.new_fn("zserio_bitsize_packed");
@@ -163,6 +191,7 @@ fn generate_zserio_bitsize(impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
     bitsize_packed_fn.arg("bit_position", "u64");
     bitsize_packed_fn.line("let mut end_position = bit_position;");
     bitsize_type_reference(
+        scope,
         bitsize_packed_fn,
         &rust_type_name,
         false,
