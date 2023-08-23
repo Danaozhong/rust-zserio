@@ -7,7 +7,7 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 
 /// Resolves all type references within a struct, and assigns the full package path
 /// to the type reference.
-pub fn resolve_struct_types(z_struct: &mut ZStruct, scope: &mut ModelScope) {
+pub fn resolve_struct_types(z_struct: &ZStruct, scope: &ModelScope) {
     if !z_struct.template_parameters.is_empty() {
         // Ignore templates
         return;
@@ -25,7 +25,7 @@ pub fn resolve_struct_types(z_struct: &mut ZStruct, scope: &mut ModelScope) {
 
 /// Resolves all type references within a struct, and assigns the full package path
 /// to the type reference.
-pub fn resolve_choice_types(z_choice: &mut ZChoice, scope: &mut ModelScope) {
+pub fn resolve_choice_types(z_choice: &ZChoice, scope: &ModelScope) {
     if !z_choice.template_parameters.is_empty() {
         // Ignore templates
         return;
@@ -53,7 +53,7 @@ pub fn resolve_choice_types(z_choice: &mut ZChoice, scope: &mut ModelScope) {
 
 /// Resolves all type references within an union, and assigns the full package path
 /// to the type reference.
-pub fn resolve_union_types(z_union: &mut ZUnion, scope: &mut ModelScope) {
+pub fn resolve_union_types(z_union: &ZUnion, scope: &ModelScope) {
     if !z_union.template_parameters.is_empty() {
         // Ignore templates
         return;
@@ -71,11 +71,11 @@ pub fn resolve_union_types(z_union: &mut ZUnion, scope: &mut ModelScope) {
 
 /// Resolves all type references within a subtype, and assigns the full package path
 /// to the type reference.
-pub fn resolve_subtype(z_subtype: &mut Subtype, scope: &mut ModelScope) {
+pub fn resolve_subtype(z_subtype: &mut Subtype, scope: &ModelScope) {
     resolve_type_reference(&mut z_subtype.zserio_type, scope);
 }
 
-pub fn resolve_type_reference(type_reference: &mut TypeReference, scope: &mut ModelScope) {
+pub fn resolve_type_reference(type_reference: &mut TypeReference, scope: &ModelScope) {
     if type_reference.is_builtin {
         return;
     }

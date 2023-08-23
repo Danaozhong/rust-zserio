@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use codegen::{Function, Scope};
 
 use crate::internal::ast::zchoice::ZChoice;

@@ -65,7 +65,7 @@ impl Model {
                     import_symbol: None,
                     symbol_name: Option::from(z_struct.borrow().name.clone()),
                 });
-                resolve_struct_types(&mut z_struct.borrow_mut(), scope);
+                resolve_struct_types(&z_struct.borrow(), scope);
                 scope.scope_stack.pop();
             }
 
@@ -75,7 +75,7 @@ impl Model {
                     import_symbol: None,
                     symbol_name: Option::from(z_choice.borrow().name.clone()),
                 });
-                resolve_choice_types(&mut z_choice.borrow_mut(), scope);
+                resolve_choice_types(&z_choice.borrow(), scope);
                 scope.scope_stack.pop();
             }
 
@@ -85,7 +85,7 @@ impl Model {
                     import_symbol: None,
                     symbol_name: Option::from(z_union.borrow().name.clone()),
                 });
-                resolve_union_types(&mut z_union.borrow_mut(), scope);
+                resolve_union_types(&z_union.borrow_mut(), scope);
                 scope.scope_stack.pop();
             }
 

@@ -43,10 +43,9 @@ fn read_sized_int(reader: &mut BitReader, num_byes: u8) -> i64 {
 }
 
 mod tests {
-    
 
     use super::*;
-    
+
     #[rstest]
     #[case(vec![0x0], 0)] // zero
     #[case(vec![0xff, 0xff, 0xff, 0xff], crate::ztype::limits::MIN_VARINT32)] // minimum
