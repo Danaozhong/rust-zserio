@@ -3,19 +3,20 @@ use codegen::{Function, Scope};
 use crate::internal::ast::zchoice::ZChoice;
 
 use crate::internal::ast::field::Field;
-
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
-    bitsize::bitsize_field, decode::decode_field, encode::encode_field,
-    expression::generate_expression, file_generator::write_to_file, function::generate_function,
-    new::new_field, new::new_param, preamble::add_standard_imports, types::convert_field_name,
-    types::to_rust_module_name, types::to_rust_type_name, types::ztype_to_rust_type,
-    zstruct::generate_struct_member_for_field,
+    array::instantiate_zserio_array, bitsize::bitsize_field, decode::decode_field,
+    encode::encode_field, expression::generate_expression, file_generator::write_to_file,
+    function::generate_function, new::new_field, new::new_param, preamble::add_standard_imports,
+    types::convert_field_name, types::to_rust_module_name, types::to_rust_type_name,
+    types::ztype_to_rust_type, zstruct::generate_struct_member_for_field,
 };
 
 use std::path::Path;
 
 pub fn generate_choice(
-    scope: &mut Scope,
+    symbol_scope: &ModelScope,
+    codegen_scope: &mut Scope,
     zchoice: &ZChoice,
     path: &Path,
     package_name: &str,
@@ -23,10 +24,10 @@ pub fn generate_choice(
     let rust_module_name = to_rust_module_name(&zchoice.name);
     let rust_type_name = to_rust_type_name(&zchoice.name);
 
-    add_standard_imports(scope);
+    add_standard_imports(codegen_scope);
 
     // generate the ZChoice as a rust structure
-    let gen_choice = scope.new_struct(&rust_type_name);
+    let gen_choice = codegen_scope.new_struct(&rust_type_name);
     gen_choice.vis("pub");
 
     // if the field is parameterized, add the parameters as member variables
@@ -57,7 +58,7 @@ pub fn generate_choice(
     }
 
     // generate the functions to serialize/deserialize
-    let choice_impl = scope.new_impl(&rust_type_name);
+    let choice_impl = codegen_scope.new_impl(&rust_type_name);
     choice_impl.impl_trait("ztype::ZserioPackableOject");
 
     // Generate a function to create a new instance of the struct
@@ -66,35 +67,41 @@ pub fn generate_choice(
     new_fn.line(format!("{} {{", &rust_type_name));
 
     for param in &zchoice.type_parameters {
-        new_param(new_fn, &param.as_ref().borrow());
+        new_param(symbol_scope, new_fn, &param.as_ref().borrow());
     }
 
     for case in &zchoice.cases {
         if let Some(case_field) = &case.field {
-            new_field(new_fn, &case_field.borrow());
+            new_field(symbol_scope, new_fn, &case_field.borrow());
         }
     }
     new_fn.line("}");
 
-    generate_zserio_read(choice_impl, zchoice);
-    generate_zserio_write(choice_impl, zchoice);
-    generate_zserio_bitsize(choice_impl, zchoice);
+    generate_zserio_read(symbol_scope, choice_impl, zchoice);
+    generate_zserio_write(symbol_scope, choice_impl, zchoice);
+    generate_zserio_bitsize(symbol_scope, choice_impl, zchoice);
 
     // Generate all the zserio functions.
-    let pub_impl = scope.new_impl(&rust_type_name);
+    let pub_impl = codegen_scope.new_impl(&rust_type_name);
     for zserio_function in &zchoice.functions {
         generate_function(pub_impl, &zserio_function.as_ref().borrow());
     }
 
-    write_to_file(&scope.to_string(), path, package_name, &rust_module_name);
+    write_to_file(
+        &codegen_scope.to_string(),
+        path,
+        package_name,
+        &rust_module_name,
+    );
     rust_module_name
 }
 
 pub fn generate_choice_match_construct(
+    symbol_scope: &ModelScope,
     code_gen_fn: &mut Function,
     zchoice: &ZChoice,
     packed: bool,
-    f: &dyn Fn(&mut Function, &Field, Option<u8>),
+    f: &dyn Fn(&ModelScope, &mut Function, &Field, Option<u8>),
 ) {
     let selector_name = convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
     let mut context_node_index = 0;
@@ -109,23 +116,35 @@ pub fn generate_choice_match_construct(
 
         code_gen_fn.line(format!("{} => {{", selector_expression_evaluation));
         if let Some(field) = &case.field {
+            instantiate_zserio_array(symbol_scope, code_gen_fn, &field.borrow(), false);
             let mut packing_node_index = None;
             if packed {
                 packing_node_index = Option::from(context_node_index);
                 context_node_index += 1
             }
-            f(code_gen_fn, &field.borrow(), packing_node_index);
+            f(
+                symbol_scope,
+                code_gen_fn,
+                &field.borrow(),
+                packing_node_index,
+            );
         }
         code_gen_fn.line("},");
     }
     if let Some(default_case) = &zchoice.default_case {
         code_gen_fn.line("_ => (");
         if let Some(field) = &default_case.field {
+            instantiate_zserio_array(symbol_scope, code_gen_fn, &field.borrow(), false);
             let mut packing_node_index = None;
             if packed {
                 packing_node_index = Option::from(context_node_index);
             }
-            f(code_gen_fn, &field.borrow(), packing_node_index);
+            f(
+                symbol_scope,
+                code_gen_fn,
+                &field.borrow(),
+                packing_node_index,
+            );
         }
         code_gen_fn.line("),");
     } else {
@@ -134,39 +153,64 @@ pub fn generate_choice_match_construct(
     code_gen_fn.line("}");
 }
 
-fn generate_zserio_read(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
+fn generate_zserio_read(
+    symbol_scope: &ModelScope,
+    struct_impl: &mut codegen::Impl,
+    choice: &ZChoice,
+) {
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
-    generate_choice_match_construct(zserio_read_fn, choice, false, &decode_field);
+
+    generate_choice_match_construct(symbol_scope, zserio_read_fn, choice, false, &decode_field);
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
-    generate_choice_match_construct(zserio_read_packed_fn, choice, true, &decode_field);
+    generate_choice_match_construct(
+        symbol_scope,
+        zserio_read_packed_fn,
+        choice,
+        true,
+        &decode_field,
+    );
 }
 
-fn generate_zserio_write(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
+fn generate_zserio_write(
+    symbol_scope: &ModelScope,
+    struct_impl: &mut codegen::Impl,
+    choice: &ZChoice,
+) {
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
-    generate_choice_match_construct(zserio_write_fn, choice, false, &encode_field);
+    generate_choice_match_construct(symbol_scope, zserio_write_fn, choice, false, &encode_field);
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
-    generate_choice_match_construct(zserio_write_packed_fn, choice, true, &encode_field);
+    generate_choice_match_construct(
+        symbol_scope,
+        zserio_write_packed_fn,
+        choice,
+        true,
+        &encode_field,
+    );
 }
 
-fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
+fn generate_zserio_bitsize(
+    symbol_scope: &ModelScope,
+    struct_impl: &mut codegen::Impl,
+    choice: &ZChoice,
+) {
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
-    generate_choice_match_construct(bitsize_fn, choice, false, &bitsize_field);
+    generate_choice_match_construct(symbol_scope, bitsize_fn, choice, false, &bitsize_field);
     bitsize_fn.line("end_position - bit_position");
 
     let bitsize_packed_fn = struct_impl.new_fn("zserio_bitsize_packed");
@@ -175,6 +219,12 @@ fn generate_zserio_bitsize(struct_impl: &mut codegen::Impl, choice: &ZChoice) {
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
     bitsize_packed_fn.line("let mut end_position = bit_position;");
-    generate_choice_match_construct(bitsize_packed_fn, choice, true, &bitsize_field);
+    generate_choice_match_construct(
+        symbol_scope,
+        bitsize_packed_fn,
+        choice,
+        true,
+        &bitsize_field,
+    );
     bitsize_packed_fn.line("end_position - bit_position");
 }

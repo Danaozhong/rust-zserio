@@ -1,4 +1,7 @@
 use crate::internal::ast::package::ZPackage;
+use crate::internal::compiler::resolve_types::{
+    resolve_choice_types, resolve_struct_types, resolve_subtype, resolve_union_types,
+};
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::model::package::package_from_file;
 use std::collections::HashMap;
@@ -11,6 +14,7 @@ use crate::internal::compiler::template_instantiation::instantiate_type;
 
 pub struct Model {
     pub packages: HashMap<String, ZPackage>,
+    pub scope: ModelScope,
 }
 
 impl Model {
@@ -30,24 +34,75 @@ impl Model {
                 packages.insert(package.name.clone(), package);
             }
         }
-        Model { packages }
+        Model {
+            packages,
+            scope: ModelScope {
+                package_scopes: HashMap::new(),
+                scope_stack: vec![],
+            },
+        }
     }
 
     pub fn evaluate(&mut self) {
-        // collect symbols
-        let mut_self = self;
-        let mut scope = ModelScope::build_scope(mut_self);
-
-        // resolve types
+        self.scope = ModelScope::build_scope(&self.packages);
 
         // evaluate templates
-        mut_self.instantiate_templates(&mut scope);
+        self.instantiate_templates();
+
+        // resolve types
+        self.resolve_types();
 
         // evaluate expressions
-        mut_self.evaluate_package(&mut scope);
+        self.evaluate_package();
     }
 
-    pub fn instantiate_templates(&mut self, scope: &mut ModelScope) {
+    pub fn resolve_types(&mut self) {
+        let scope = &mut self.scope;
+        for pkg in self.packages.values_mut() {
+            for z_struct in pkg.structs.values_mut() {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_struct.borrow().name.clone()),
+                });
+                resolve_struct_types(&mut z_struct.borrow_mut(), scope);
+                scope.scope_stack.pop();
+            }
+
+            for z_choice in pkg.zchoices.values_mut() {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_choice.borrow().name.clone()),
+                });
+                resolve_choice_types(&mut z_choice.borrow_mut(), scope);
+                scope.scope_stack.pop();
+            }
+
+            for z_union in &pkg.zunions {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_union.borrow().name.clone()),
+                });
+                resolve_union_types(&mut z_union.borrow_mut(), scope);
+                scope.scope_stack.pop();
+            }
+
+            for z_subtype in &pkg.subtypes {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_subtype.borrow().name.clone()),
+                });
+                resolve_subtype(&mut z_subtype.borrow_mut(), scope);
+                scope.scope_stack.pop();
+            }
+        }
+    }
+
+    pub fn instantiate_templates(&mut self) {
+        let scope = &mut self.scope;
         for pkg in self.packages.values_mut() {
             scope.scope_stack.push(ScopeLocation {
                 package: pkg.name.clone(),
@@ -68,13 +123,14 @@ impl Model {
         }
     }
 
-    pub fn evaluate_package(&mut self, scope: &mut ModelScope) {
+    pub fn evaluate_package(&mut self) {
+        let scope = &mut self.scope;
         for pkg in self.packages.values_mut() {
             for z_struct in pkg.structs.values_mut() {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
-                    symbol_name: Option::from(z_struct.as_ref().borrow().name.clone()),
+                    symbol_name: Option::from(z_struct.borrow().name.clone()),
                 });
                 z_struct.borrow().evaluate(scope);
                 scope.scope_stack.pop();
@@ -84,7 +140,7 @@ impl Model {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
-                    symbol_name: Option::from(z_enum.as_ref().borrow().name.clone()),
+                    symbol_name: Option::from(z_enum.borrow().name.clone()),
                 });
                 z_enum.borrow_mut().evaluate(scope);
                 scope.scope_stack.pop();
@@ -94,7 +150,7 @@ impl Model {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
-                    symbol_name: Option::from(z_choice.as_ref().borrow().name.clone()),
+                    symbol_name: Option::from(z_choice.borrow().name.clone()),
                 });
                 z_choice.borrow().evaluate_selector_expression(scope);
                 z_choice
@@ -105,11 +161,21 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
+            for z_enum in &pkg.zunions {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_enum.borrow().name.clone()),
+                });
+                z_enum.borrow().evaluate(scope);
+                scope.scope_stack.pop();
+            }
+
             for z_const in &mut pkg.consts {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
-                    symbol_name: Option::from(z_const.as_ref().borrow().name.clone()),
+                    symbol_name: Option::from(z_const.borrow().name.clone()),
                 });
                 z_const.borrow_mut().evaluate(scope);
                 scope.scope_stack.pop();
@@ -119,7 +185,7 @@ impl Model {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
-                    symbol_name: Option::from(bitmask.as_ref().borrow().name.clone()),
+                    symbol_name: Option::from(bitmask.borrow().name.clone()),
                 });
                 bitmask.borrow_mut().evaluate(scope);
                 scope.scope_stack.pop();

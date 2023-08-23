@@ -6,7 +6,7 @@ use rust_bitwriter::BitWriter;
 
 #[derive(PartialEq)]
 pub struct ExternType {
-    pub bit_size: u64,
+    pub bit_size: u32,
     pub data_blob: Vec<u8>,
 }
 
@@ -16,7 +16,7 @@ pub fn read_extern_type(bit_reader: &mut BitReader) -> ExternType {
     let num_of_full_bytes = bit_size / 8;
     let remaining_bits = (bit_size % 8) as u8;
 
-    let mut extern_bytes = read_bytes(bit_reader, num_of_full_bytes as u32);
+    let mut extern_bytes = read_bytes(bit_reader, num_of_full_bytes);
     if remaining_bits != 0 {
         let mut last_byte = bit_reader
             .read_u8(remaining_bits)

@@ -14,7 +14,9 @@ pub fn generate_function(codegen_scope: &mut Impl, zserio_function: &ZFunction) 
     fn_gen_scope.vis("pub");
 
     // Generate the function content.
-    fn_gen_scope.line(generate_expression(
-        &zserio_function.result.as_ref().borrow(),
+    fn_gen_scope.line(format!(
+        "({}) as {}",
+        generate_expression(&zserio_function.result.as_ref().borrow()),
+        ztype_to_rust_type(&zserio_function.return_type),
     ));
 }

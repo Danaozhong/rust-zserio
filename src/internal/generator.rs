@@ -6,7 +6,6 @@ pub mod expression;
 pub mod file_generator;
 pub mod function;
 pub mod model;
-pub mod native_type;
 pub mod new;
 pub mod package;
 pub mod preamble;

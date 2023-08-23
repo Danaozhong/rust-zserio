@@ -17,7 +17,7 @@ pub struct ZStruct {
 
 impl ZStruct {
     pub fn evaluate(&self, scope: &mut ModelScope) {
-        // Ignore packages that are templated. They cannot be evaluated. Only their templated
+        // Ignore structures that are templated. They cannot be evaluated. Only their templated
         // instances will be evaluated.
         if !self.template_parameters.is_empty() {
             return;

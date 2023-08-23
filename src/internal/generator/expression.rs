@@ -8,8 +8,8 @@ use crate::internal::generator::types::{
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, BINARY_LITERAL, BOOL_LITERAL, DECIMAL_LITERAL, DIVIDE, DOT, DOUBLE_LITERAL, EQ,
     FLOAT_LITERAL, GE, GT, HEXADECIMAL_LITERAL, ID, LE, LENGTHOF, LOGICAL_AND, LOGICAL_OR, LPAREN,
-    LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, OCTAL_LITERAL, OR, PLUS, QUESTIONMARK, RPAREN, RSHIFT,
-    TILDE, VALUEOF, XOR,
+    LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OCTAL_LITERAL, OR, PLUS, QUESTIONMARK,
+    RPAREN, RSHIFT, TILDE, VALUEOF, XOR,
 };
 
 pub struct ExpressionGenerationResult {
@@ -32,6 +32,7 @@ pub fn generate_expression(expression: &Expression) -> String {
         DOT => generate_dot_expression(expression),
         VALUEOF => generate_valueof_expression(expression),
         LENGTHOF => generate_lengthof_expression(expression),
+        NUMBITS => generate_numbits_expression(expression),
         EQ | GE | GT | LE | LT | NE => generate_comparison_expression(expression),
         PLUS | MINUS | MULTIPLY | DIVIDE | MODULO => generate_arithmetic_expression(expression),
         QUESTIONMARK => generate_ternary_expression(expression),
@@ -162,7 +163,14 @@ fn generate_valueof_expression(expression: &Expression) -> String {
 
 fn generate_lengthof_expression(expression: &Expression) -> String {
     format!(
-        "ztype::lengthof({})",
+        "{}.len()",
+        generate_expression(expression.operand1.as_ref().unwrap())
+    )
+}
+
+fn generate_numbits_expression(expression: &Expression) -> String {
+    format!(
+        "{} as u32",
         generate_expression(expression.operand1.as_ref().unwrap())
     )
 }

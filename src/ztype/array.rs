@@ -12,7 +12,7 @@ use crate::ztype::varuint_encode::write_varsize;
 pub struct Array<T> {
     pub array_trait: Box<dyn ArrayTrait<T>>,
     pub is_packed: bool,
-    pub fixed_size: Option<u64>,
+    pub fixed_size: Option<u32>,
     pub is_aligned: bool,
     pub packing_context_node: Option<PackingContextNode>,
 }
@@ -27,10 +27,10 @@ impl<T> Array<T> {
     pub fn zserio_write(&mut self, writer: &mut BitWriter, data: &Vec<T>) {
         if let Some(expected_array_len) = self.fixed_size {
             // for fixed-size arrays, the provided length must match
-            assert_eq!(expected_array_len, data.len() as u64);
+            assert_eq!(expected_array_len, data.len() as u32);
         } else {
             // for auto arrays, write the length of the array
-            write_varsize(writer, data.len() as u64);
+            write_varsize(writer, data.len() as u32);
         }
 
         if data.is_empty() {
@@ -93,7 +93,7 @@ impl<T> Array<T> {
     pub fn zserio_bitsize(&mut self, data: &Vec<T>, bit_position: u64) -> u64 {
         let mut end_position = bit_position;
         if self.fixed_size.is_none() {
-            end_position += varsize_bitsize(data.len() as u64) as u64;
+            end_position += varsize_bitsize(data.len() as u32) as u64;
         }
         if !data.is_empty() {
             if self.array_trait.is_bitsizeof_constant() {
@@ -126,7 +126,7 @@ impl<T> Array<T> {
     pub fn zserio_bitsize_packed(&mut self, data: &Vec<T>, bit_position: u64) -> u64 {
         let mut end_position = bit_position;
         if self.fixed_size.is_none() {
-            end_position += varsize_bitsize(data.len() as u64) as u64;
+            end_position += varsize_bitsize(data.len() as u32) as u64;
         }
         if !data.is_empty() {
             self.create_packing_context_node_if_not_exists();

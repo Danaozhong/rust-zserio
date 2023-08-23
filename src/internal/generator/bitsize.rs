@@ -2,12 +2,14 @@ use codegen::Function;
 
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
-use crate::internal::generator::native_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::types::convert_field_name;
 
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 
 pub fn bitsize_type_reference(
+    _scope: &ModelScope,
     function: &mut Function,
     field_name: &str,
     is_marshaler: bool,
@@ -36,9 +38,12 @@ pub fn bitsize_type_reference(
                 field_name
             ));
         } else if type_reference.name == "extern" {
-            function.line(format!("end_position += {}.bit_size;", field_name));
+            function.line(format!("end_position += {}.bit_size as u64;", field_name));
         } else if type_reference.name == "bytes" {
-            function.line(format!("end_position += {}.byte_size * 8;", field_name));
+            function.line(format!(
+                "end_position += ({}.byte_size as u64) * 8;",
+                field_name
+            ));
         } else if type_reference.name == "bool" {
             // boolean
             function.line("end_position += 1;");
@@ -66,34 +71,34 @@ pub fn bitsize_type_reference(
                 "float32" => String::from("32"),
                 "float64" => String::from("64"),
                 "varint" => {
-                    format!("ztype::signed_bit_size({})", field_name)
+                    format!("ztype::varint_bitsize({}) as u64", field_name)
                 }
                 "varint16" => {
-                    format!("ztype::signed_bit_size({})", field_name)
+                    format!("ztype::varint16_bitsize({}) as u64", field_name)
                 }
                 "varint32" => {
-                    format!("ztype::signed_bit_size({})", field_name)
+                    format!("ztype::varint32_bitsize({}) as u64", field_name)
                 }
                 "varint64" => {
-                    format!("ztype::signed_bit_size({})", field_name)
+                    format!("ztype::varint64_bitsize({}) as u64", field_name)
                 }
                 "varuint" => {
-                    format!("ztype::unsigned_bit_size({})", field_name)
+                    format!("ztype::varuint_bitsize({}) as u64", field_name)
                 }
                 "varuint16" => {
-                    format!("ztype::unsigned_bit_size({})", field_name)
+                    format!("ztype::varuint16_bitsize({}) as u64", field_name)
                 }
                 "varuint32" => {
-                    format!("ztype::unsigned_bit_size({})", field_name)
+                    format!("ztype::varuint32_bitsize({}) as u64", field_name)
                 }
                 "varuint64" => {
-                    format!("ztype::unsigned_bit_size({})", field_name)
+                    format!("ztype::varuint64_bitsize({}) as u64", field_name)
                 }
                 "varsize" => {
-                    format!("ztype::unsigned_bit_size({})", field_name)
+                    format!("ztype::varsize_bitsize({}) as u64", field_name)
                 }
                 "int" | "bit" => {
-                    format!("{}", type_reference.bits)
+                    format!("{} as u64", type_reference.bits)
                 }
                 _ => panic!("failed"),
             };
@@ -102,8 +107,13 @@ pub fn bitsize_type_reference(
     }
 }
 
-pub fn bitsize_field(function: &mut Function, field: &Field, context_node_index: Option<u8>) {
-    let native_type = get_fundamental_type(&field.field_type);
+pub fn bitsize_field(
+    scope: &ModelScope,
+    function: &mut Function,
+    field: &Field,
+    context_node_index: Option<u8>,
+) {
+    let native_type = get_fundamental_type(&field.field_type, scope);
     let fund_type = native_type.fundamental_type;
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
@@ -121,6 +131,7 @@ pub fn bitsize_field(function: &mut Function, field: &Field, context_node_index:
         ));
     } else {
         bitsize_type_reference(
+            scope,
             function,
             &field_name,
             native_type.is_marshaler,

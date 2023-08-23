@@ -1,12 +1,20 @@
 use bitreader::BitReader;
 use rstest::rstest;
 
-pub fn read_varsize(reader: &mut BitReader) -> u64 {
-    read_sized_uint(reader, 5)
+pub fn read_varsize(reader: &mut BitReader) -> u32 {
+    read_sized_uint(reader, 5) as u32
+}
+
+pub fn read_varuint16(reader: &mut BitReader) -> u16 {
+    read_sized_uint(reader, 2) as u16
 }
 
 pub fn read_varuint32(reader: &mut BitReader) -> u32 {
     read_sized_uint(reader, 4) as u32
+}
+
+pub fn read_varuint64(reader: &mut BitReader) -> u64 {
+    read_sized_uint(reader, 8)
 }
 
 pub fn read_varuint(reader: &mut BitReader) -> u64 {

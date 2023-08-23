@@ -1,7 +1,8 @@
 use codegen::Function;
 
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
-use crate::internal::generator::native_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::types::{
     convert_field_name, zserio_to_rust_type, ztype_to_rust_type,
 };
@@ -9,13 +10,14 @@ use crate::internal::generator::types::{
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
 pub fn decode_type(
+    scope: &ModelScope,
     function: &mut Function,
     lvalue_field_name: &String,
     rvalue_field_name: &String,
     field_type: &TypeReference,
     context_node_index: Option<u8>,
 ) {
-    let native_type = get_fundamental_type(field_type);
+    let native_type = get_fundamental_type(field_type, scope);
     let fund_type = native_type.fundamental_type;
 
     if native_type.is_marshaler {
@@ -50,7 +52,10 @@ pub fn decode_type(
             ));
         } else if fund_type.name == "bool" {
             // boolean
-            function.line(format!("{} = reader.read_bool();", lvalue_field_name));
+            function.line(format!(
+                "{} = reader.read_bool().expect(\"failed to read bool\");",
+                lvalue_field_name
+            ));
         } else if let Some(node_idx) = context_node_index {
             // packed decoding
             function.line(format!(
@@ -87,10 +92,15 @@ pub fn decode_type(
     }
 }
 
-pub fn decode_field(function: &mut Function, field: &Field, context_node_index: Option<u8>) {
-    let native_type = get_fundamental_type(&field.field_type);
+pub fn decode_field(
+    scope: &ModelScope,
+    function: &mut Function,
+    field: &Field,
+    context_node_index: Option<u8>,
+) {
+    let native_type = get_fundamental_type(&field.field_type, scope);
     let _fund_type = native_type.fundamental_type;
-    let rvalue_field_name = format!("self.{}", convert_field_name(&field.name));
+    let mut rvalue_field_name = format!("self.{}", convert_field_name(&field.name));
     let mut lvalue_field_name = rvalue_field_name.clone();
 
     // TODO alignment
@@ -98,10 +108,26 @@ pub fn decode_field(function: &mut Function, field: &Field, context_node_index: 
     if field.is_optional {
         function.line("let present = reader.read_bool().unwrap();");
         function.line("if present {");
-        lvalue_field_name = format!(
-            "let optional_value: {}",
-            ztype_to_rust_type(&field.field_type)
-        );
+
+        // In case the field is optional, create a local variable
+        // to store the value temporarly.
+        let mut field_type = ztype_to_rust_type(&field.field_type);
+        if field.array.is_some() {
+            field_type = format!("Vec<{}>", field_type.as_str());
+        }
+
+        if native_type.is_marshaler {
+            // Todo this currently doesn't work for arrays
+            if field.array.is_some() {
+                function.line("let mut optional_value = vec![];");
+            } else {
+                function.line(format!("let mut optional_value = {}::new();", field_type));
+            }
+
+            rvalue_field_name = "optional_value".into();
+        } else {
+            lvalue_field_name = format!("let optional_value: {}", field_type);
+        }
     }
 
     if field.array.is_some() {
@@ -112,11 +138,12 @@ pub fn decode_field(function: &mut Function, field: &Field, context_node_index: 
 
         function.line(format!(
             "{} = {}.zserio_read(reader);",
-            lvalue_field_name,
+            rvalue_field_name,
             array_type_name(&field.name)
         ));
     } else {
         decode_type(
+            scope,
             function,
             &lvalue_field_name,
             &rvalue_field_name,
@@ -127,8 +154,8 @@ pub fn decode_field(function: &mut Function, field: &Field, context_node_index: 
 
     if field.is_optional {
         function.line(format!(
-            "{} = Option::from(optional_value);",
-            rvalue_field_name
+            "self.{} = Option::from(optional_value);",
+            convert_field_name(&field.name)
         ));
         function.line("}"); // close the "if present {"
     }

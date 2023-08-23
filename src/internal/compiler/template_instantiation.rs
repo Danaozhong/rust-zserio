@@ -28,7 +28,7 @@ pub fn instantiate_type(
         new_type_name = generate_instantiated_name(zserio_type);
     }
 
-    let symbol = scope.resolve_symbol(&zserio_type.name);
+    let symbol = scope.resolve_symbol(&zserio_type.name, true);
     match symbol.symbol {
         Symbol::Struct(s) => {
             return instantiate_struct(
