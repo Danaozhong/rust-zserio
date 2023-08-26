@@ -15,6 +15,7 @@ use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
     value_wrapper,
 };
+use crate::reference_modules::type_lookup_test::ztype::union_type::{UnionType, UnionTypeSelector};
 use crate::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
 
 use bitreader::BitReader;
@@ -30,6 +31,7 @@ fn main() {
     test_functions_in_instantiated_templates();
     test_extern_type();
     test_type_lookup();
+    test_union_type();
 }
 
 fn test_structure() {
@@ -180,4 +182,28 @@ fn test_type_lookup() {
     let mut bitwriter = BitWriter::new();
     ztype_struct.zserio_write(&mut bitwriter);
     bitwriter.close().expect("failed to close bit stream");
+}
+
+fn test_union_type() {
+    // This test case checks union types, by creating them, assigning a value,
+    // and then performing a round-trip test.
+    let mut union_instance = UnionType::new();
+
+    // fill the bytes buffer with four bytes
+    union_instance.u_16_value = 32;
+    union_instance.union_selector = UnionTypeSelector::U16Value;
+
+    // serialize
+    let mut bitwriter = BitWriter::new();
+    union_instance.zserio_write(&mut bitwriter);
+    bitwriter.close().expect("failed to close bit stream");
+    let serialized_bytes = bitwriter.data();
+
+    // deserialize
+    let mut other_union_instance = UnionType::new();
+    let mut bitreader = BitReader::new(serialized_bytes);
+    other_union_instance.zserio_read(&mut bitreader);
+
+    assert!(other_union_instance.union_selector as u32 == union_instance.union_selector as u32);
+    assert!(other_union_instance.u_16_value == union_instance.u_16_value);
 }

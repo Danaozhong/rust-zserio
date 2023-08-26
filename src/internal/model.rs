@@ -161,13 +161,13 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
-            for z_enum in &pkg.zunions {
+            for z_union in &pkg.zunions {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
-                    symbol_name: Option::from(z_enum.borrow().name.clone()),
+                    symbol_name: Option::from(z_union.borrow().name.clone()),
                 });
-                z_enum.borrow().evaluate(scope);
+                z_union.borrow().evaluate(scope);
                 scope.scope_stack.pop();
             }
 

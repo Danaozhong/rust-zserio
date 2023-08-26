@@ -23,6 +23,10 @@ pub fn convert_to_enum_field_name(name: &String) -> String {
     name.to_case(Case::UpperCamel)
 }
 
+pub fn convert_to_union_selector_name(field_name: &String) -> String {
+    field_name.to_case(Case::UpperCamel)
+}
+
 pub fn convert_to_function_name(name: &String) -> String {
     // Converts a function name from zserio style to rust style (snake case).
     name.to_case(Case::Snake)

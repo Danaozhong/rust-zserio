@@ -66,7 +66,9 @@ use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::parser::gen::zserioparser::{IdContextAttrs, GT, RSHIFT};
+use super::parser::gen::zserioparser::{
+    IdContextAttrs, UnionFieldDefinitionContextAttrs, GT, RSHIFT,
+};
 
 // the antlr implementation for Rust requires to use one single return type,
 // but depending on the node, the types returned while parsing the tree may
@@ -587,11 +589,11 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             }
         }
         for field_context in ctx.unionFieldDefinition_all() {
-            match self.visit(&*field_context) {
-                ZserioTreeReturnType::Field(f) => {
-                    zserio_union.fields.push(Rc::from(RefCell::from(*f)))
+            match self.visit(&*field_context.choiceFieldDefinition().unwrap()) {
+                ZserioTreeReturnType::Field(field) => {
+                    zserio_union.fields.push(Rc::from(RefCell::from(*field)))
                 }
-                _ => println!(),
+                _ => panic!("failed to decode the union fields."),
             }
         }
         for function_ctx in ctx.functionDefinition_all() {
