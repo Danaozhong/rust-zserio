@@ -5,6 +5,7 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     preamble::get_default_scope, subtype::generate_subtype, types::to_rust_module_name,
     zchoice::generate_choice, zenum::generate_enum, zstruct::generate_struct,
+    zunion::generate_union,
 };
 use std::path::Path;
 
@@ -34,7 +35,7 @@ pub fn generate_package(
         ));
     }
 
-    // Generate  the rust code for zserio structures.
+    // Generate  the rust code for zserio Choices.
     for z_choice_ref_cell in package.zchoices.values() {
         let z_choice = z_choice_ref_cell.borrow();
         // Ignore templates, only generate code for instantiated choices.
@@ -46,6 +47,23 @@ pub fn generate_package(
             symbol_scope,
             &mut gen_scope,
             &z_choice,
+            package_directory,
+            &package_name,
+        ));
+    }
+
+    // Generate  the rust code for zserio Union types.
+    for zunion_ref_cell in &package.zunions {
+        let zunion = zunion_ref_cell.borrow();
+        // Ignore templates, only generate code for instantiated unions.
+        if !zunion.template_parameters.is_empty() {
+            continue;
+        }
+        let mut gen_scope = get_default_scope(package, root_package);
+        module_names.push(generate_union(
+            symbol_scope,
+            &mut gen_scope,
+            &zunion,
             package_directory,
             &package_name,
         ));
