@@ -25,8 +25,8 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         bit_position + self.bitsize_of(bit_position, value)
     }
 
-    fn read(&self, reader: &mut BitReader) -> String {
-        read_string(reader)
+    fn read(&self, reader: &mut BitReader, value: &mut String, _index: usize) {
+        *value = read_string(reader);
     }
 
     fn write(&self, writer: &mut BitWriter, value: &String) {
@@ -61,8 +61,14 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
-    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> String {
-        context_node.context.read(self, reader)
+    fn read_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        reader: &mut BitReader,
+        value: &mut String,
+        index: usize,
+    ) {
+        context_node.context.read(self, reader, value, index);
     }
 
     fn write_packed(

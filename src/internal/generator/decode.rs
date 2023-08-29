@@ -3,6 +3,7 @@ use codegen::Function;
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::new::get_default_initializer;
 use crate::internal::generator::types::{
     convert_field_name, zserio_to_rust_type, ztype_to_rust_type,
 };
@@ -59,10 +60,10 @@ pub fn decode_type(
         } else if let Some(node_idx) = context_node_index {
             // packed decoding
             function.line(format!(
-                "{} = context_node.children[{}].context.read(&{}, reader);",
-                lvalue_field_name,
+                "context_node.children[{}].context.read(&{}, reader, &mut {}, 0);",
                 node_idx,
                 initialize_array_trait(&fund_type),
+                rvalue_field_name,
             ));
         } else {
             // nonpacked decoding
@@ -99,10 +100,10 @@ pub fn decode_field(
     context_node_index: Option<u8>,
 ) {
     let native_type = get_fundamental_type(&field.field_type, scope);
-    let _fund_type = native_type.fundamental_type;
-    let mut rvalue_field_name = format!("self.{}", convert_field_name(&field.name));
+    let field_name = convert_field_name(&field.name);
+    let mut rvalue_field_name = format!("self.{}", field_name);
     let mut lvalue_field_name = rvalue_field_name.clone();
-
+    let mut field_type = ztype_to_rust_type(&field.field_type);
     // TODO alignment
 
     if field.is_optional {
@@ -111,35 +112,63 @@ pub fn decode_field(
 
         // In case the field is optional, create a local variable
         // to store the value temporarly.
-        let mut field_type = ztype_to_rust_type(&field.field_type);
         if field.array.is_some() {
             field_type = format!("Vec<{}>", field_type.as_str());
         }
 
         if native_type.is_marshaler {
-            // Todo this currently doesn't work for arrays
             if field.array.is_some() {
                 function.line("let mut optional_value = vec![];");
             } else {
                 function.line(format!("let mut optional_value = {}::new();", field_type));
             }
-
-            rvalue_field_name = "optional_value".into();
         } else {
-            lvalue_field_name = format!("let optional_value: {}", field_type);
+            let default_value = get_default_initializer(
+                false, // We have already checked if the field is optional.
+                false, // The underlying type will never be an array (no multidimensional array support in zserio).
+                native_type.is_marshaler,
+                &native_type.fundamental_type.name,
+                &field_type,
+            );
+            function.line(format!(
+                "let mut optional_value: {} = {};",
+                &field_type, &default_value
+            ));
         }
+        lvalue_field_name = "optional_value".into();
+        rvalue_field_name = "optional_value".into();
     }
 
     if field.array.is_some() {
+        let array_type_name = array_type_name(&field.name);
         // Array fields need to be serialized using the array class, which takes
         // care of the array delta compression.
 
-        // TODO support @index operator
+        // Read the length of the array, either from the bit stream,
+        // or from the array definition in zserio.
+        function.line(format!(
+            "let {}_array_length = {}.zserio_read_array_length(reader);",
+            field_name, array_type_name,
+        ));
+
+        // initialize the array elements with empty values.
+        let default_value = get_default_initializer(
+            false, // The underlying type will never be optional (already checked).
+            false, // The underlying type will never be an array (no 2D array support in zserio).
+            native_type.is_marshaler,
+            &native_type.fundamental_type.name,
+            &field_type,
+        );
+        function.line(format!(
+            "{} = vec![{}; {}_array_length];",
+            rvalue_field_name, default_value, field_name,
+        ));
+
+        // TODO need to pass the parameters.
 
         function.line(format!(
-            "{} = {}.zserio_read(reader);",
-            rvalue_field_name,
-            array_type_name(&field.name)
+            "{}.zserio_read(reader, &mut {});",
+            array_type_name, rvalue_field_name,
         ));
     } else {
         decode_type(

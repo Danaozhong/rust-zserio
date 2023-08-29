@@ -24,8 +24,8 @@ pub fn generate_enum(
     // generate the struct itself
     let gen_enum = gen_scope.new_enum(&rust_type_name);
     gen_enum.vis("pub");
-    gen_enum.derive("Copy");
     gen_enum.derive("Clone");
+    gen_enum.derive("Copy");
     gen_enum.derive("PartialEq");
 
     let mut enum_value = 0;
@@ -100,18 +100,16 @@ pub fn generate_enum(
 
 fn generate_zserio_read(scope: &ModelScope, struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
     let rust_type_name = to_rust_type_name(&zenum.name);
-    let temp_var = format!(
-        "let v: {}",
-        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
-    );
-
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
     decode_type(
         scope,
         zserio_read_fn,
-        &temp_var,
+        &format!(
+            "let v: {}",
+            zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+        ),
         &String::from(""),
         &zenum.enum_type,
         None,
@@ -122,11 +120,15 @@ fn generate_zserio_read(scope: &ModelScope, struct_impl: &mut codegen::Impl, zen
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
+    zserio_read_packed_fn.line(format!(
+        "let mut v: {} = 0;",
+        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+    ));
     decode_type(
         scope,
         zserio_read_packed_fn,
-        &temp_var,
         &String::from(""),
+        &String::from("v"),
         &zenum.enum_type,
         Option::from(0),
     );

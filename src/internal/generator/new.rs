@@ -29,6 +29,38 @@ pub fn new_param(scope: &ModelScope, function: &mut Function, param: &Parameter)
     );
 }
 
+pub fn get_default_initializer(
+    is_optional: bool,
+    is_array: bool,
+    is_marshaler: bool,
+    fund_type_name: &String,
+    rust_type: &String,
+) -> String {
+    if is_optional {
+        return "None".into();
+    } else if is_array {
+        return "vec![]".into();
+    } else if is_marshaler {
+        return format!("{}::new()", rust_type);
+    } else if fund_type_name == "string" {
+        // string types
+        return "\"\".into()".into();
+    } else if fund_type_name == "bool" {
+        // boolean
+        return "false".into();
+    } else if fund_type_name == "extern" {
+        return "ztype::ExternType{ bit_size: 0, data_blob: vec![] }".into();
+    } else if fund_type_name == "bytes" {
+        return "ztype::BytesType{ byte_size: 0, data_blob: vec![] }".into();
+    } else if fund_type_name == "float16"
+        || fund_type_name == "float32"
+        || fund_type_name == "float64"
+    {
+        return "0.0".into();
+    }
+    // must be an integer type
+    "0".into()
+}
 pub fn new_type(
     scope: &ModelScope,
     function: &mut Function,
@@ -42,33 +74,15 @@ pub fn new_type(
     let field_name = convert_field_name(name);
     let rust_type = ztype_to_rust_type(type_reference);
 
-    if is_optional {
-        function.line(format!("{}: None,", field_name));
-    } else if let Some(_array) = array {
-        function.line(format!("{}: vec![],", field_name));
-    } else if native_type.is_marshaler {
-        function.line(format!("{}: {}::new(),", field_name, rust_type));
-    } else {
-        // fundamental types
-        if fund_type.name == "string" {
-            // string types
-            function.line(format!("{}: \"\".into(),", field_name));
-        } else if fund_type.name == "bool" {
-            // boolean
-            function.line(format!("{}: false,", field_name));
-        } else if type_reference.name == "extern" {
-            function.line(format!(
-                "{}: ztype::ExternType{{ bit_size: 0, data_blob: vec![] }},",
-                field_name
-            ));
-        } else if type_reference.name == "bytes" {
-            function.line(format!(
-                "{}: ztype::BytesType{{ byte_size: 0, data_blob: vec![] }},",
-                field_name
-            ));
-        } else {
-            // must be an integer type
-            function.line(format!("{}: 0,", field_name));
-        }
-    }
+    function.line(format!(
+        "{}: {},",
+        field_name,
+        get_default_initializer(
+            is_optional,
+            array.is_some(),
+            native_type.is_marshaler,
+            &fund_type.name,
+            &rust_type
+        ),
+    ));
 }

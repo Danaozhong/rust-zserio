@@ -44,6 +44,7 @@ pub fn generate_struct(
     // generate the struct itself
     let gen_struct = codegen_scope.new_struct(&rust_type_name);
     gen_struct.vis("pub");
+    gen_struct.derive("Clone");
 
     // if the field is parameterized, add the parameters as member variables
     for param in &zstruct.type_parameters {

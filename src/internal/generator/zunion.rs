@@ -77,6 +77,7 @@ pub fn generate_union(
     // generate the union itself
     let gen_union = codegen_scope.new_struct(&rust_type_name);
     gen_union.vis("pub");
+    gen_union.derive("Clone");
 
     // if the union is parameterized, add the parameters as struct fields
     for param in &zunion.type_parameters {

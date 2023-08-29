@@ -23,8 +23,8 @@ impl array_trait::ArrayTrait<u32> for VarSizeArrayTrait {
         bit_position + self.bitsize_of(bit_position, value)
     }
 
-    fn read(&self, reader: &mut BitReader) -> u32 {
-        ztype::read_varsize(reader)
+    fn read(&self, reader: &mut BitReader, value: &mut u32, _index: usize) {
+        *value = ztype::read_varsize(reader);
     }
 
     fn write(&self, writer: &mut BitWriter, value: &u32) {
@@ -60,8 +60,14 @@ impl array_trait::ArrayTrait<u32> for VarSizeArrayTrait {
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
-    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> u32 {
-        context_node.context.read(self, reader)
+    fn read_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        reader: &mut BitReader,
+        value: &mut u32,
+        index: usize,
+    ) {
+        context_node.context.read(self, reader, value, index);
     }
 
     fn write_packed(

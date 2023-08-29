@@ -128,20 +128,28 @@ impl DeltaContext {
         0
     }
 
-    pub fn read<T>(&mut self, array_traits: &dyn ArrayTrait<T>, reader: &mut BitReader) -> T {
+    pub fn read<T>(
+        &mut self,
+        array_traits: &dyn ArrayTrait<T>,
+        reader: &mut BitReader,
+        value: &mut T,
+        _index: usize,
+    ) {
         if !self.processing_started {
             self.processing_started = true;
             self.read_descriptor(reader);
-            return self.read_unpacked(array_traits, reader);
+            self.read_unpacked(array_traits, reader, value);
+            return;
         }
         if !self.is_packed {
-            return self.read_unpacked(array_traits, reader);
+            self.read_unpacked(array_traits, reader, value);
+            return;
         }
         if self.max_bit_number > 0 {
             let delta = read_signed_bits(reader, self.max_bit_number + 1);
             self.previous_element = (self.previous_element as i64 + delta) as u64;
         }
-        array_traits.from_u64(self.previous_element)
+        *value = array_traits.from_u64(self.previous_element);
     }
 
     pub fn finish_init(&mut self) {
@@ -206,10 +214,14 @@ impl DeltaContext {
         }
     }
 
-    fn read_unpacked<T>(&mut self, array_traits: &dyn ArrayTrait<T>, reader: &mut BitReader) -> T {
-        let element = array_traits.read(reader);
-        self.previous_element = array_traits.to_u64(&element);
-        element
+    fn read_unpacked<T>(
+        &mut self,
+        array_traits: &dyn ArrayTrait<T>,
+        reader: &mut BitReader,
+        value: &mut T,
+    ) {
+        array_traits.read(reader, value, 0); // TODO need to check if the index is needed
+        self.previous_element = array_traits.to_u64(value);
     }
 
     fn write_descriptor(&self, writer: &mut BitWriter) {

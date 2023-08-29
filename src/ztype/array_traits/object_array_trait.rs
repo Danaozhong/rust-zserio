@@ -27,10 +27,8 @@ where
         bit_position + self.bitsize_of(bit_position, value)
     }
 
-    fn read(&self, reader: &mut BitReader) -> T {
-        let mut value = T::new();
+    fn read(&self, reader: &mut BitReader, value: &mut T, _index: usize) {
         value.zserio_read(reader);
-        value
     }
 
     fn write(&self, writer: &mut BitWriter, value: &T) {
@@ -66,10 +64,14 @@ where
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
-    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> T {
-        let mut element = T::new();
-        element.zserio_read_packed(context_node, reader);
-        element
+    fn read_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        reader: &mut BitReader,
+        value: &mut T,
+        _index: usize,
+    ) {
+        value.zserio_read_packed(context_node, reader);
     }
 
     fn write_packed(
