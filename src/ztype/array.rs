@@ -12,7 +12,7 @@ use crate::ztype::varuint_encode::write_varsize;
 pub struct Array<T> {
     pub array_trait: Box<dyn ArrayTrait<T>>,
     pub is_packed: bool,
-    pub fixed_size: Option<u32>,
+    pub fixed_size: Option<usize>,
     pub is_aligned: bool,
     pub packing_context_node: Option<PackingContextNode>,
 }
@@ -27,7 +27,7 @@ impl<T> Array<T> {
     pub fn zserio_write(&mut self, writer: &mut BitWriter, data: &Vec<T>) {
         if let Some(expected_array_len) = self.fixed_size {
             // for fixed-size arrays, the provided length must match
-            assert_eq!(expected_array_len, data.len() as u32);
+            assert_eq!(expected_array_len, data.len());
         } else {
             // for auto arrays, write the length of the array
             write_varsize(writer, data.len() as u32);
@@ -60,34 +60,35 @@ impl<T> Array<T> {
         }
     }
 
-    pub fn zserio_read(&mut self, reader: &mut BitReader) -> Vec<T> {
-        let array_length;
+    pub fn zserio_read_array_length(&mut self, reader: &mut BitReader) -> usize {
         if let Some(expected_array_len) = self.fixed_size {
-            array_length = expected_array_len;
+            expected_array_len
         } else {
-            array_length = read_varsize(reader);
+            read_varsize(reader) as usize
         }
+    }
 
-        let mut data = Vec::<T>::with_capacity(array_length as usize);
-        if array_length > 0 {
+    pub fn zserio_read(&mut self, reader: &mut BitReader, data: &mut Vec<T>) {
+        if !data.is_empty() {
             if self.is_packed {
                 self.create_packing_context_node_if_not_exists();
             }
-            for _index in 0..array_length {
+            for (index, data_item) in data.iter_mut().enumerate() {
                 if self.is_aligned {
                     reader.align(8).expect("failed to align reader");
                 }
                 if self.is_packed {
-                    data.push(
-                        self.array_trait
-                            .read_packed(self.packing_context_node.as_mut().unwrap(), reader),
+                    self.array_trait.read_packed(
+                        self.packing_context_node.as_mut().unwrap(),
+                        reader,
+                        data_item,
+                        index,
                     );
                 } else {
-                    data.push(self.array_trait.read(reader));
+                    self.array_trait.read(reader, data_item, index);
                 }
             }
         }
-        data
     }
 
     pub fn zserio_bitsize(&mut self, data: &Vec<T>, bit_position: u64) -> u64 {

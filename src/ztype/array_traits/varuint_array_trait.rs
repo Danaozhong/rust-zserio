@@ -23,8 +23,8 @@ impl array_trait::ArrayTrait<u64> for VarUintArrayTrait {
         bit_position + self.bitsize_of(bit_position, value)
     }
 
-    fn read(&self, reader: &mut BitReader) -> u64 {
-        ztype::read_varuint(reader)
+    fn read(&self, reader: &mut BitReader, value: &mut u64, _index: usize) {
+        *value = ztype::read_varuint(reader);
     }
 
     fn write(&self, writer: &mut BitWriter, value: &u64) {
@@ -60,8 +60,14 @@ impl array_trait::ArrayTrait<u64> for VarUintArrayTrait {
         bit_position + context_node.context.bitsize_of(self, bit_position, element)
     }
 
-    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> u64 {
-        context_node.context.read(self, reader)
+    fn read_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        reader: &mut BitReader,
+        value: &mut u64,
+        index: usize,
+    ) {
+        context_node.context.read(self, reader, value, index);
     }
 
     fn write_packed(

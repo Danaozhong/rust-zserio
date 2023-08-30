@@ -6,7 +6,7 @@ pub trait ArrayTrait<T> {
     fn needs_bitsizeof_position(&self) -> bool;
     fn bitsize_of(&self, bit_position: u64, value: &T) -> u64;
     fn initialize_offsets(&self, bit_position: u64, value: &T) -> u64;
-    fn read(&self, reader: &mut BitReader) -> T;
+    fn read(&self, reader: &mut BitReader, value: &mut T, index: usize);
     fn write(&self, writer: &mut BitWriter, value: &T);
     fn to_u64(&self, value: &T) -> u64;
     #[allow(clippy::wrong_self_convention)]
@@ -32,7 +32,13 @@ pub trait ArrayTrait<T> {
         element: &T,
     ) -> u64;
 
-    fn read_packed(&self, context_node: &mut PackingContextNode, reader: &mut BitReader) -> T;
+    fn read_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        reader: &mut BitReader,
+        value: &mut T,
+        index: usize,
+    );
 
     fn write_packed(
         &self,

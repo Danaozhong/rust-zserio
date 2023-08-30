@@ -31,6 +31,7 @@ pub fn generate_choice(
     // generate the ZChoice as a rust structure
     let gen_choice = codegen_scope.new_struct(&rust_type_name);
     gen_choice.vis("pub");
+    gen_choice.derive("Clone");
 
     // if the field is parameterized, add the parameters as member variables
     for param in &zchoice.type_parameters {

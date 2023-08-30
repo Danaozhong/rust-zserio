@@ -4,7 +4,7 @@ use crate::ztype::{read_varsize, write_varsize};
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct BytesType {
     pub byte_size: u32,
     pub data_blob: Vec<u8>,
