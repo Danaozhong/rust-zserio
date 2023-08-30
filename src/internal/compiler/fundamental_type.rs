@@ -35,7 +35,7 @@ pub fn get_fundamental_type(
                 symbol_name: current_symbol_ref,
             }
         ); */
-        current_type_ref = match current_symbol_ref.symbol {
+        let mut new_type_ref = match current_symbol_ref.symbol {
             Symbol::Bitmask(_)
             | Symbol::Choice(_)
             | Symbol::Enum(_)
@@ -48,6 +48,11 @@ pub fn get_fundamental_type(
             Symbol::Subtype(subtype) => *subtype.borrow().zserio_type.clone(),
             _ => panic!("unexpected type {:?}", current_symbol_ref.symbol),
         };
+
+        // Make sure that the type arguments are passed to the
+        // fundamental type.
+        new_type_ref.type_arguments = current_type_ref.type_arguments.clone();
+        current_type_ref = new_type_ref;
 
         if is_marshaler {
             // If the type is a marshaller type, return the type reference
