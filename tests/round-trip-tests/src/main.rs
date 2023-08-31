@@ -9,12 +9,19 @@ pub mod reference_modules {
         pub mod unrelated_ztype;
         pub mod ztype;
     }
+    pub mod parameter_passing {
+        pub mod index_operator;
+        pub mod parameter_passing;
+    }
 }
+pub mod parameter_passing_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
     value_wrapper,
 };
+
+
 use crate::reference_modules::type_lookup_test::ztype::union_type::{UnionType, UnionTypeSelector};
 use crate::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
 
@@ -23,6 +30,7 @@ use reference_modules::core::instantiations::instantiated_template_struct;
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableOject;
 
+use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
 fn main() {
     test_structure();
     test_functions();
@@ -32,6 +40,8 @@ fn main() {
     test_extern_type();
     test_type_lookup();
     test_union_type();
+    test_parameter_passing();
+    test_index_operator();
 }
 
 fn test_structure() {

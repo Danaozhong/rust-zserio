@@ -10,7 +10,7 @@ struct ParameterPassing
     Block(numElements)  block;
 
     // Test passing of parameters to an array.
-    Block(numElements) blocks[3];
+    Block(numElements) blocks[2];
 };
 
 struct Block(uint32 numElements)
