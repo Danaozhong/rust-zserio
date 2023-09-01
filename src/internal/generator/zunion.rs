@@ -47,6 +47,7 @@ pub fn generate_union(
     let union_selector_gen_scope = codegen_scope.new_enum(&selector_type_name);
     union_selector_gen_scope.derive("Copy");
     union_selector_gen_scope.derive("Clone");
+    union_selector_gen_scope.derive("PartialEq");
 
     union_selector_gen_scope.vis("pub");
     for (field_index, field) in zunion.fields.iter().enumerate() {
@@ -78,6 +79,7 @@ pub fn generate_union(
     let gen_union = codegen_scope.new_struct(&rust_type_name);
     gen_union.vis("pub");
     gen_union.derive("Clone");
+    gen_union.derive("PartialEq");
 
     // if the union is parameterized, add the parameters as struct fields
     for param in &zunion.type_parameters {

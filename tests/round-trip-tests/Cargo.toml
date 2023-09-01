@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bitreader = "0.3.7"
-rust-bitwriter = { git = "https://github.com/Danaozhong/rust-bitwriter.git", version = "0.0.1" }
+bitreader = { git = "https://github.com/Danaozhong/bitreader", branch = "Bug/FixLeftShiftWithOverflowException" }
+rust-bitwriter = { git = "https://github.com/Danaozhong/rust-bitwriter.git", branch = "main" }
 rust-zserio = { path = "../.." }
 
 [build-dependencies]

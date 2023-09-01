@@ -29,7 +29,7 @@ struct ValueWrapper(int32 parameter)
     string description;
     optional int32 optInt32;
     
-    bit:10 fixed_array[128];
+    bit:10 fixed_array[4];
 
     string str_array[];
 

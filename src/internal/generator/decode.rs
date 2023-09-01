@@ -1,3 +1,7 @@
+use crate::internal::generator::expression::generate_expression;
+use crate::internal::generator::pass_parameters::{
+    does_expression_contains_index_operator, get_type_parameter,
+};
 use codegen::Function;
 
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
@@ -111,7 +115,7 @@ pub fn decode_field(
         function.line("if present {");
 
         // In case the field is optional, create a local variable
-        // to store the value temporarly.
+        // to store the value temporarily.
         if field.array.is_some() {
             field_type = format!("Vec<{}>", field_type.as_str());
         }
@@ -139,8 +143,8 @@ pub fn decode_field(
         rvalue_field_name = "optional_value".into();
     }
 
+    let array_type_name = array_type_name(&field.name);
     if field.array.is_some() {
-        let array_type_name = array_type_name(&field.name);
         // Array fields need to be serialized using the array class, which takes
         // care of the array delta compression.
 
@@ -163,9 +167,60 @@ pub fn decode_field(
             "{} = vec![{}; {}_array_length];",
             rvalue_field_name, default_value, field_name,
         ));
+    }
 
-        // TODO need to pass the parameters.
+    // Pass the parameters.
+    if !native_type.fundamental_type.type_arguments.is_empty() {
+        let type_parameters = get_type_parameter(scope, &native_type.fundamental_type);
 
+        // Check if parameters are passed to an array. If yes, a for loop is required.
+        let mut element_name = rvalue_field_name.clone();
+
+        if field.array.is_some() {
+            element_name = String::from("element");
+            let mut parameter_passing_uses_index_operator = false;
+            for type_param in &native_type.fundamental_type.type_arguments {
+                if does_expression_contains_index_operator(&type_param.borrow()) {
+                    parameter_passing_uses_index_operator = true;
+                    break;
+                }
+            }
+            // Depending on if the @index operator is used, the for loop need an index variable,
+            // to be able to assign the parameters to the correct index.
+            if parameter_passing_uses_index_operator {
+                function.line(format!(
+                    "for (param_index, element) in {}.iter_mut().enumerate() {{",
+                    rvalue_field_name
+                ));
+            } else {
+                function.line(format!("for element in &mut {} {{", rvalue_field_name));
+            }
+        }
+
+        for (param_index, type_argument_rc) in native_type
+            .fundamental_type
+            .type_arguments
+            .iter()
+            .enumerate()
+        {
+            let type_argument = type_argument_rc.borrow();
+            let type_parameter = &type_parameters[param_index];
+
+            function.line(format!(
+                "{}.{} = {}.clone();",
+                element_name,
+                convert_field_name(&type_parameter.borrow().name),
+                generate_expression(&type_argument),
+            ));
+        }
+
+        if field.array.is_some() {
+            // Close the for-loop used to pass the parameters to the array elements.
+            function.line("}");
+        }
+    }
+
+    if field.array.is_some() {
         function.line(format!(
             "{}.zserio_read(reader, &mut {});",
             array_type_name, rvalue_field_name,

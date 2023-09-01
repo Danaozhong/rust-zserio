@@ -9,12 +9,18 @@ pub mod reference_modules {
         pub mod unrelated_ztype;
         pub mod ztype;
     }
+    pub mod parameter_passing {
+        pub mod index_operator;
+        pub mod parameter_passing;
+    }
 }
+pub mod parameter_passing_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
     value_wrapper,
 };
+
 use crate::reference_modules::type_lookup_test::ztype::union_type::{UnionType, UnionTypeSelector};
 use crate::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
 
@@ -23,6 +29,7 @@ use reference_modules::core::instantiations::instantiated_template_struct;
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableOject;
 
+use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
 fn main() {
     test_structure();
     test_functions();
@@ -32,6 +39,8 @@ fn main() {
     test_extern_type();
     test_type_lookup();
     test_union_type();
+    test_parameter_passing();
+    test_index_operator();
 }
 
 fn test_structure() {
@@ -119,6 +128,7 @@ fn test_template_instantiation() {
     // generated types can be serialized and deserialized.
     let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
     z_struct.field.description = "Test Description".into();
+    z_struct.field.fixed_array = vec![0, 1, 2, 3];
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -132,6 +142,7 @@ fn test_template_instantiation() {
     other_struct.zserio_read(&mut bitreader);
 
     assert!(other_struct.field.description == z_struct.field.description);
+    assert!(other_struct.field.fixed_array == z_struct.field.fixed_array);
 }
 
 fn test_functions_in_instantiated_templates() {
