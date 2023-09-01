@@ -25,8 +25,6 @@ pub fn does_expression_contains_index_operator(expression: &Expression) -> bool 
     let mut expressions_to_check = vec![expression];
 
     while let Some(current_exp) = expressions_to_check.pop() {
-        
-
         if current_exp.expression_type == INDEX {
             return true;
         }

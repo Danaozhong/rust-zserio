@@ -4,12 +4,9 @@ use crate::internal::generator::pass_parameters::{
 };
 use codegen::Function;
 
-
-
-
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
-use crate::internal::compiler::symbol_scope::{ModelScope};
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::new::get_default_initializer;
 use crate::internal::generator::types::{
     convert_field_name, zserio_to_rust_type, ztype_to_rust_type,
