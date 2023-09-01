@@ -27,5 +27,10 @@ pub struct Field {
 impl Field {
     pub fn evaluate(&self, scope: &mut ModelScope) {
         self.field_type.evaluate(scope);
+        if let Some(array) = &self.array {
+            if let Some(array_length_expression) = &array.array_length_expression {
+                array_length_expression.borrow_mut().evaluate(scope);
+            }
+        }
     }
 }
