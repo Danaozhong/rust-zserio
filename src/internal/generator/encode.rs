@@ -1,10 +1,13 @@
-use codegen::Function;
-
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::expression::generate_expression;
+use crate::internal::generator::pass_parameters::{
+    does_expression_contains_index_operator, get_type_parameter,
+};
 use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type};
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
+use codegen::Function;
 
 pub fn encode_type(
     scope: &ModelScope,
@@ -87,6 +90,7 @@ pub fn encode_field(
     field: &Field,
     context_node_index: Option<u8>,
 ) {
+    let native_type = get_fundamental_type(&field.field_type, scope);
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
     if field.is_optional {
@@ -95,12 +99,76 @@ pub fn encode_field(
         field_name = "x".into();
     }
 
-    if field.array.is_some() {
+    // Parameter check: by design decision, the objects passed to the encoding
+    // part are not mutable. As such, we cannot pass the parameters here ourselves.
+    // We can, however, ensure, that the parameters were correctly set, and trigger
+    // an error if they were not set correctly.
+    if !native_type.fundamental_type.type_arguments.is_empty() {
+        let type_parameters = get_type_parameter(scope, &native_type.fundamental_type);
+
+        // Check if parameters are passed to an array. If yes, a for loop is required.
+        let mut element_name = field_name.clone();
+
+        if field.array.is_some() {
+            element_name = String::from("element");
+            let mut parameter_passing_uses_index_operator = false;
+            for type_param in &native_type.fundamental_type.type_arguments {
+                if does_expression_contains_index_operator(&type_param.borrow()) {
+                    parameter_passing_uses_index_operator = true;
+                    break;
+                }
+            }
+            // Depending on if the @index operator is used, the for loop need an index variable,
+            // to be able to assign the parameters to the correct index.
+            if parameter_passing_uses_index_operator {
+                function.line(format!(
+                    "for (param_index, element) in {}.iter().enumerate() {{",
+                    field_name
+                ));
+            } else {
+                function.line(format!("for element in &{} {{", field_name));
+            }
+        }
+
+        for (param_index, type_argument_rc) in native_type
+            .fundamental_type
+            .type_arguments
+            .iter()
+            .enumerate()
+        {
+            let type_argument = type_argument_rc.borrow();
+            let type_parameter = &type_parameters[param_index];
+
+            // TODO: for now, we are just using assertions.
+            // In the future, this should be replaced by using
+            // proper error handling, and reporting the error back to
+            // the caller.
+            function.line(format!(
+                "assert!({}.{} == {});",
+                &element_name,
+                convert_field_name(&type_parameter.borrow().name),
+                generate_expression(&type_argument),
+            ));
+        }
+
+        if field.array.is_some() {
+            // Close the for-loop used to pass the parameters to the array elements.
+            function.line("}");
+        }
+    }
+
+    if let Some(array_information) = &field.array {
+        // For arrays with fixed length, ensure that the array length is correct.
+        if let Some(array_length_expr) = &array_information.array_length_expression {
+            function.line(format!(
+                "assert!({}.len() == {} as usize);",
+                &field_name,
+                &generate_expression(&array_length_expr.borrow()),
+            ));
+        }
+
         // Array fields need to be deserialized using the array class, which takes
         // care of the array delta compression.
-
-        // TODO support @index operator
-
         function.line(format!(
             "{}.zserio_write(writer, &{});",
             array_type_name(&field.name),

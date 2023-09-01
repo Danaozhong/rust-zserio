@@ -32,6 +32,7 @@ pub fn generate_choice(
     let gen_choice = codegen_scope.new_struct(&rust_type_name);
     gen_choice.vis("pub");
     gen_choice.derive("Clone");
+    gen_choice.derive("PartialEq");
 
     // if the field is parameterized, add the parameters as member variables
     for param in &zchoice.type_parameters {

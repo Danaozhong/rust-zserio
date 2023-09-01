@@ -128,6 +128,7 @@ fn test_template_instantiation() {
     // generated types can be serialized and deserialized.
     let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
     z_struct.field.description = "Test Description".into();
+    z_struct.field.fixed_array = vec![0, 1, 2, 3];
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -141,6 +142,7 @@ fn test_template_instantiation() {
     other_struct.zserio_read(&mut bitreader);
 
     assert!(other_struct.field.description == z_struct.field.description);
+    assert!(other_struct.field.fixed_array == z_struct.field.fixed_array);
 }
 
 fn test_functions_in_instantiated_templates() {
