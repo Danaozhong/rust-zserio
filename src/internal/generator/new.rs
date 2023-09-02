@@ -77,7 +77,7 @@ pub fn new_type(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
     function: &mut Function,
-    name: &String,
+    name: &str,
     type_reference: &TypeReference,
     is_optional: bool,
     array: &Option<Array>,
