@@ -9,3 +9,4 @@ import reference_modules.type_lookup_test.ztype.*;
 import reference_modules.type_lookup_test.other_ztype.*;
 import reference_modules.parameter_passing.index_operator.*;
 import reference_modules.parameter_passing.parameter_passing.*;
+import reference_modules.ambiguous_types.ambiguous_types.*;

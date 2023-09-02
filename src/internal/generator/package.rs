@@ -1,22 +1,25 @@
-use crate::internal::generator::file_generator::write_to_file;
-
 use crate::internal::ast::package::ZPackage;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::file_generator::write_to_file;
 use crate::internal::generator::{
-    preamble::get_default_scope, subtype::generate_subtype, types::to_rust_module_name,
+    subtype::generate_subtype, types::to_rust_module_name, types::TypeGenerator,
     zchoice::generate_choice, zenum::generate_enum, zstruct::generate_struct,
     zunion::generate_union,
 };
+use codegen::Scope;
 use std::path::Path;
 
 pub fn generate_package(
     symbol_scope: &ModelScope,
     package: &ZPackage,
     package_directory: &Path,
-    root_package: &String,
+    root_package: &str,
 ) {
     let package_name = to_rust_module_name(&package.name);
     let mut module_names = Vec::new();
+    let type_generator = TypeGenerator {
+        root_package_name: root_package.to_owned(),
+    };
 
     // Generate  the rust code for zserio structures.
     for z_struct_ref_cell in package.structs.values() {
@@ -25,9 +28,10 @@ pub fn generate_package(
         if !z_struct.template_parameters.is_empty() {
             continue;
         }
-        let mut gen_scope = get_default_scope(package, root_package);
+        let mut gen_scope = Scope::new();
         module_names.push(generate_struct(
             symbol_scope,
+            &type_generator,
             &mut gen_scope,
             &z_struct,
             package_directory,
@@ -42,9 +46,10 @@ pub fn generate_package(
         if !z_choice.template_parameters.is_empty() {
             continue;
         }
-        let mut gen_scope = get_default_scope(package, root_package);
+        let mut gen_scope = Scope::new();
         module_names.push(generate_choice(
             symbol_scope,
+            &type_generator,
             &mut gen_scope,
             &z_choice,
             package_directory,
@@ -59,9 +64,10 @@ pub fn generate_package(
         if !zunion.template_parameters.is_empty() {
             continue;
         }
-        let mut gen_scope = get_default_scope(package, root_package);
+        let mut gen_scope = Scope::new();
         module_names.push(generate_union(
             symbol_scope,
+            &type_generator,
             &mut gen_scope,
             &zunion,
             package_directory,
@@ -72,9 +78,10 @@ pub fn generate_package(
     // Generate the rust code for Enums.
     for z_enum_ref_cell in &package.enums {
         let z_enum = z_enum_ref_cell.borrow();
-        let mut gen_scope = get_default_scope(package, root_package);
+        let mut gen_scope = Scope::new();
         module_names.push(generate_enum(
             symbol_scope,
+            &type_generator,
             &mut gen_scope,
             &z_enum,
             package_directory,
@@ -85,9 +92,10 @@ pub fn generate_package(
     // Generate the subtypes
     for zsubtype_ref in &package.subtypes {
         let zsubtype = zsubtype_ref.borrow();
-        let mut codegen_scope = get_default_scope(package, root_package);
+        let mut codegen_scope = Scope::new();
         module_names.push(generate_subtype(
             &mut codegen_scope,
+            &type_generator,
             &zsubtype,
             package_directory,
             &package_name,

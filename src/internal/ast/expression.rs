@@ -57,7 +57,7 @@ pub struct Expression {
     pub operand2: Option<Box<Expression>>,
     pub operand3: Option<Box<Expression>>,
     pub result_type: ExpressionType,
-    pub symbol: Option<Symbol>,
+    pub symbol: Option<SymbolReference>,
 
     // Flag which indicates that the expression is fully resolved
     pub fully_resolved: bool,
@@ -134,7 +134,11 @@ impl Expression {
                     func.as_ref().borrow().return_type.as_ref(),
                     scope,
                 );
-                self.symbol = Option::from(Symbol::Function(func.clone()));
+                self.symbol = Option::from(SymbolReference {
+                    symbol: Symbol::Function(func.clone()),
+                    name: func.borrow().name.clone(),
+                    package: "".into(),
+                });
             }
             _ => panic!(
                 "expression is not a function, but {:?}",
@@ -227,7 +231,15 @@ impl Expression {
         //compound_symbol: &Symbol,
         scope: &mut ModelScope,
     ) {
-        let type_ref = match self.operand1.as_ref().unwrap().symbol.as_ref().unwrap() {
+        let type_ref = match &self
+            .operand1
+            .as_ref()
+            .unwrap()
+            .symbol
+            .as_ref()
+            .unwrap()
+            .symbol
+        {
             Symbol::Field(z_field) => z_field.borrow().field_type.clone(),
             Symbol::Parameter(param) => {
                 // A parameter dot expression happens when inside a choice or enum,
@@ -254,7 +266,7 @@ impl Expression {
             scope.resolve_symbol(&self.operand2.as_ref().unwrap().text, false);
 
         self.result_type = symbol_to_expression_type(&compound_symbol, scope);
-        self.symbol = Option::from(compound_symbol.symbol.clone());
+        self.symbol = Option::from(compound_symbol.clone());
 
         // The scope of the compound symbol may be different to the original
         // scope, so the scope will be restored after the expression evaluation
@@ -576,7 +588,7 @@ impl Expression {
             return;
         }
         let symbol_reference = scope.resolve_symbol(&self.text, false);
-        self.symbol = Option::from(symbol_reference.symbol.clone());
+        self.symbol = Option::from(symbol_reference.clone());
         self.result_type = symbol_to_expression_type(&symbol_reference, scope);
         self.fully_resolved = false;
     }

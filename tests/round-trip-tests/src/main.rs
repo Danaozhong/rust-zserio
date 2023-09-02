@@ -13,7 +13,12 @@ pub mod reference_modules {
         pub mod index_operator;
         pub mod parameter_passing;
     }
+    pub mod ambiguous_types {
+        pub mod main;
+        pub mod other;
+    }
 }
+pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
 
 use crate::reference_modules::core::types::{
@@ -29,7 +34,9 @@ use reference_modules::core::instantiations::instantiated_template_struct;
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableOject;
 
+use crate::ambiguous_types_test::test_ambiguous_types;
 use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
+
 fn main() {
     test_structure();
     test_functions();
@@ -41,6 +48,7 @@ fn main() {
     test_union_type();
     test_parameter_passing();
     test_index_operator();
+    test_ambiguous_types();
 }
 
 fn test_structure() {

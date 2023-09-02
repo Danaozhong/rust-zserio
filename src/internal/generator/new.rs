@@ -5,11 +5,17 @@ use crate::internal::ast::{field::Array, field::Field, parameter::Parameter};
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
-use crate::internal::generator::types::{convert_field_name, ztype_to_rust_type};
+use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 
-pub fn new_field(scope: &ModelScope, function: &mut Function, field: &Field) {
+pub fn new_field(
+    scope: &ModelScope,
+    type_generator: &TypeGenerator,
+    function: &mut Function,
+    field: &Field,
+) {
     new_type(
         scope,
+        type_generator,
         function,
         &field.name,
         &field.field_type,
@@ -18,9 +24,15 @@ pub fn new_field(scope: &ModelScope, function: &mut Function, field: &Field) {
     );
 }
 
-pub fn new_param(scope: &ModelScope, function: &mut Function, param: &Parameter) {
+pub fn new_param(
+    scope: &ModelScope,
+    type_generator: &TypeGenerator,
+    function: &mut Function,
+    param: &Parameter,
+) {
     new_type(
         scope,
+        type_generator,
         function,
         &param.name,
         &param.zserio_type,
@@ -63,6 +75,7 @@ pub fn get_default_initializer(
 }
 pub fn new_type(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     name: &String,
     type_reference: &TypeReference,
@@ -72,7 +85,7 @@ pub fn new_type(
     let native_type = get_fundamental_type(type_reference, scope);
     let fund_type = native_type.fundamental_type;
     let field_name = convert_field_name(name);
-    let rust_type = ztype_to_rust_type(type_reference);
+    let rust_type = type_generator.ztype_to_rust_type(type_reference);
 
     function.line(format!(
         "{}: {},",

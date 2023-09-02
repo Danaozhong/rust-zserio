@@ -6,12 +6,13 @@ use crate::internal::generator::{
     bitsize::bitsize_type_reference, decode::decode_type, encode::encode_type,
     file_generator::write_to_file, preamble::add_standard_imports,
     types::convert_to_enum_field_name, types::to_rust_module_name, types::to_rust_type_name,
-    types::zserio_to_rust_type,
+    types::zserio_to_rust_type, types::TypeGenerator,
 };
 use std::path::Path;
 
 pub fn generate_enum(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     gen_scope: &mut Scope,
     zenum: &ZEnum,
     path: &Path,
@@ -85,9 +86,9 @@ pub fn generate_enum(
     ));
 
     // generate the functions to serialize/deserialize
-    generate_zserio_read(scope, z_impl, zenum);
-    generate_zserio_write(scope, z_impl, zenum);
-    generate_zserio_bitsize(scope, z_impl, zenum);
+    generate_zserio_read(scope, type_generator, z_impl, zenum);
+    generate_zserio_write(scope, type_generator, z_impl, zenum);
+    generate_zserio_bitsize(scope, type_generator, z_impl, zenum);
 
     write_to_file(
         &gen_scope.to_string(),
@@ -98,13 +99,19 @@ pub fn generate_enum(
     rust_module_name
 }
 
-fn generate_zserio_read(scope: &ModelScope, struct_impl: &mut codegen::Impl, zenum: &ZEnum) {
+fn generate_zserio_read(
+    scope: &ModelScope,
+    type_generator: &TypeGenerator,
+    struct_impl: &mut codegen::Impl,
+    zenum: &ZEnum,
+) {
     let rust_type_name = to_rust_type_name(&zenum.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
     decode_type(
         scope,
+        type_generator,
         zserio_read_fn,
         &format!(
             "let v: {}",
@@ -126,6 +133,7 @@ fn generate_zserio_read(scope: &ModelScope, struct_impl: &mut codegen::Impl, zen
     ));
     decode_type(
         scope,
+        type_generator,
         zserio_read_packed_fn,
         &String::from(""),
         &String::from("v"),
@@ -135,7 +143,12 @@ fn generate_zserio_read(scope: &ModelScope, struct_impl: &mut codegen::Impl, zen
     zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64);",));
 }
 
-fn generate_zserio_write(scope: &ModelScope, impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
+fn generate_zserio_write(
+    scope: &ModelScope,
+    type_generator: &TypeGenerator,
+    impl_codegen: &mut codegen::Impl,
+    zenum: &ZEnum,
+) {
     let rust_type_name = format!(
         "(*self as {})",
         zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
@@ -146,6 +159,7 @@ fn generate_zserio_write(scope: &ModelScope, impl_codegen: &mut codegen::Impl, z
     zserio_write_fn.arg("writer", "&mut BitWriter");
     encode_type(
         scope,
+        type_generator,
         zserio_write_fn,
         &rust_type_name,
         &zenum.enum_type,
@@ -158,6 +172,7 @@ fn generate_zserio_write(scope: &ModelScope, impl_codegen: &mut codegen::Impl, z
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
     encode_type(
         scope,
+        type_generator,
         zserio_write_packed_fn,
         &rust_type_name,
         &zenum.enum_type,
@@ -165,7 +180,12 @@ fn generate_zserio_write(scope: &ModelScope, impl_codegen: &mut codegen::Impl, z
     );
 }
 
-fn generate_zserio_bitsize(scope: &ModelScope, impl_codegen: &mut codegen::Impl, zenum: &ZEnum) {
+fn generate_zserio_bitsize(
+    scope: &ModelScope,
+    type_generator: &TypeGenerator,
+    impl_codegen: &mut codegen::Impl,
+    zenum: &ZEnum,
+) {
     let rust_type_name = format!(
         "(*self as {})",
         zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
@@ -178,6 +198,7 @@ fn generate_zserio_bitsize(scope: &ModelScope, impl_codegen: &mut codegen::Impl,
     bitsize_fn.line("let mut end_position = bit_position;");
     bitsize_type_reference(
         scope,
+        type_generator,
         bitsize_fn,
         &rust_type_name,
         false,
@@ -194,6 +215,7 @@ fn generate_zserio_bitsize(scope: &ModelScope, impl_codegen: &mut codegen::Impl,
     bitsize_packed_fn.line("let mut end_position = bit_position;");
     bitsize_type_reference(
         scope,
+        type_generator,
         bitsize_packed_fn,
         &rust_type_name,
         false,

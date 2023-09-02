@@ -3,7 +3,7 @@ use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::expression::generate_expression;
-use crate::internal::generator::types::ztype_to_rust_type;
+use crate::internal::generator::types::TypeGenerator;
 use codegen::Function;
 use convert_case::{Case, Casing};
 use std::cell::RefCell;
@@ -47,7 +47,10 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
     }
 }
 
-pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
+pub fn initialize_array_trait(
+    type_generator: &TypeGenerator,
+    zserio_type: &TypeReference,
+) -> String {
     let mut code_str = format!(
         "ztype::array_traits::{}{{\n",
         get_array_trait_for_type(zserio_type)
@@ -59,7 +62,7 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
         if let Some(length_expression) = &zserio_type.length_expression {
             code_str += format!(
                 "num_bits: ({}) as u8,\n",
-                generate_expression(&length_expression.borrow())
+                generate_expression(&length_expression.borrow(), type_generator)
             )
             .as_str();
         } else {
@@ -90,6 +93,7 @@ pub fn initialize_array_trait(zserio_type: &TypeReference) -> String {
 
 pub fn instantiate_zserio_array(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     field: &Field,
     force_packed: bool,
@@ -100,7 +104,7 @@ pub fn instantiate_zserio_array(
 
     let native_type = get_fundamental_type(&field.field_type, scope);
     let fund_type = native_type.fundamental_type;
-    let rust_type = ztype_to_rust_type(field.field_type.as_ref());
+    let rust_type = type_generator.ztype_to_rust_type(field.field_type.as_ref());
     // also initialize the array part
     function.line(format!(
         "let mut {} = ztype::Array::<{}>{{",
@@ -109,7 +113,7 @@ pub fn instantiate_zserio_array(
     ));
     function.line(format!(
         "array_trait: Box::new({}),",
-        initialize_array_trait(fund_type.as_ref())
+        initialize_array_trait(type_generator, fund_type.as_ref())
     ));
     // TODO function.line(format!("fixed_size: {},", array.array_length_expression.is_some()));
     function.line("fixed_size: None,");
@@ -126,11 +130,18 @@ pub fn instantiate_zserio_array(
 
 pub fn instantiate_zserio_arrays(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     fields: &Vec<Rc<RefCell<Field>>>,
     force_packed: bool,
 ) {
     for field in fields {
-        instantiate_zserio_array(scope, function, &field.borrow(), force_packed);
+        instantiate_zserio_array(
+            scope,
+            type_generator,
+            function,
+            &field.borrow(),
+            force_packed,
+        );
     }
 }

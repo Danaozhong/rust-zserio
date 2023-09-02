@@ -104,6 +104,7 @@ impl ZChoice {
                             .symbol
                             .as_ref()
                             .unwrap()
+                            .symbol
                         {
                             Symbol::Parameter(p) => {
                                 let mut operand2 = Box::from(condition_expression.clone());

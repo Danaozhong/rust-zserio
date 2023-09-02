@@ -8,5 +8,5 @@ fn main() {
     // Use rust-zserio to generate the new code
     let mut model = Model::from_filesystem(Path::new("../reference_modules"));
     model.evaluate();
-    generate_model(&mut model, Path::new("src"), &String::new());
+    generate_model(&mut model, Path::new("src"), "");
 }
