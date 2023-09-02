@@ -10,7 +10,7 @@ use std::string::String;
 pub struct ZEnumItem {
     pub name: String,
     pub comment: String,
-    pub expression: Option<Rc<RefCell<Expression>>>,
+    pub value: Option<Rc<RefCell<Expression>>>,
 }
 #[derive(Debug)]
 pub struct ZEnum {
@@ -23,7 +23,7 @@ pub struct ZEnum {
 impl ZEnum {
     pub fn evaluate(&mut self, scope: &mut ModelScope) {
         for item in &mut self.items {
-            if let Some(item_expression) = &mut item.expression {
+            if let Some(item_expression) = &mut item.value {
                 item_expression.as_ref().borrow_mut().evaluate(scope);
             }
         }

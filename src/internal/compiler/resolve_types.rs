@@ -1,5 +1,6 @@
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::ast::zchoice::ZChoice;
+use crate::internal::ast::zconst::ZConst;
 use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::ast::zsubtype::Subtype;
 use crate::internal::ast::zunion::ZUnion;
@@ -73,6 +74,12 @@ pub fn resolve_union_types(z_union: &ZUnion, scope: &ModelScope) {
 /// to the type reference.
 pub fn resolve_subtype(z_subtype: &mut Subtype, scope: &ModelScope) {
     resolve_type_reference(&mut z_subtype.zserio_type, scope);
+}
+
+/// Resolves all type references within a constant, and assigns the full package path
+/// to the type reference.
+pub fn resolve_constant(zconst: &mut ZConst, scope: &ModelScope) {
+    resolve_type_reference(&mut zconst.zserio_type, scope);
 }
 
 pub fn resolve_type_reference(type_reference: &mut TypeReference, scope: &ModelScope) {

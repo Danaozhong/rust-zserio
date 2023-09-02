@@ -3,7 +3,8 @@ use crate::internal::ast::expression::{
 };
 use crate::internal::compiler::symbol_scope::Symbol;
 use crate::internal::generator::types::{
-    convert_field_name, convert_to_enum_field_name, custom_type_to_rust_type, TypeGenerator,
+    constant_type_to_rust_type, convert_field_name, convert_to_enum_field_name,
+    custom_type_to_rust_type, TypeGenerator,
 };
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, BINARY_LITERAL, BOOL_LITERAL, DECIMAL_LITERAL, DIVIDE, DOT, DOUBLE_LITERAL, EQ,
@@ -223,6 +224,7 @@ fn generate_identifier_expression(
         Symbol::Union(u) => custom_type_to_rust_type(&u.borrow().name),
         Symbol::Enum(e) => custom_type_to_rust_type(&e.borrow().name),
         Symbol::Bitmask(bitmask) => custom_type_to_rust_type(&bitmask.borrow().name),
+        Symbol::Const(zconst) => constant_type_to_rust_type(&zconst.borrow().name),
         _ => panic!("unsupported identifier type {:?}", expression.symbol),
     };
     type_generator.get_full_module_path(&symbol_ref.package, &rust_symbol_name)

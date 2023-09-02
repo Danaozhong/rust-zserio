@@ -1,6 +1,7 @@
 use crate::internal::ast::package::ZPackage;
 use crate::internal::compiler::resolve_types::{
-    resolve_choice_types, resolve_struct_types, resolve_subtype, resolve_union_types,
+    resolve_choice_types, resolve_constant, resolve_struct_types, resolve_subtype,
+    resolve_union_types,
 };
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::model::package::package_from_file;
@@ -96,6 +97,16 @@ impl Model {
                     symbol_name: Option::from(z_subtype.borrow().name.clone()),
                 });
                 resolve_subtype(&mut z_subtype.borrow_mut(), scope);
+                scope.scope_stack.pop();
+            }
+
+            for zconstant in &pkg.consts {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(zconstant.borrow().name.clone()),
+                });
+                resolve_constant(&mut zconstant.borrow_mut(), scope);
                 scope.scope_stack.pop();
             }
         }

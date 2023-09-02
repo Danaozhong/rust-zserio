@@ -676,12 +676,12 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut enum_item = Box::new(ZEnumItem {
             name: ctx.id().unwrap().get_text(),
             comment: "".into(),
-            expression: None,
+            value: None,
         });
         if let Some(expression_ctx) = ctx.expression() {
             match self.visit(&*expression_ctx) {
                 ZserioTreeReturnType::Expression(e) => {
-                    enum_item.expression = Option::from(Rc::from(RefCell::from(*e)))
+                    enum_item.value = Option::from(Rc::from(RefCell::from(*e)))
                 }
                 _ => panic!(),
             }

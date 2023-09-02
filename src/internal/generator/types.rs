@@ -9,7 +9,7 @@ pub struct TypeGenerator {
 }
 
 impl TypeGenerator {
-    pub fn zserio_package_to_rust_module(&self, package: &String) -> String {
+    pub fn zserio_package_to_rust_module(&self, package: &str) -> String {
         assert!(!package.is_empty(), "package type has not been resolved");
         let mut root_package = String::from("crate");
         if !self.root_package_name.is_empty() {
@@ -33,7 +33,7 @@ impl TypeGenerator {
         )
     }
 
-    pub fn get_full_module_path(&self, package: &String, rust_symbol_name: &String) -> String {
+    pub fn get_full_module_path(&self, package: &str, rust_symbol_name: &str) -> String {
         format!(
             "{}::{}",
             self.zserio_package_to_rust_module(package),
@@ -42,36 +42,49 @@ impl TypeGenerator {
     }
 }
 
-pub fn to_rust_module_name(name: &String) -> String {
+pub fn to_rust_module_name(name: &str) -> String {
     name.to_case(Case::Snake)
 }
 
-pub fn to_rust_type_name(name: &String) -> String {
+pub fn to_rust_type_name(name: &str) -> String {
     name.to_case(Case::UpperCamel)
 }
 
-pub fn convert_field_name(name: &String) -> String {
-    if RESERVED_RUST_KEYWORDS.contains(&name.as_str()) {
+/// Translates a zserio name to a rust constant name.
+pub fn to_rust_constant_name(name: &str) -> String {
+    name.to_ascii_uppercase()
+}
+
+pub fn convert_field_name(name: &str) -> String {
+    if RESERVED_RUST_KEYWORDS.contains(&name) {
         return format!("z_{}", name.to_case(Case::Snake));
     }
     name.to_case(Case::Snake)
 }
 
-pub fn convert_to_enum_field_name(name: &String) -> String {
+pub fn convert_to_enum_field_name(name: &str) -> String {
     name.to_case(Case::UpperCamel)
 }
 
-pub fn convert_to_union_selector_name(field_name: &String) -> String {
+pub fn convert_to_union_selector_name(field_name: &str) -> String {
     field_name.to_case(Case::UpperCamel)
 }
 
-pub fn convert_to_function_name(name: &String) -> String {
+pub fn convert_to_function_name(name: &str) -> String {
     // Converts a function name from zserio style to rust style (snake case).
     name.to_case(Case::Snake)
 }
 
-pub fn custom_type_to_rust_type(name: &String) -> String {
+pub fn custom_type_to_rust_type(name: &str) -> String {
     format!("{}::{}", to_rust_module_name(name), to_rust_type_name(name))
+}
+
+pub fn constant_type_to_rust_type(name: &str) -> String {
+    format!(
+        "{}::{}",
+        to_rust_module_name(name),
+        to_rust_constant_name(name)
+    )
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
