@@ -57,8 +57,9 @@ fn test_structure() {
 
     // Instantiate the data
     let mut value_wrapper = value_wrapper::ValueWrapper::new();
-    value_wrapper.value = 18;
-    value_wrapper.enum_value = Color::Red;
+    value_wrapper.parameter = 7;
+    value_wrapper.value = 14;
+    value_wrapper.enum_value = Color::Red; // this field only gets serialized, if parameter = 7
     value_wrapper.description = "test".into();
     value_wrapper.fixed_array = vec![100, 101, 102, 103];
     value_wrapper.packed_array = vec![200, 201, 202, 203, 205, 204];
@@ -71,6 +72,11 @@ fn test_structure() {
 
     // deserialize
     let mut other_value_wrapper = value_wrapper::ValueWrapper::new();
+
+    // Pass parameters.
+    other_value_wrapper.parameter = 7;
+
+    // Deserialize.
     let mut bitreader = BitReader::new(serialized_bytes);
     other_value_wrapper.zserio_read(&mut bitreader);
 
