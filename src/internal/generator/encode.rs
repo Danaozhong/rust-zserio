@@ -1,7 +1,7 @@
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
-use crate::internal::generator::expression::generate_expression;
+use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
@@ -99,7 +99,7 @@ pub fn encode_field(
     if let Some(optional_clause) = &field.optional_clause {
         function.line(format!(
             "if {} {{",
-            generate_expression(&optional_clause.borrow(), type_generator)
+            generate_boolean_expression(&optional_clause.borrow(), type_generator)
         ));
     }
 

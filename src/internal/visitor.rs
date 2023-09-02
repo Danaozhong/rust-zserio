@@ -144,7 +144,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut package_name = "".into();
         match self.visit(&*ctx.packageNameDefinition().unwrap()) {
             ZserioTreeReturnType::Str(n) => package_name = n,
-            _ => println!("should not happen"),
+            _ => println!("package declaration missing"),
         }
 
         println!("package found with name {package_name}");
