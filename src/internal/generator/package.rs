@@ -3,8 +3,8 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::file_generator::write_to_file;
 use crate::internal::generator::{
     subtype::generate_subtype, types::to_rust_module_name, types::TypeGenerator,
-    zchoice::generate_choice, zenum::generate_enum, zstruct::generate_struct,
-    zunion::generate_union,
+    zbitmask::generate_bitmask, zchoice::generate_choice, zconst::generate_constant,
+    zenum::generate_enum, zstruct::generate_struct, zunion::generate_union,
 };
 use codegen::Scope;
 use std::path::Path;
@@ -89,6 +89,20 @@ pub fn generate_package(
         ));
     }
 
+    // Generate the rust code for bitmask types.
+    for zbitmask_ref in &package.bitmask_types {
+        let zbitmask = zbitmask_ref.borrow();
+        let mut gen_scope = Scope::new();
+        module_names.push(generate_bitmask(
+            symbol_scope,
+            &type_generator,
+            &mut gen_scope,
+            &zbitmask,
+            package_directory,
+            &package_name,
+        ));
+    }
+
     // Generate the subtypes
     for zsubtype_ref in &package.subtypes {
         let zsubtype = zsubtype_ref.borrow();
@@ -102,8 +116,21 @@ pub fn generate_package(
         ));
     }
 
+    // Generate the constant
+    for zconst_ref in &package.consts {
+        let zconst = zconst_ref.borrow();
+        let mut codegen_scope = Scope::new();
+        module_names.push(generate_constant(
+            &mut codegen_scope,
+            &type_generator,
+            &zconst,
+            package_directory,
+            &package_name,
+        ));
+    }
+
     // Finally, generate the mod file for each package.
-    // For now, this is using raw string concatination, as codegen does not support
+    // For now, this is using raw string concatenation, as codegen does not support
     // module declarations.
     let mut mod_file_content = String::from("");
 

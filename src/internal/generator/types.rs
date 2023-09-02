@@ -50,6 +50,11 @@ pub fn to_rust_type_name(name: &String) -> String {
     name.to_case(Case::UpperCamel)
 }
 
+/// Translates a zserio name to a rust constant name.
+pub fn to_rust_constant_name(name: &String) -> String {
+    name.to_ascii_uppercase()
+}
+
 pub fn convert_field_name(name: &String) -> String {
     if RESERVED_RUST_KEYWORDS.contains(&name.as_str()) {
         return format!("z_{}", name.to_case(Case::Snake));
@@ -72,6 +77,14 @@ pub fn convert_to_function_name(name: &String) -> String {
 
 pub fn custom_type_to_rust_type(name: &String) -> String {
     format!("{}::{}", to_rust_module_name(name), to_rust_type_name(name))
+}
+
+pub fn constant_type_to_rust_type(name: &String) -> String {
+    format!(
+        "{}::{}",
+        to_rust_module_name(name),
+        to_rust_constant_name(name)
+    )
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {

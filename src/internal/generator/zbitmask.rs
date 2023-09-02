@@ -1,6 +1,6 @@
 use codegen::Scope;
 
-use crate::internal::ast::{expression::ExpressionType, zenum::ZEnum};
+use crate::internal::ast::{expression::ExpressionType, zbitmask::ZBitmaskType};
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     bitsize::bitsize_type_reference, decode::decode_type, encode::encode_type,
@@ -10,16 +10,16 @@ use crate::internal::generator::{
 };
 use std::path::Path;
 
-pub fn generate_enum(
+pub fn generate_bitmask(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
     gen_scope: &mut Scope,
-    zenum: &ZEnum,
+    zbitmask: &ZBitmaskType,
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = to_rust_module_name(&zenum.name);
-    let rust_type_name = to_rust_type_name(&zenum.name);
+    let rust_module_name = to_rust_module_name(&zbitmask.name);
+    let rust_type_name = to_rust_type_name(&zbitmask.name);
     add_standard_imports(gen_scope);
 
     // generate the struct itself
@@ -30,7 +30,7 @@ pub fn generate_enum(
     gen_enum.derive("PartialEq");
 
     let mut enum_value = 0;
-    for item in &zenum.items {
+    for item in &zbitmask.values {
         if let Some(value_expression) = &item.value {
             match value_expression.as_ref().borrow().result_type {
                 ExpressionType::Integer(v) => enum_value = v,
@@ -53,7 +53,7 @@ pub fn generate_enum(
     from_int_fn.line("match v {");
 
     let mut enum_value = 0;
-    for item in &zenum.items {
+    for item in &zbitmask.values {
         if let Some(value_expression) = &item.value {
             match value_expression.as_ref().borrow().result_type {
                 ExpressionType::Integer(v) => enum_value = v,
@@ -82,13 +82,13 @@ pub fn generate_enum(
     new_fn.line(format!(
         "{}::{}",
         &rust_type_name,
-        convert_to_enum_field_name(&zenum.items[0].name)
+        convert_to_enum_field_name(&zbitmask.values[0].name)
     ));
 
     // generate the functions to serialize/deserialize
-    generate_zserio_read(scope, type_generator, z_impl, zenum);
-    generate_zserio_write(scope, type_generator, z_impl, zenum);
-    generate_zserio_bitsize(scope, type_generator, z_impl, zenum);
+    generate_zserio_read(scope, type_generator, z_impl, zbitmask);
+    generate_zserio_write(scope, type_generator, z_impl, zbitmask);
+    generate_zserio_bitsize(scope, type_generator, z_impl, zbitmask);
 
     write_to_file(
         &gen_scope.to_string(),
@@ -103,9 +103,9 @@ fn generate_zserio_read(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
-    zenum: &ZEnum,
+    zbitmask: &ZBitmaskType,
 ) {
-    let rust_type_name = to_rust_type_name(&zenum.name);
+    let rust_type_name = to_rust_type_name(&zbitmask.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
@@ -115,10 +115,10 @@ fn generate_zserio_read(
         zserio_read_fn,
         &format!(
             "let v: {}",
-            zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+            zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
         ),
         &String::from(""),
-        &zenum.enum_type,
+        &zbitmask.zserio_type,
         None,
     );
     zserio_read_fn.line(format!("*self = {rust_type_name}::from_int(v as i64);",));
@@ -129,7 +129,7 @@ fn generate_zserio_read(
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
     zserio_read_packed_fn.line(format!(
         "let mut v: {} = 0;",
-        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+        zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
     ));
     decode_type(
         scope,
@@ -137,7 +137,7 @@ fn generate_zserio_read(
         zserio_read_packed_fn,
         &String::from(""),
         &String::from("v"),
-        &zenum.enum_type,
+        &zbitmask.zserio_type,
         Option::from(0),
     );
     zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64);",));
@@ -147,11 +147,11 @@ fn generate_zserio_write(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
     impl_codegen: &mut codegen::Impl,
-    zenum: &ZEnum,
+    zbitmask: &ZBitmaskType,
 ) {
     let rust_type_name = format!(
         "(*self as {})",
-        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+        zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
     );
 
     let zserio_write_fn = impl_codegen.new_fn("zserio_write");
@@ -162,7 +162,7 @@ fn generate_zserio_write(
         type_generator,
         zserio_write_fn,
         &rust_type_name,
-        &zenum.enum_type,
+        &zbitmask.zserio_type,
         None,
     );
 
@@ -175,7 +175,7 @@ fn generate_zserio_write(
         type_generator,
         zserio_write_packed_fn,
         &rust_type_name,
-        &zenum.enum_type,
+        &zbitmask.zserio_type,
         Option::from(0),
     );
 }
@@ -184,11 +184,11 @@ fn generate_zserio_bitsize(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
     impl_codegen: &mut codegen::Impl,
-    zenum: &ZEnum,
+    zbitmask: &ZBitmaskType,
 ) {
     let rust_type_name = format!(
         "(*self as {})",
-        zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+        zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
     );
 
     let bitsize_fn = impl_codegen.new_fn("zserio_bitsize");
@@ -202,7 +202,7 @@ fn generate_zserio_bitsize(
         bitsize_fn,
         &rust_type_name,
         false,
-        &zenum.enum_type,
+        &zbitmask.zserio_type,
         None,
     );
     bitsize_fn.line("end_position - bit_position");
@@ -219,7 +219,7 @@ fn generate_zserio_bitsize(
         bitsize_packed_fn,
         &rust_type_name,
         false,
-        &zenum.enum_type,
+        &zbitmask.zserio_type,
         Option::from(0),
     );
     bitsize_packed_fn.line("end_position - bit_position");
