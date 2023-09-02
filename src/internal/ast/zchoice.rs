@@ -124,6 +124,7 @@ impl ZChoice {
                                         symbol: None,
                                         fully_resolved: false,
                                         evaluation_state: EvaluationState::NotEvaluated,
+                                        native_type: None,
                                     })),
                                     operand2: Option::from(operand2),
                                     operand3: None,
@@ -132,6 +133,7 @@ impl ZChoice {
                                     symbol: None,
                                     fully_resolved: false,
                                     evaluation_state: EvaluationState::NotEvaluated,
+                                    native_type: None,
                                 });
                             }
                             _ => panic!("selector expression is not a parameter"),

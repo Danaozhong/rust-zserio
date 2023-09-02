@@ -1,13 +1,15 @@
 use crate::internal::ast::zbitmask::ZBitmaskType;
 
+use crate::internal::ast::evaluate_mixing_native_types::{
+    evaluate_mixing_float_types, evaluate_mixing_integer_types,
+};
+use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
 use crate::internal::compiler::symbol_scope::{ModelScope, ScopeLocation, Symbol, SymbolReference};
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LENGTHOF, LOGICAL_AND, LOGICAL_OR,
     LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK, RPAREN,
     RSHIFT, TILDE, VALUEOF, XOR,
 };
-
-use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
@@ -58,6 +60,13 @@ pub struct Expression {
     pub operand3: Option<Box<Expression>>,
     pub result_type: ExpressionType,
     pub symbol: Option<SymbolReference>,
+
+    // If the expression is a native type, or a product of one or
+    // more native types (e.g. addition), this variable stores
+    // the resulting type. That way, even when mixing different
+    // types (signed/unsigned), the result type can be clearly
+    // identified during code generation (necessary for type casts).
+    pub native_type: Option<TypeReference>,
 
     // Flag which indicates that the expression is fully resolved
     pub fully_resolved: bool,
@@ -130,7 +139,7 @@ impl Expression {
     fn evaluate_function_call_expression(&mut self, scope: &mut ModelScope) {
         match &self.operand1.as_ref().unwrap().result_type {
             ExpressionType::Function(func) => {
-                self.result_type = type_reference_to_expression_type(
+                (self.result_type, self.native_type) = type_reference_to_expression_type(
                     func.as_ref().borrow().return_type.as_ref(),
                     scope,
                 );
@@ -177,7 +186,7 @@ impl Expression {
                     panic!("unexpected dot expression type {:?}", &op1.result_type);
                 }
             },
-            _ => panic!("arithmetic expression requries two operators"),
+            _ => panic!("arithmetic expression requires two operators"),
         }
     }
 
@@ -265,7 +274,7 @@ impl Expression {
         let compound_symbol: SymbolReference =
             scope.resolve_symbol(&self.operand2.as_ref().unwrap().text, false);
 
-        self.result_type = symbol_to_expression_type(&compound_symbol, scope);
+        (self.result_type, self.native_type) = symbol_to_expression_type(&compound_symbol, scope);
         self.symbol = Option::from(compound_symbol.clone());
 
         // The scope of the compound symbol may be different to the original
@@ -280,6 +289,7 @@ impl Expression {
     fn evaluate_lengthof_operator(&mut self) {
         self.fully_resolved = false;
         self.result_type = ExpressionType::Integer(0);
+        self.native_type = Some(TypeReference::new_native_type("varsize"));
         /*
         match self.operand1.unwrap().symbol.unwrap() {
             Symbol::Field(s, index) => {
@@ -298,11 +308,17 @@ impl Expression {
     }
     fn evaluate_valueof_operator(&mut self) {
         match &self.operand1 {
-            Some(op1) => match op1.result_type {
-                ExpressionType::BitMask(_) | ExpressionType::Enum(_) => {
+            Some(op1) => match &op1.result_type {
+                ExpressionType::BitMask(bitmask) => {
                     self.result_type = ExpressionType::Integer(0);
                     self.fully_resolved = false;
-                }
+                    self.native_type = Some(*bitmask.borrow().zserio_type.clone());
+                },
+                ExpressionType::Enum(zenum) => {
+                    self.result_type = ExpressionType::Integer(0);
+                    self.fully_resolved = false;
+                    self.native_type = Some(*zenum.borrow().enum_type.clone());
+                },
                 _ => panic!("valueof operator can only be applied to bitmask or enum expressions, but was called for {:?}", op1)
             },
             _ => panic!("valueof operator expression requries one operator"),
@@ -316,6 +332,7 @@ impl Expression {
                     self.result_type =
                         ExpressionType::Integer(32 - i32::leading_zeros(value) as i32);
                     self.fully_resolved = op1.fully_resolved;
+                    self.native_type = Some(TypeReference::new_native_type("varsize"));
                 }
                 _ => {
                     panic!("numbits operator can only be applied to integer expressions")
@@ -327,21 +344,24 @@ impl Expression {
 
     fn evaluate_unary_arithmetic_expression(&mut self) {
         match &self.operand1 {
-            Some(op1) => match op1.result_type {
-                ExpressionType::Integer(value) => match self.expression_type {
-                    PLUS => self.result_type = ExpressionType::Integer(value),
-                    MINUS => self.result_type = ExpressionType::Integer(-value),
-                    _ => panic!("unexpected unary integer expression"),
-                },
-                ExpressionType::Float(value) => match self.expression_type {
-                    PLUS => self.result_type = ExpressionType::Float(value),
-                    MINUS => self.result_type = ExpressionType::Float(-value),
-                    _ => panic!("unexpected unary float expression"),
-                },
-                _ => {
-                    panic!("logical negation expression can only be applied to boolean expressions")
-                }
-            },
+            Some(op1) => {
+                self.native_type = op1.native_type.clone();
+                match op1.result_type {
+                    ExpressionType::Integer(value) => match self.expression_type {
+                        PLUS => self.result_type = ExpressionType::Integer(value),
+                        MINUS => self.result_type = ExpressionType::Integer(-value),
+                        _ => panic!("unexpected unary integer expression"),
+                    },
+                    ExpressionType::Float(value) => match self.expression_type {
+                        PLUS => self.result_type = ExpressionType::Float(value),
+                        MINUS => self.result_type = ExpressionType::Float(-value),
+                        _ => panic!("unexpected unary float expression"),
+                    },
+                    _ => {
+                        panic!("logical negation expression can only be applied to boolean expressions")
+                    }
+                };
+            }
             _ => panic!("logical negation expression requries one operator"),
         }
     }
@@ -362,18 +382,20 @@ impl Expression {
             LT => value1 < value2,
             NE => value1 != value2,
             _ => panic!("unexpected integer comparison"),
-        })
+        });
+        self.native_type = Some(TypeReference::new_native_type("bool"));
     }
 
     fn evaluate_comparison_expression(&mut self) {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => {
+                self.native_type = Some(TypeReference::new_native_type("bool"));
                 match (&op1.result_type, &op2.result_type) {
                     (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
-                        self.evaluate_integer_comparison_expression(*value1, *value2)
+                        self.evaluate_integer_comparison_expression(*value1, *value2);
                     }
                     (ExpressionType::BitMask(_), ExpressionType::Integer(value2)) => {
-                        self.evaluate_integer_comparison_expression(1, *value2)
+                        self.evaluate_integer_comparison_expression(1, *value2);
                     }
                     (ExpressionType::Float(value1), ExpressionType::Float(value2)) => {
                         self.result_type = ExpressionType::Bool(match self.expression_type {
@@ -395,7 +417,7 @@ impl Expression {
                     }
                     _ => {
                         if self.expression_type != EQ && self.expression_type != NE {
-                            panic!("comparsion expression can only be applied to integer, float, or string types, but the provided types are {:?} and {:?}", &op1.result_type, &op2.result_type);
+                            panic!("comparison expression can only be applied to integer, float, or string types, but the provided types are {:?} and {:?}", &op1.result_type, &op2.result_type);
                         }
 
                         // TODO it may be needed to evaluate equal/nonequal comparisons
@@ -407,11 +429,11 @@ impl Expression {
                     }
                 }
             }
-            _ => panic!("comparsion expression requries two operands"),
+            _ => panic!("comparison expression requries two operands"),
         }
     }
 
-    fn evaluate_float_arithemtic_expression(&mut self, mut value1: f64, mut value2: f64) {
+    fn evaluate_float_arithmetic_expression(&mut self, mut value1: f64, mut value2: f64) {
         if !self.operand1.as_ref().unwrap().fully_resolved {
             value1 = 1.0;
         }
@@ -437,6 +459,8 @@ impl Expression {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
                 (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
+                    self.native_type =
+                        evaluate_mixing_integer_types(&op1.native_type, &op2.native_type);
                     let mut v1 = *value1;
                     let mut v2 = *value2;
                     if !op1.fully_resolved {
@@ -458,15 +482,22 @@ impl Expression {
                 // Float arithmetic expressions can be mixed with integer types.
                 // If one operand is a float type, the result will also be a float type.
                 (ExpressionType::Float(value1), ExpressionType::Float(value2)) => {
-                    self.evaluate_float_arithemtic_expression(*value1, *value2);
+                    self.native_type =
+                        evaluate_mixing_float_types(&op1.native_type, &op2.native_type);
+                    self.evaluate_float_arithmetic_expression(*value1, *value2);
                 }
                 (ExpressionType::Integer(value1), ExpressionType::Float(value2)) => {
-                    self.evaluate_float_arithemtic_expression(*value1 as f64, *value2);
+                    self.native_type =
+                        evaluate_mixing_float_types(&op1.native_type, &op2.native_type);
+                    self.evaluate_float_arithmetic_expression(*value1 as f64, *value2);
                 }
                 (ExpressionType::Float(value1), ExpressionType::Integer(value2)) => {
-                    self.evaluate_float_arithemtic_expression(*value1, *value2 as f64);
+                    self.native_type =
+                        evaluate_mixing_float_types(&op1.native_type, &op2.native_type);
+                    self.evaluate_float_arithmetic_expression(*value1, *value2 as f64);
                 }
                 (ExpressionType::String(str1), ExpressionType::String(str2)) => {
+                    self.native_type = Some(TypeReference::new_native_type("string"));
                     match self.expression_type {
                         PLUS => {
                             self.result_type = ExpressionType::String(format!("{}{}", str1, str2))
@@ -487,6 +518,7 @@ impl Expression {
             Some(op1) => match op1.result_type {
                 ExpressionType::Bool(value) => {
                     self.result_type = ExpressionType::Bool(!value);
+                    self.native_type = op1.native_type.clone();
                 }
                 _ => {
                     panic!("logical negation expression can only be applied to boolean expressions")
@@ -501,6 +533,7 @@ impl Expression {
             Some(op1) => match op1.result_type {
                 ExpressionType::Integer(value) => {
                     self.result_type = ExpressionType::Integer(!value);
+                    self.native_type = op1.native_type.clone();
                 }
                 _ => {
                     panic!("bitwise negation expression can only be applied to integer expressions")
@@ -589,7 +622,7 @@ impl Expression {
         }
         let symbol_reference = scope.resolve_symbol(&self.text, false);
         self.symbol = Option::from(symbol_reference.clone());
-        self.result_type = symbol_to_expression_type(&symbol_reference, scope);
+        (self.result_type, self.native_type) = symbol_to_expression_type(&symbol_reference, scope);
         self.fully_resolved = false;
     }
 }
@@ -597,64 +630,70 @@ impl Expression {
 fn symbol_to_expression_type(
     symbol_reference: &SymbolReference,
     scope: &mut ModelScope,
-) -> ExpressionType {
-    match &symbol_reference.symbol {
+) -> (ExpressionType, Option<TypeReference>) {
+    return match &symbol_reference.symbol {
         Symbol::Const(z_const) => {
-            return type_reference_to_expression_type(
-                &z_const.as_ref().borrow().zserio_type,
-                scope,
-            );
+            type_reference_to_expression_type(&z_const.as_ref().borrow().zserio_type, scope)
         }
-        Symbol::Bitmask(z_bitmask) => ExpressionType::BitMask(z_bitmask.clone()),
-        Symbol::Union(_) => ExpressionType::Compound,
-        Symbol::Struct(_) => ExpressionType::Compound,
-        Symbol::Choice(_) => ExpressionType::Compound,
-        Symbol::Enum(z_enum) => ExpressionType::Enum(z_enum.clone()),
+        Symbol::Bitmask(z_bitmask) => (ExpressionType::BitMask(z_bitmask.clone()), None),
+        Symbol::Union(_) => (ExpressionType::Compound, None),
+        Symbol::Struct(_) => (ExpressionType::Compound, None),
+        Symbol::Choice(_) => (ExpressionType::Compound, None),
+        Symbol::Enum(z_enum) => (ExpressionType::Enum(z_enum.clone()), None),
         Symbol::Field(field) => {
-            return type_reference_to_expression_type(&field.borrow().field_type, scope);
+            type_reference_to_expression_type(&field.borrow().field_type, scope)
         }
         Symbol::Parameter(param) => {
-            return type_reference_to_expression_type(&param.as_ref().borrow().zserio_type, scope);
+            type_reference_to_expression_type(&param.as_ref().borrow().zserio_type, scope)
         }
         Symbol::EnumItem(z_enum, _) => {
             // The index doesn't really matter, as each enum value has the same type.
             // We are only interested in the type at the moment. The actual value will
             // be applied in the generated code.
-            return type_reference_to_expression_type(&z_enum.as_ref().borrow().enum_type, scope);
+            type_reference_to_expression_type(&z_enum.as_ref().borrow().enum_type, scope)
         }
         Symbol::Subtype(subtype) => {
-            return type_reference_to_expression_type(
-                &subtype.as_ref().borrow().zserio_type,
-                scope,
-            );
+            type_reference_to_expression_type(&subtype.as_ref().borrow().zserio_type, scope)
         }
-        Symbol::Function(z_function) => ExpressionType::Function(z_function.clone()),
-    }
+        Symbol::Function(z_function) => (ExpressionType::Function(z_function.clone()), None),
+    };
 }
 
 fn type_reference_to_expression_type(
     type_ref: &TypeReference,
     scope: &mut ModelScope,
-) -> ExpressionType {
+) -> (ExpressionType, Option<TypeReference>) {
     if type_ref.is_builtin {
         // The return values set by this function are all dummy
         // values, because this function only returns the type,
         // not the actual value. Since this value is not hard-coded,
         // it will be retrieved after code generation.
         if type_ref.name.as_str() == "string" {
-            ExpressionType::String("".into())
+            (
+                ExpressionType::String("".into()),
+                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+            )
         } else if type_ref.name.as_str() == "bool" {
-            return ExpressionType::Bool(false);
+            (
+                ExpressionType::Bool(false),
+                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+            )
         } else if type_ref.name.starts_with("float") {
-            return ExpressionType::Float(0.0);
+            (
+                ExpressionType::Float(0.0),
+                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+            )
         } else if type_ref.name.starts_with("bit")
             || type_ref.name.starts_with("int")
-            || type_ref.name.starts_with("uint")
             || type_ref.name.starts_with("varsize")
             || type_ref.name.starts_with("varuint")
+            || type_ref.name.starts_with("uint")
             || type_ref.name.starts_with("varint")
         {
-            return ExpressionType::Integer(0);
+            (
+                ExpressionType::Integer(0),
+                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+            )
         } else {
             panic!("failed to determine builtin type reference type");
         }
