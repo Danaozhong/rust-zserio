@@ -8,14 +8,13 @@ use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::new::get_default_initializer;
-use crate::internal::generator::types::{
-    convert_field_name, zserio_to_rust_type, ztype_to_rust_type,
-};
+use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type, TypeGenerator};
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
 pub fn decode_type(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     lvalue_field_name: &String,
     rvalue_field_name: &String,
@@ -66,7 +65,7 @@ pub fn decode_type(
             function.line(format!(
                 "context_node.children[{}].context.read(&{}, reader, &mut {}, 0);",
                 node_idx,
-                initialize_array_trait(&fund_type),
+                initialize_array_trait(type_generator, &fund_type),
                 rvalue_field_name,
             ));
         } else {
@@ -99,6 +98,7 @@ pub fn decode_type(
 
 pub fn decode_field(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     field: &Field,
     context_node_index: Option<u8>,
@@ -107,7 +107,7 @@ pub fn decode_field(
     let field_name = convert_field_name(&field.name);
     let mut rvalue_field_name = format!("self.{}", field_name);
     let mut lvalue_field_name = rvalue_field_name.clone();
-    let mut field_type = ztype_to_rust_type(&field.field_type);
+    let mut field_type = type_generator.ztype_to_rust_type(&field.field_type);
     // TODO alignment
 
     if field.is_optional {
@@ -210,7 +210,7 @@ pub fn decode_field(
                 "{}.{} = {}.clone();",
                 element_name,
                 convert_field_name(&type_parameter.borrow().name),
-                generate_expression(&type_argument),
+                generate_expression(&type_argument, type_generator),
             ));
         }
 
@@ -228,6 +228,7 @@ pub fn decode_field(
     } else {
         decode_type(
             scope,
+            type_generator,
             function,
             &lvalue_field_name,
             &rvalue_field_name,

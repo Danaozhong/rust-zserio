@@ -4,6 +4,44 @@ use std::result::Result;
 
 const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct"];
 
+pub struct TypeGenerator {
+    pub root_package_name: String,
+}
+
+impl TypeGenerator {
+    pub fn zserio_package_to_rust_module(&self, package: &String) -> String {
+        assert!(!package.is_empty(), "package type has not been resolved");
+        let mut root_package = String::from("crate");
+        if !self.root_package_name.is_empty() {
+            root_package = format!("crate::{}", &self.root_package_name);
+        }
+        format!("{}::{}", &root_package, package.replace('.', "::"))
+    }
+
+    pub fn ztype_to_rust_type(&self, ztype: &TypeReference) -> String {
+        if ztype.is_builtin {
+            // the type is a zserio built-in type, such as int32, string, bool
+            return zserio_to_rust_type(&ztype.name)
+                .unwrap_or_else(|_| panic!("type mapping failed {:?}", &ztype.name));
+        }
+        // the type is a custom type, defined in some zserio file.
+        assert!(!ztype.package.is_empty(), "package must be resolved");
+        format!(
+            "{}::{}",
+            self.zserio_package_to_rust_module(&ztype.package),
+            custom_type_to_rust_type(&ztype.name)
+        )
+    }
+
+    pub fn get_full_module_path(&self, package: &String, rust_symbol_name: &String) -> String {
+        format!(
+            "{}::{}",
+            self.zserio_package_to_rust_module(package),
+            rust_symbol_name,
+        )
+    }
+}
+
 pub fn to_rust_module_name(name: &String) -> String {
     name.to_case(Case::Snake)
 }
@@ -30,16 +68,6 @@ pub fn convert_to_union_selector_name(field_name: &String) -> String {
 pub fn convert_to_function_name(name: &String) -> String {
     // Converts a function name from zserio style to rust style (snake case).
     name.to_case(Case::Snake)
-}
-
-pub fn ztype_to_rust_type(ztype: &TypeReference) -> String {
-    if ztype.is_builtin {
-        // the type is a zserio built-in type, such as int32, string, bool
-        return zserio_to_rust_type(&ztype.name)
-            .unwrap_or_else(|_| panic!("type mapping failed {:?}", &ztype.name));
-    }
-    // the type is a custom type, defined in some zserio file.
-    custom_type_to_rust_type(&ztype.name)
 }
 
 pub fn custom_type_to_rust_type(name: &String) -> String {

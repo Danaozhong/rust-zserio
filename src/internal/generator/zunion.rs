@@ -8,15 +8,19 @@ use crate::internal::generator::{
     file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
     preamble::add_standard_imports, types::convert_field_name,
     types::convert_to_union_selector_name, types::to_rust_module_name, types::to_rust_type_name,
-    types::ztype_to_rust_type,
+    types::TypeGenerator,
 };
 use codegen::Scope;
 use codegen::Struct;
 
 use std::path::Path;
 
-pub fn generate_struct_member_for_field(gen_struct: &mut Struct, field: &Field) {
-    let mut field_type = ztype_to_rust_type(field.field_type.as_ref());
+pub fn generate_struct_member_for_field(
+    type_generator: &TypeGenerator,
+    gen_struct: &mut Struct,
+    field: &Field,
+) {
+    let mut field_type = type_generator.ztype_to_rust_type(field.field_type.as_ref());
 
     if field.array.is_some() {
         field_type = format!("Vec<{}>", field_type.as_str());
@@ -30,6 +34,7 @@ pub fn generate_struct_member_for_field(gen_struct: &mut Struct, field: &Field) 
 
 pub fn generate_union(
     symbol_scope: &ModelScope,
+    type_generator: &TypeGenerator,
     codegen_scope: &mut Scope,
     zunion: &ZUnion,
     path: &Path,
@@ -83,7 +88,7 @@ pub fn generate_union(
 
     // if the union is parameterized, add the parameters as struct fields
     for param in &zunion.type_parameters {
-        let param_type = ztype_to_rust_type(param.borrow().zserio_type.as_ref());
+        let param_type = type_generator.ztype_to_rust_type(param.borrow().zserio_type.as_ref());
         // Possible improvement: currently the parameters are copied instead of taken the reference.
         // It would be great to change that to references to avoid unnecessary copying, but this is
         // painful in rust due to the lifetime checks.
@@ -101,7 +106,7 @@ pub fn generate_union(
 
     // Add the data fields to the union
     for field in &zunion.fields {
-        generate_struct_member_for_field(gen_union, &field.borrow());
+        generate_struct_member_for_field(type_generator, gen_union, &field.borrow());
     }
 
     // generate the functions to serialize/deserialize
@@ -122,24 +127,29 @@ pub fn generate_union(
 
     // Set the default value for the parameters
     for param in &zunion.type_parameters {
-        new_param(symbol_scope, new_fn, &param.as_ref().borrow());
+        new_param(
+            symbol_scope,
+            type_generator,
+            new_fn,
+            &param.as_ref().borrow(),
+        );
     }
 
     // Set the default values for the fields
     for field in &zunion.fields {
-        new_field(symbol_scope, new_fn, &field.borrow());
+        new_field(symbol_scope, type_generator, new_fn, &field.borrow());
     }
     new_fn.line("}");
 
     // Generate the functions to read, write and bitcount the data to/from zserio format.
-    generate_zserio_read(symbol_scope, union_impl, zunion);
-    generate_zserio_write(symbol_scope, union_impl, zunion);
-    generate_zserio_bitsize(symbol_scope, union_impl, zunion);
+    generate_zserio_read(symbol_scope, type_generator, union_impl, zunion);
+    generate_zserio_write(symbol_scope, type_generator, union_impl, zunion);
+    generate_zserio_bitsize(symbol_scope, type_generator, union_impl, zunion);
 
     // Generate all the zserio functions.
     let pub_impl = codegen_scope.new_impl(&rust_type_name);
     for zserio_function in &zunion.functions {
-        generate_function(pub_impl, &zserio_function.as_ref().borrow());
+        generate_function(pub_impl, type_generator, &zserio_function.as_ref().borrow());
     }
 
     write_to_file(
@@ -153,10 +163,11 @@ pub fn generate_union(
 
 pub fn generate_union_match_construct(
     symbol_scope: &ModelScope,
+    type_generator: &TypeGenerator,
     code_gen_fn: &mut codegen::Function,
     zunion: &ZUnion,
     packed: bool,
-    f: &dyn Fn(&ModelScope, &mut codegen::Function, &Field, Option<u8>),
+    f: &dyn Fn(&ModelScope, &TypeGenerator, &mut codegen::Function, &Field, Option<u8>),
 ) {
     let mut context_node_index = 0;
     let rust_type_name = to_rust_type_name(&zunion.name);
@@ -169,7 +180,13 @@ pub fn generate_union_match_construct(
             selector_type_name,
             convert_to_union_selector_name(&field.borrow().name)
         ));
-        instantiate_zserio_array(symbol_scope, code_gen_fn, &field.borrow(), false);
+        instantiate_zserio_array(
+            symbol_scope,
+            type_generator,
+            code_gen_fn,
+            &field.borrow(),
+            false,
+        );
         let mut packing_node_index = None;
         if packed {
             packing_node_index = Option::from(context_node_index);
@@ -177,6 +194,7 @@ pub fn generate_union_match_construct(
         }
         f(
             symbol_scope,
+            type_generator,
             code_gen_fn,
             &field.borrow(),
             packing_node_index,
@@ -188,6 +206,7 @@ pub fn generate_union_match_construct(
 
 fn generate_zserio_read(
     symbol_scope: &ModelScope,
+    type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {
@@ -201,7 +220,14 @@ fn generate_zserio_read(
         rust_type_name
     ));
 
-    generate_union_match_construct(symbol_scope, zserio_read_fn, union, false, &decode_field);
+    generate_union_match_construct(
+        symbol_scope,
+        type_generator,
+        zserio_read_fn,
+        union,
+        false,
+        &decode_field,
+    );
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
@@ -209,6 +235,7 @@ fn generate_zserio_read(
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
     generate_union_match_construct(
         symbol_scope,
+        type_generator,
         zserio_read_packed_fn,
         union,
         true,
@@ -218,6 +245,7 @@ fn generate_zserio_read(
 
 fn generate_zserio_write(
     symbol_scope: &ModelScope,
+    type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {
@@ -225,7 +253,14 @@ fn generate_zserio_write(
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
     zserio_write_fn.line("ztype::write_varsize(writer, self.union_selector as u32);".to_string());
-    generate_union_match_construct(symbol_scope, zserio_write_fn, union, false, &encode_field);
+    generate_union_match_construct(
+        symbol_scope,
+        type_generator,
+        zserio_write_fn,
+        union,
+        false,
+        &encode_field,
+    );
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
@@ -235,6 +270,7 @@ fn generate_zserio_write(
         .line("ztype::write_varsize(writer, self.union_selector as u32);".to_string());
     generate_union_match_construct(
         symbol_scope,
+        type_generator,
         zserio_write_packed_fn,
         union,
         true,
@@ -244,6 +280,7 @@ fn generate_zserio_write(
 
 fn generate_zserio_bitsize(
     symbol_scope: &ModelScope,
+    type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {
@@ -253,7 +290,14 @@ fn generate_zserio_bitsize(
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
     bitsize_fn.line("end_position += ztype::varsize_bitsize(self.union_selector as u32) as u64;");
-    generate_union_match_construct(symbol_scope, bitsize_fn, union, false, &bitsize_field);
+    generate_union_match_construct(
+        symbol_scope,
+        type_generator,
+        bitsize_fn,
+        union,
+        false,
+        &bitsize_field,
+    );
     bitsize_fn.line("end_position - bit_position");
 
     let bitsize_packed_fn = struct_impl.new_fn("zserio_bitsize_packed");
@@ -262,6 +306,13 @@ fn generate_zserio_bitsize(
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
     bitsize_packed_fn.line("let mut end_position = bit_position;");
-    generate_union_match_construct(symbol_scope, bitsize_packed_fn, union, true, &bitsize_field);
+    generate_union_match_construct(
+        symbol_scope,
+        type_generator,
+        bitsize_packed_fn,
+        union,
+        true,
+        &bitsize_field,
+    );
     bitsize_packed_fn.line("end_position - bit_position");
 }

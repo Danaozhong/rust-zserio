@@ -5,12 +5,13 @@ use crate::internal::generator::expression::generate_expression;
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
-use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type};
+use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type, TypeGenerator};
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 use codegen::Function;
 
 pub fn encode_type(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     field_name: &String,
     field_type: &TypeReference,
@@ -55,7 +56,7 @@ pub fn encode_type(
             function.line(format!(
                 "context_node.children[{}].context.write(&{}, writer, &{});",
                 node_idx,
-                initialize_array_trait(&fund_type),
+                initialize_array_trait(type_generator, &fund_type),
                 field_name,
             ));
         } else if fund_type.bits != 0 {
@@ -86,6 +87,7 @@ pub fn encode_type(
 
 pub fn encode_field(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     field: &Field,
     context_node_index: Option<u8>,
@@ -147,7 +149,7 @@ pub fn encode_field(
                 "assert!({}.{} == {});",
                 &element_name,
                 convert_field_name(&type_parameter.borrow().name),
-                generate_expression(&type_argument),
+                generate_expression(&type_argument, type_generator),
             ));
         }
 
@@ -161,9 +163,9 @@ pub fn encode_field(
         // For arrays with fixed length, ensure that the array length is correct.
         if let Some(array_length_expr) = &array_information.array_length_expression {
             function.line(format!(
-                "assert!({}.len() == {} as usize);",
+                "assert!({}.len() == ({}) as usize);",
                 &field_name,
-                &generate_expression(&array_length_expr.borrow()),
+                &generate_expression(&array_length_expr.borrow(), type_generator),
             ));
         }
 
@@ -177,6 +179,7 @@ pub fn encode_field(
     } else {
         encode_type(
             scope,
+            type_generator,
             function,
             &field_name,
             &field.field_type,

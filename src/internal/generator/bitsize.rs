@@ -4,12 +4,13 @@ use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
-use crate::internal::generator::types::convert_field_name;
+use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 
 pub fn bitsize_type_reference(
     _scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     field_name: &str,
     is_marshaler: bool,
@@ -54,7 +55,7 @@ pub fn bitsize_type_reference(
             function.line(format!(
                 "end_position += context_node.children[{}].context.bitsize_of(&{}, end_position, &{});",
                 node_idx,
-                initialize_array_trait(type_reference),
+                initialize_array_trait(type_generator, type_reference),
                 field_name,
             ));
         } else {
@@ -109,6 +110,7 @@ pub fn bitsize_type_reference(
 
 pub fn bitsize_field(
     scope: &ModelScope,
+    type_generator: &TypeGenerator,
     function: &mut Function,
     field: &Field,
     context_node_index: Option<u8>,
@@ -132,6 +134,7 @@ pub fn bitsize_field(
     } else {
         bitsize_type_reference(
             scope,
+            type_generator,
             function,
             &field_name,
             native_type.is_marshaler,
