@@ -19,5 +19,5 @@ struct Block(uint32 numElements)
 
     // Add a conditional item, that depends on the parameter passed in the index.
     // This ensures that during serialization / deserialization, the item is correctly passed.
-    uint8 conditionItem if lengthof(numElements) > 0;
+    uint8 conditionItem if numElements > 0;
 };

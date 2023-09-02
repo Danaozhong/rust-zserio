@@ -405,6 +405,35 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         field.is_optional = ctx.OPTIONAL().is_some();
 
+        if let Some(field_initializer_ctx) = ctx.fieldInitializer() {
+            match ZserioParserVisitorCompat::visit_fieldInitializer(self, &field_initializer_ctx) {
+                ZserioTreeReturnType::Expression(expr) => {
+                    field.initializer = Option::from(Rc::from(RefCell::from(*expr)))
+                }
+                _ => panic!("unexpected field initializer type"),
+            }
+        }
+
+        if let Some(field_optional_clause_ctx) = ctx.fieldOptionalClause() {
+            match ZserioParserVisitorCompat::visit_fieldOptionalClause(
+                self,
+                &field_optional_clause_ctx,
+            ) {
+                ZserioTreeReturnType::Expression(expr) => {
+                    field.optional_clause = Option::from(Rc::from(RefCell::from(*expr)))
+                }
+                _ => panic!("unexpected field optional clause type"),
+            }
+        }
+
+        if let Some(field_constraint_ctx) = ctx.fieldConstraint() {
+            match ZserioParserVisitorCompat::visit_fieldConstraint(self, &field_constraint_ctx) {
+                ZserioTreeReturnType::Expression(expr) => {
+                    field.constraint = Option::from(Rc::from(RefCell::from(*expr)))
+                }
+                _ => panic!("unexpected field constraint type"),
+            }
+        }
         ZserioTreeReturnType::Field(field)
     }
 
@@ -562,6 +591,9 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             is_optional: false,
             alignment: 0,
             field_type: type_reference,
+            constraint: None,
+            initializer: None,
+            optional_clause: None,
             array,
         }))
     }

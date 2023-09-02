@@ -95,8 +95,30 @@ pub fn encode_field(
     let native_type = get_fundamental_type(&field.field_type, scope);
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
+    // Check if the field uses an optional clause
+    if let Some(optional_clause) = &field.optional_clause {
+        function.line(format!(
+            "if {} {{",
+            generate_expression(&optional_clause.borrow(), type_generator)
+        ));
+    }
+
+    // Align the byte stream, if alignment is specified.
+    if field.alignment != 0 {
+        function.line(format!("writer.align({});", field.alignment));
+    }
+
     if field.is_optional {
-        function.line(format!("if let Some(x) = {} {{", field_name));
+        // If the type is a marshaller, take it by reference.
+        let mut borrow_symbol = String::from("");
+        if native_type.is_marshaler {
+            borrow_symbol = "&".into();
+        }
+
+        function.line(format!(
+            "if let Some(x) = {}{} {{",
+            borrow_symbol, field_name
+        ));
         function.line("writer.write_bool(true).expect(\"failed to write bool\");");
         field_name = "x".into();
     }
@@ -191,6 +213,11 @@ pub fn encode_field(
         function.line("} else {");
         // write a "0" if the field is not set.
         function.line("writer.write_bool(false).expect(\"failed to write bool\");");
+        function.line("}");
+    }
+
+    // Close the optional clause.
+    if field.optional_clause.is_some() {
         function.line("}");
     }
 }

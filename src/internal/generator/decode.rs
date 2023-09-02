@@ -107,8 +107,21 @@ pub fn decode_field(
     let field_name = convert_field_name(&field.name);
     let mut rvalue_field_name = format!("self.{}", field_name);
     let mut lvalue_field_name = rvalue_field_name.clone();
-    let mut field_type = type_generator.ztype_to_rust_type(&field.field_type);
-    // TODO alignment
+    let raw_field_type = type_generator.ztype_to_rust_type(&field.field_type);
+    let mut field_type = raw_field_type.clone();
+
+    // Check if the field uses an optional clause
+    if let Some(optional_clause) = &field.optional_clause {
+        function.line(format!(
+            "if {} {{",
+            generate_expression(&optional_clause.borrow(), type_generator)
+        ));
+    }
+
+    // Align the byte stream, if alignment is specified.
+    if field.alignment != 0 {
+        function.line(format!("reader.align({});", field.alignment));
+    }
 
     if field.is_optional {
         function.line("let present = reader.read_bool().unwrap();");
@@ -161,7 +174,7 @@ pub fn decode_field(
             false, // The underlying type will never be an array (no 2D array support in zserio).
             native_type.is_marshaler,
             &native_type.fundamental_type.name,
-            &field_type,
+            &raw_field_type,
         );
         function.line(format!(
             "{} = vec![{}; {}_array_length];",
@@ -243,5 +256,9 @@ pub fn decode_field(
             convert_field_name(&field.name)
         ));
         function.line("}"); // close the "if present {"
+    }
+    // Close the optional clause.
+    if field.optional_clause.is_some() {
+        function.line("}");
     }
 }
