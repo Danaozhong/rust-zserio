@@ -109,6 +109,10 @@ impl Model {
                 import_symbol: None,
                 symbol_name: None,
             });
+
+            // Generate template instantiations using the "instantiate" keyword.
+            // Need to clone "instantiated_types", so that the package (pkg) can
+            // be modified.
             let type_instantiations = pkg.instantiated_types.clone();
             for rc_instantiation in &type_instantiations {
                 let instantiation = rc_instantiation.as_ref().borrow_mut();
@@ -118,6 +122,20 @@ impl Model {
                     &instantiation.zserio_type.clone(),
                     &instantiation.name.clone(),
                 );
+            }
+
+            // Generate template instantiations using the "subtype" keyword.
+            let subtypes = pkg.subtypes.clone();
+            for rc_subtype in subtypes {
+                let subtype = rc_subtype.borrow();
+                if !subtype.zserio_type.template_arguments.is_empty() {
+                    instantiate_type(
+                        pkg,
+                        scope,
+                        &subtype.zserio_type.clone(),
+                        &subtype.name.clone(),
+                    );
+                }
             }
             scope.scope_stack.pop();
         }

@@ -92,6 +92,10 @@ pub fn generate_package(
     // Generate the subtypes
     for zsubtype_ref in &package.subtypes {
         let zsubtype = zsubtype_ref.borrow();
+        // Ignore templated subtypes
+        if !zsubtype.zserio_type.template_arguments.is_empty() {
+            continue;
+        }
         let mut codegen_scope = Scope::new();
         module_names.push(generate_subtype(
             &mut codegen_scope,
