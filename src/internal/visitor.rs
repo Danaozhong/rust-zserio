@@ -764,6 +764,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -787,6 +788,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -807,6 +809,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -831,6 +834,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         ZserioTreeReturnType::Expression(expression)
     }
@@ -858,12 +862,14 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 symbol: None,
                 fully_resolved: false,
                 evaluation_state: EvaluationState::NotEvaluated,
+                native_type: None,
             })),
             operand3: None,
             result_type: ExpressionType::Other,
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         }))
     }
 
@@ -883,6 +889,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         }))
     }
 
@@ -929,6 +936,18 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             ),
             _ => panic!("unexpected expression type {:?}, ", literal_text),
         };
+
+        // Determine the exact zserio type for this literal.
+        let native_type = match literal_ctx {
+            _ if literal_ctx.BOOL_LITERAL().is_some() => {
+                Some(TypeReference::new_native_type("bool"))
+            }
+            _ if literal_ctx.STRING_LITERAL().is_some() => {
+                Some(TypeReference::new_native_type("string"))
+            }
+            _ => None,
+        };
+
         let expression_type = literal_ctx.start().token_type;
         ZserioTreeReturnType::Expression(Box::new(Expression {
             expression_type,
@@ -941,6 +960,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             result_type,
             fully_resolved: true,
             evaluation_state: EvaluationState::Completed,
+            native_type,
         }))
     }
 
@@ -963,6 +983,9 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            // We assume that a lengthof expression always returns an varsize type.
+            // This must match with the generated type during expression generation.
+            native_type: Some(TypeReference::new_native_type("varsize")),
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -983,6 +1006,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1003,6 +1027,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: Some(TypeReference::new_native_type("usize")),
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1023,6 +1048,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1046,6 +1072,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1070,6 +1097,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1094,6 +1122,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1126,6 +1155,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1150,6 +1180,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1177,6 +1208,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1201,6 +1233,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1228,6 +1261,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1255,6 +1289,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: Some(TypeReference::new_native_type("bool")),
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1279,6 +1314,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: Some(TypeReference::new_native_type("bool")),
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1303,6 +1339,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1373,12 +1410,12 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             // This is a built-in type, e.g. string, uint32, bit:x, ....
             type_reference.is_builtin = true;
             let mut name = ctx.get_text();
-            let mut bits: i8 = 0;
+            let mut bits: u8 = 0;
             if name.contains(':') {
                 let bits_subst: Vec<&str> = name.split(':').collect();
                 bits = bits_subst[1]
-                    .parse::<i8>()
-                    .expect("failed to convert to i8");
+                    .parse::<u8>()
+                    .expect("failed to convert to u8");
                 name = bits_subst[0].into();
             }
             type_reference.name = name;
@@ -1461,6 +1498,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 symbol: None,
                 fully_resolved: false,
                 evaluation_state: EvaluationState::NotEvaluated,
+                native_type: None,
             }));
         }
         self.visit(&*ctx.expression().unwrap())

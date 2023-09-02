@@ -20,10 +20,14 @@ pub mod reference_modules {
     pub mod template_instantiation {
         pub mod template_instantiation;
     }
+    pub mod type_casts {
+        pub mod type_casts;
+    }
 }
 pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
 pub mod template_instantiation_test;
+pub mod type_casts_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
@@ -40,6 +44,7 @@ use rust_zserio::ztype::ZserioPackableOject;
 
 use crate::ambiguous_types_test::test_ambiguous_types;
 use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
+use crate::type_casts_test::test_type_casts;
 
 fn main() {
     test_structure();
@@ -53,6 +58,7 @@ fn main() {
     test_parameter_passing();
     test_index_operator();
     test_ambiguous_types();
+    test_type_casts();
 }
 
 fn test_structure() {

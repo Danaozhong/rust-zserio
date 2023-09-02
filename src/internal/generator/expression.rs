@@ -81,9 +81,57 @@ fn generate_arithmetic_expression(
         // of a float or integer expression.
         return generate_unary_arithmetic_expression(expression, type_generator);
     }
+
+    // Check if casts are required
+    let mut op1 = generate_expression(expression.operand1.as_ref().unwrap(), type_generator);
+    let mut op2 = generate_expression(expression.operand2.as_ref().unwrap(), type_generator);
+
+    let mut expression_type = None;
+    let mut op1_rust_type = None;
+    let mut op2_rust_type = None;
+
+    // Check if casting is needed because of different original types.
+    // Casting is needed in the following cases:
+    // - mixing floats with integers
+    // - mixing signed/unsigned types
+    // - mixing different bit lengths
+    // - mixing numerals of different types
+    // Casting is not needed in the following cases:
+    // - The expression result is not an integer.
+    // - One or both operands are numerals without type annotations, for example
+    //   "17.5 + 13.6"
+    match &expression.result_type {
+        ExpressionType::Integer(_) | ExpressionType::BitMask(_) | ExpressionType::Float(_) => {
+            if let Some(native_type) = &expression.native_type {
+                expression_type = Some(type_generator.ztype_to_rust_type(native_type));
+                if let Some(op1_native_type) = &expression.operand1.as_ref().unwrap().native_type {
+                    op1_rust_type = Some(type_generator.ztype_to_rust_type(op1_native_type));
+                }
+                if let Some(op2_native_type) = &expression.operand2.as_ref().unwrap().native_type {
+                    op2_rust_type = Some(type_generator.ztype_to_rust_type(op2_native_type));
+                }
+            }
+        }
+        _ => (),
+    };
+
+    // Generate the type casts
+    if let Some(result_type) = expression_type {
+        if let Some(op1_result_type) = op1_rust_type {
+            if result_type != op1_result_type {
+                op1 = format!("(({}) as {})", op1, result_type);
+            }
+        }
+        if let Some(op2_result_type) = op2_rust_type {
+            if result_type != op2_result_type {
+                op2 = format!("(({}) as {})", op2, result_type);
+            }
+        }
+    }
+
     format!(
         "{} {} {}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
+        op1,
         match expression.expression_type {
             PLUS => "+",
             MINUS => "-",
@@ -92,7 +140,7 @@ fn generate_arithmetic_expression(
             MODULO => "%",
             _ => panic!("unexpected arithmetic expression operator"),
         },
-        generate_expression(expression.operand2.as_ref().unwrap(), type_generator),
+        op2,
     )
 }
 
@@ -190,14 +238,14 @@ fn generate_valueof_expression(expression: &Expression, type_generator: &TypeGen
 
 fn generate_lengthof_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
     format!(
-        "{}.len()",
+        "({}.len() as u32)",
         generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
     )
 }
 
 fn generate_numbits_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
     format!(
-        "{} as u32",
+        "({} as u32)",
         generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
     )
 }
