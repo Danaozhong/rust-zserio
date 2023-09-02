@@ -17,9 +17,13 @@ pub mod reference_modules {
         pub mod main;
         pub mod other;
     }
+    pub mod template_instantiation {
+        pub mod template_instantiation;
+    }
 }
 pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
+pub mod template_instantiation_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
