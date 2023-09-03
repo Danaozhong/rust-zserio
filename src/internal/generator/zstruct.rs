@@ -1,7 +1,7 @@
 use crate::internal::ast::field::Field;
 use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::compiler::symbol_scope::ModelScope;
-use crate::internal::generator::array::instantiate_zserio_arrays;
+use crate::internal::generator::array::instantiate_zserio_array;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
@@ -124,8 +124,14 @@ fn generate_zserio_read(
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
-    instantiate_zserio_arrays(scope, type_generator, zserio_read_fn, fields, false);
     for field in fields {
+        instantiate_zserio_array(
+            scope,
+            type_generator,
+            zserio_read_fn,
+            &field.borrow(),
+            false,
+        );
         decode_field(scope, type_generator, zserio_read_fn, &field.borrow(), None);
     }
 
@@ -133,8 +139,14 @@ fn generate_zserio_read(
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
-    instantiate_zserio_arrays(scope, type_generator, zserio_read_packed_fn, fields, true);
     for field in fields {
+        instantiate_zserio_array(
+            scope,
+            type_generator,
+            zserio_read_packed_fn,
+            &field.borrow(),
+            true,
+        );
         decode_field(
             scope,
             type_generator,
@@ -146,7 +158,7 @@ fn generate_zserio_read(
 }
 
 fn generate_zserio_write(
-    scope: &ModelScope,
+    symbol_scope: &ModelScope,
     type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
     fields: &Vec<Rc<RefCell<Field>>>,
@@ -155,20 +167,26 @@ fn generate_zserio_write(
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
 
-    instantiate_zserio_arrays(scope, type_generator, zserio_write_fn, fields, false);
     for field_rc in fields {
         let field = field_rc.borrow();
-        encode_field(scope, type_generator, zserio_write_fn, &field, None);
+        instantiate_zserio_array(symbol_scope, type_generator, zserio_write_fn, &field, false);
+        encode_field(symbol_scope, type_generator, zserio_write_fn, &field, None);
     }
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
-    instantiate_zserio_arrays(scope, type_generator, zserio_write_packed_fn, fields, true);
     for field in fields {
+        instantiate_zserio_array(
+            symbol_scope,
+            type_generator,
+            zserio_write_packed_fn,
+            &field.borrow(),
+            true,
+        );
         encode_field(
-            scope,
+            symbol_scope,
             type_generator,
             zserio_write_packed_fn,
             &field.borrow(),
@@ -178,7 +196,7 @@ fn generate_zserio_write(
 }
 
 fn generate_zserio_bitsize(
-    scope: &ModelScope,
+    symbol_scope: &ModelScope,
     type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
     fields: &Vec<Rc<RefCell<Field>>>,
@@ -187,10 +205,22 @@ fn generate_zserio_bitsize(
     bitsize_fn.ret("u64");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
-    instantiate_zserio_arrays(scope, type_generator, bitsize_fn, fields, false);
     bitsize_fn.line("let mut end_position = bit_position;");
     for field in fields {
-        bitsize_field(scope, type_generator, bitsize_fn, &field.borrow(), None);
+        instantiate_zserio_array(
+            symbol_scope,
+            type_generator,
+            bitsize_fn,
+            &field.borrow(),
+            false,
+        );
+        bitsize_field(
+            symbol_scope,
+            type_generator,
+            bitsize_fn,
+            &field.borrow(),
+            None,
+        );
     }
     bitsize_fn.line("end_position - bit_position");
 
@@ -199,11 +229,17 @@ fn generate_zserio_bitsize(
     bitsize_packed_fn.arg_ref_self();
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
-    instantiate_zserio_arrays(scope, type_generator, bitsize_packed_fn, fields, true);
     bitsize_packed_fn.line("let mut end_position = bit_position;");
     for field in fields {
+        instantiate_zserio_array(
+            symbol_scope,
+            type_generator,
+            bitsize_packed_fn,
+            &field.borrow(),
+            true,
+        );
         bitsize_field(
-            scope,
+            symbol_scope,
             type_generator,
             bitsize_packed_fn,
             &field.borrow(),

@@ -35,6 +35,9 @@ pub mod reference_modules {
     pub mod integer_types {
         pub mod integer_types;
     }
+    pub mod parameterized_array_length {
+        pub mod parameterized_array_length;
+    }
 }
 pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
@@ -44,6 +47,7 @@ pub mod optional_values_test;
 pub mod bitmask_test;
 pub mod constants_test;
 pub mod integer_types_test;
+pub mod parameterized_array_length_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
@@ -65,6 +69,7 @@ use crate::optional_values_test::{ test_optional_values, test_optional_members, 
 use crate::bitmask_test::test_bitmasks;
 use crate::constants_test::test_constants;
 use crate::integer_types_test::test_integer_types;
+use crate::parameterized_array_length_test::test_parameterized_array_length;
 
 
 fn main() {
@@ -86,6 +91,7 @@ fn main() {
     test_bitmasks();
     test_constants();
     test_integer_types();
+    test_parameterized_array_length();
 }
 
 fn test_structure() {
