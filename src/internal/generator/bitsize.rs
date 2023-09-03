@@ -1,10 +1,10 @@
-use codegen::Function;
-
 use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::expression::generate_boolean_expression;
 use crate::internal::generator::types::{convert_field_name, TypeGenerator};
+use codegen::Function;
 
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 
@@ -119,6 +119,20 @@ pub fn bitsize_field(
     let fund_type = native_type.fundamental_type;
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
+    // Check if the field uses an optional clause
+    if let Some(optional_clause) = &field.optional_clause {
+        function.line(format!(
+            "if {} {{",
+            generate_boolean_expression(&optional_clause.borrow(), type_generator)
+        ));
+    }
+
+    // Align the byte stream, if alignment is specified.
+    if field.alignment != 0 {
+        // TODO calculate alignment size
+        //function.line(format!("writer.align({});", field.alignment));
+    }
+
     if field.is_optional {
         function.line("end_position += 1;");
         function.line(format!("if let Some(x) = {} {{", field_name));
@@ -145,6 +159,11 @@ pub fn bitsize_field(
     if field.is_optional {
         // in case the field is optional, end the if condition which checks
         // if the field is set.
+        function.line("}");
+    }
+
+    // Close the optional clause.
+    if field.optional_clause.is_some() {
         function.line("}");
     }
 }

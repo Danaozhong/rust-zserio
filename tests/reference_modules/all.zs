@@ -13,3 +13,4 @@ import reference_modules.ambiguous_types.ambiguous_types.*;
 import reference_modules.template_instantiation.template_instantiation.*;
 import reference_modules.type_casts.type_casts.*;
 import reference_modules.optional_values.optional_values.*;
+import reference_modules.bitmask_test.bitmask_test.*;

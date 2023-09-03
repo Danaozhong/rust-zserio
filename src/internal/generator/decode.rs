@@ -1,4 +1,4 @@
-use crate::internal::generator::expression::generate_expression;
+use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
@@ -114,7 +114,7 @@ pub fn decode_field(
     if let Some(optional_clause) = &field.optional_clause {
         function.line(format!(
             "if {} {{",
-            generate_expression(&optional_clause.borrow(), type_generator)
+            generate_boolean_expression(&optional_clause.borrow(), type_generator)
         ));
     }
 
@@ -218,12 +218,16 @@ pub fn decode_field(
         {
             let type_argument = type_argument_rc.borrow();
             let type_parameter = &type_parameters[param_index];
-
+            let mut requires_cloning = String::from("");
+            if !type_argument.fully_resolved {
+                requires_cloning = ".clone()".into();
+            }
             function.line(format!(
-                "{}.{} = {}.clone();",
+                "{}.{} = {}{};",
                 element_name,
                 convert_field_name(&type_parameter.borrow().name),
                 generate_expression(&type_argument, type_generator),
+                requires_cloning,
             ));
         }
 

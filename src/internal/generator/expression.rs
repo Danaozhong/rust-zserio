@@ -4,7 +4,7 @@ use crate::internal::ast::expression::{
 use crate::internal::compiler::symbol_scope::Symbol;
 use crate::internal::generator::types::{
     constant_type_to_rust_type, convert_field_name, convert_to_enum_field_name,
-    custom_type_to_rust_type, TypeGenerator,
+    custom_type_to_rust_type, to_rust_constant_name, to_rust_module_name, TypeGenerator,
 };
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, BINARY_LITERAL, BOOL_LITERAL, DECIMAL_LITERAL, DIVIDE, DOT, DOUBLE_LITERAL, EQ,
@@ -17,6 +17,18 @@ pub struct ExpressionGenerationResult {
     pub generated_value: String,
     pub is_lvalue: bool,
     pub lvalue_name: String,
+}
+
+pub fn generate_boolean_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+) -> String {
+    let generated_code = generate_expression(expression, type_generator);
+    match expression.result_type {
+        ExpressionType::BitMask(_) => format!("{} != 0", generated_code),
+        ExpressionType::Integer(_) => format!("{} != 0", generated_code),
+        _ => generated_code,
+    }
 }
 
 pub fn generate_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
@@ -169,11 +181,13 @@ fn generate_dot_expression(expression: &Expression, type_generator: &TypeGenerat
                 .get_full_module_path(&op1.symbol.as_ref().unwrap().package, &enum_expression)
         }
         ExpressionType::BitMask(z_bitmask) => {
-            format!(
+            let bitmask_expression = format!(
                 "{}::{}",
-                custom_type_to_rust_type(&z_bitmask.borrow().name),
-                convert_to_enum_field_name(&expression.operand2.as_ref().unwrap().text)
-            )
+                to_rust_module_name(&z_bitmask.borrow().name),
+                to_rust_constant_name(&expression.operand2.as_ref().unwrap().text)
+            );
+            type_generator
+                .get_full_module_path(&op1.symbol.as_ref().unwrap().package, &bitmask_expression)
         }
         ExpressionType::Compound => {
             match &op1
@@ -256,10 +270,33 @@ fn generate_identifier_expression(
 ) -> String {
     let symbol_ref = expression.symbol.as_ref().unwrap();
 
+    // Workaround for bitmasks - bitmasks are wrapped in a special structure,
+    // so when referencing them, we need to apply the wrapper.
+    let bitmask_workaround = match &expression.result_type {
+        ExpressionType::BitMask(_) => String::from(".bitmask_value"),
+        _ => String::from(""),
+    };
+
     // check for early returns, where no full type addressing is needed.
     match &symbol_ref.symbol {
-        Symbol::Field(f) => return format!("self.{}", convert_field_name(&f.borrow().name)),
-        Symbol::Parameter(p) => return format!("self.{}", convert_field_name(&p.borrow().name)),
+        Symbol::Field(f) => {
+            if f.borrow().name == "selector" {
+                print!("expression {:?}", expression);
+                print!("t");
+            }
+            return format!(
+                "self.{}{}",
+                convert_field_name(&f.borrow().name),
+                &bitmask_workaround
+            );
+        }
+        Symbol::Parameter(p) => {
+            return format!(
+                "self.{}{}",
+                convert_field_name(&p.borrow().name),
+                &bitmask_workaround
+            )
+        }
         Symbol::Function(z_function) => {
             return format!("self.{}", convert_field_name(&z_function.borrow().name))
         }
@@ -271,7 +308,9 @@ fn generate_identifier_expression(
         Symbol::Choice(c) => custom_type_to_rust_type(&c.borrow().name),
         Symbol::Union(u) => custom_type_to_rust_type(&u.borrow().name),
         Symbol::Enum(e) => custom_type_to_rust_type(&e.borrow().name),
-        Symbol::Bitmask(bitmask) => custom_type_to_rust_type(&bitmask.borrow().name),
+        Symbol::Bitmask(bitmask) => {
+            custom_type_to_rust_type(&bitmask.borrow().name) + ".bitmask_value"
+        }
         Symbol::Const(zconst) => constant_type_to_rust_type(&zconst.borrow().name),
         _ => panic!("unsupported identifier type {:?}", expression.symbol),
     };
