@@ -29,6 +29,9 @@ pub mod reference_modules {
     pub mod bitmask_test {
         pub mod bitmask_test;
     }
+    pub mod constants {
+        pub mod constants;
+    }
 }
 pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
@@ -36,6 +39,7 @@ pub mod template_instantiation_test;
 pub mod type_casts_test;
 pub mod optional_values_test;
 pub mod bitmask_test;
+pub mod constants_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
@@ -55,6 +59,8 @@ use crate::parameter_passing_test::{test_index_operator, test_parameter_passing}
 use crate::type_casts_test::test_type_casts;
 use crate::optional_values_test::test_optional_values;
 use crate::bitmask_test::test_bitmasks;
+use crate::constants_test::test_constants;
+
 
 fn main() {
     test_structure();
@@ -71,6 +77,7 @@ fn main() {
     test_type_casts();
     test_optional_values();
     test_bitmasks();
+    test_constants();
 }
 
 fn test_structure() {

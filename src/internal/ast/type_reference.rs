@@ -27,17 +27,6 @@ impl TypeReference {
             length_expression: None,
         }
     }
-    pub fn new_native_bit_type(name: &str, num_bits: u8) -> TypeReference {
-        TypeReference {
-            is_builtin: true,
-            package: "".into(),
-            name: name.to_owned(),
-            bits: num_bits,
-            template_arguments: vec![],
-            type_arguments: vec![],
-            length_expression: None,
-        }
-    }
 
     pub fn evaluate(&self, scope: &mut ModelScope) {
         for type_argument in &self.type_arguments {

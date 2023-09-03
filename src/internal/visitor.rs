@@ -1027,7 +1027,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
-            native_type: Some(TypeReference::new_native_type("usize")),
+            native_type: Some(TypeReference::new_native_type("varsize")),
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),

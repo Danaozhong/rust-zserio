@@ -1,4 +1,6 @@
 use crate::internal::ast::zconst::ZConst;
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::expression::generate_expression;
 use crate::internal::generator::file_generator::write_to_file;
 use crate::internal::generator::preamble::add_standard_imports;
@@ -10,8 +12,9 @@ use std::path::Path;
 use codegen::Scope;
 
 pub fn generate_constant(
-    codegen_scope: &mut Scope,
+    symbol_scope: &ModelScope,
     type_generator: &TypeGenerator,
+    codegen_scope: &mut Scope,
     zconst: &ZConst,
     path: &Path,
     package_name: &str,
@@ -23,8 +26,21 @@ pub fn generate_constant(
     // Constants are not yet supported by the code generator - generate them manually.
     let mut file_content = codegen_scope.to_string();
 
-    // Generate the constants
-    let field_type = type_generator.ztype_to_rust_type(zconst.zserio_type.as_ref());
+    // Generate the constants using the fundamental type. Consts can only use native types.
+    let fundamental_type = get_fundamental_type(zconst.zserio_type.as_ref(), symbol_scope);
+    assert!(
+        fundamental_type.fundamental_type.is_builtin,
+        "const types need to be fundamental zserio types, but found {:?}",
+        fundamental_type.fundamental_type
+    );
+
+    let mut field_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
+
+    // Workaround for string types: rust does not allow consts of String type,
+    // it only supports &str constants.
+    if field_type == "String" {
+        field_type = "&str".to_owned();
+    }
 
     file_content += format!(
         "pub const {}: {} = {};\n",

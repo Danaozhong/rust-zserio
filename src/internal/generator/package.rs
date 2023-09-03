@@ -125,8 +125,9 @@ pub fn generate_package(
         let zconst = zconst_ref.borrow();
         let mut codegen_scope = Scope::new();
         module_names.push(generate_constant(
-            &mut codegen_scope,
+            symbol_scope,
             &type_generator,
+            &mut codegen_scope,
             &zconst,
             package_directory,
             &package_name,
