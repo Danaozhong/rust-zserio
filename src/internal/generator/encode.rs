@@ -1,5 +1,7 @@
 use crate::internal::ast::{field::Field, type_reference::TypeReference};
-use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::{
+    get_fundamental_type, FundamentalZserioTypeReference,
+};
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
 use crate::internal::generator::pass_parameters::{
@@ -85,6 +87,19 @@ pub fn encode_type(
     }
 }
 
+pub fn requires_borrowing(native_type: &FundamentalZserioTypeReference) -> bool {
+    if native_type.is_marshaler {
+        return true;
+    }
+    if !native_type.fundamental_type.is_builtin {
+        return true;
+    }
+    if native_type.fundamental_type.name == "string" {
+        return true;
+    }
+    false
+}
+
 pub fn encode_field(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
@@ -111,7 +126,7 @@ pub fn encode_field(
     if field.is_optional {
         // If the type is a marshaller, take it by reference.
         let mut borrow_symbol = String::from("");
-        if native_type.is_marshaler {
+        if requires_borrowing(&native_type) {
             borrow_symbol = "&".into();
         }
 

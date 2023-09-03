@@ -2,6 +2,7 @@ use crate::internal::ast::field::Field;
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::encode::requires_borrowing;
 use crate::internal::generator::expression::generate_boolean_expression;
 use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 use codegen::Function;
@@ -116,7 +117,6 @@ pub fn bitsize_field(
     context_node_index: Option<u8>,
 ) {
     let native_type = get_fundamental_type(&field.field_type, scope);
-    let fund_type = native_type.fundamental_type;
     let mut field_name = format!("self.{}", convert_field_name(&field.name));
 
     // Check if the field uses an optional clause
@@ -135,7 +135,16 @@ pub fn bitsize_field(
 
     if field.is_optional {
         function.line("end_position += 1;");
-        function.line(format!("if let Some(x) = {} {{", field_name));
+        // If the type is a marshaller, take it by reference.
+        let mut borrow_symbol = String::from("");
+        if requires_borrowing(&native_type) {
+            borrow_symbol = "&".into();
+        }
+
+        function.line(format!(
+            "if let Some(x) = {}{} {{",
+            borrow_symbol, field_name
+        ));
         field_name = "x".into();
     }
 
@@ -152,7 +161,7 @@ pub fn bitsize_field(
             function,
             &field_name,
             native_type.is_marshaler,
-            &fund_type,
+            &native_type.fundamental_type,
             context_node_index,
         );
     }

@@ -142,7 +142,7 @@ pub fn decode_field(
         } else {
             let default_value = get_default_initializer(
                 false, // We have already checked if the field is optional.
-                false, // The underlying type will never be an array (no multidimensional array support in zserio).
+                field.array.is_some(),
                 native_type.is_marshaler,
                 &native_type.fundamental_type.name,
                 &field_type,

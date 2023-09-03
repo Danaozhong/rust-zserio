@@ -57,7 +57,7 @@ use rust_zserio::ztype::ZserioPackableOject;
 use crate::ambiguous_types_test::test_ambiguous_types;
 use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
 use crate::type_casts_test::test_type_casts;
-use crate::optional_values_test::test_optional_values;
+use crate::optional_values_test::{ test_optional_values, test_optional_members, test_optional_arrays };
 use crate::bitmask_test::test_bitmasks;
 use crate::constants_test::test_constants;
 
@@ -76,6 +76,8 @@ fn main() {
     test_ambiguous_types();
     test_type_casts();
     test_optional_values();
+    test_optional_members();
+    test_optional_arrays();
     test_bitmasks();
     test_constants();
 }
