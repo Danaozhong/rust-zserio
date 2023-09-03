@@ -6,8 +6,6 @@ use crate::internal::generator::expression::generate_expression;
 use crate::internal::generator::types::TypeGenerator;
 use codegen::Function;
 use convert_case::{Case, Casing};
-use std::cell::RefCell;
-use std::rc::Rc;
 
 pub fn array_type_name(name: &String) -> String {
     String::from("zs_array_") + &name.to_case(Case::Snake)
@@ -116,8 +114,15 @@ pub fn instantiate_zserio_array(
         "array_trait: Box::new({}),",
         initialize_array_trait(type_generator, fund_type.as_ref())
     ));
-    // TODO function.line(format!("fixed_size: {},", array.array_length_expression.is_some()));
-    function.line("fixed_size: None,");
+    let array_length_str = match &field.array.as_ref().unwrap().array_length_expression {
+        Some(array_length_expression) => format!(
+            "Some(({}) as usize)",
+            generate_expression(&array_length_expression.borrow(), type_generator)
+        ),
+        None => "None".to_owned(),
+    };
+    function.line(format!("fixed_size: {},", array_length_str));
+
     function.line(format!("is_aligned: {},", field.alignment != 0));
     function.line(format!(
         "is_packed: {},",
@@ -127,22 +132,4 @@ pub fn instantiate_zserio_array(
     function.line("packing_context_node: None,");
 
     function.line("};");
-}
-
-pub fn instantiate_zserio_arrays(
-    scope: &ModelScope,
-    type_generator: &TypeGenerator,
-    function: &mut Function,
-    fields: &Vec<Rc<RefCell<Field>>>,
-    force_packed: bool,
-) {
-    for field in fields {
-        instantiate_zserio_array(
-            scope,
-            type_generator,
-            function,
-            &field.borrow(),
-            force_packed,
-        );
-    }
 }
