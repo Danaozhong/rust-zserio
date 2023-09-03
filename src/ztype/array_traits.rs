@@ -1,5 +1,6 @@
 pub mod array_trait;
 mod bit_field_array_trait;
+mod boolean_array_trait;
 mod float16_array_trait;
 mod float32_array_trait;
 mod float64_array_trait;
@@ -20,6 +21,7 @@ mod delta_context;
 pub mod packing_context_node;
 
 pub use self::bit_field_array_trait::BitFieldArrayTrait;
+pub use self::boolean_array_trait::BooleanArrayTrait;
 pub use self::float16_array_trait::Float16ArrayTrait;
 pub use self::float32_array_trait::Float32ArrayTrait;
 pub use self::float64_array_trait::Float64ArrayTrait;
