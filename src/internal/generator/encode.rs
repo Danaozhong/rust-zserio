@@ -7,7 +7,7 @@ use crate::internal::generator::expression::{generate_boolean_expression, genera
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
-use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type, TypeGenerator};
+use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 use codegen::Function;
 
@@ -75,11 +75,9 @@ pub fn encode_type(
             }
         } else {
             // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64
-            let rust_type_name =
-                zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
             function.line(format!(
                 "ztype::write_{}(writer, {});",
-                rust_type_name, field_name
+                &fund_type.name, field_name
             ));
         }
     } else {

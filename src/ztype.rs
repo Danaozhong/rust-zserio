@@ -3,28 +3,28 @@ pub use self::string_encode::write_string;
 
 pub use self::string_decode::read_string;
 
-pub use self::bits_encode::write_i16;
-pub use self::bits_encode::write_i32;
-pub use self::bits_encode::write_i64;
-pub use self::bits_encode::write_i8;
+pub use self::bits_encode::write_int16;
+pub use self::bits_encode::write_int32;
+pub use self::bits_encode::write_int64;
+pub use self::bits_encode::write_int8;
 
-pub use self::bits_encode::write_u16;
-pub use self::bits_encode::write_u32;
-pub use self::bits_encode::write_u64;
-pub use self::bits_encode::write_u8;
+pub use self::bits_encode::write_uint16;
+pub use self::bits_encode::write_uint32;
+pub use self::bits_encode::write_uint64;
+pub use self::bits_encode::write_uint8;
 
 pub use self::bits_encode::write_signed_bits;
 pub use self::bits_encode::write_unsigned_bits;
 
-pub use self::bits_decode::read_i16;
-pub use self::bits_decode::read_i32;
-pub use self::bits_decode::read_i64;
-pub use self::bits_decode::read_i8;
+pub use self::bits_decode::read_int16;
+pub use self::bits_decode::read_int32;
+pub use self::bits_decode::read_int64;
+pub use self::bits_decode::read_int8;
 
-pub use self::bits_decode::read_u16;
-pub use self::bits_decode::read_u32;
-pub use self::bits_decode::read_u64;
-pub use self::bits_decode::read_u8;
+pub use self::bits_decode::read_uint16;
+pub use self::bits_decode::read_uint32;
+pub use self::bits_decode::read_uint64;
+pub use self::bits_decode::read_uint8;
 
 pub use self::bits_decode::read_signed_bits;
 pub use self::bits_decode::read_unsigned_bits;
@@ -50,9 +50,9 @@ pub use self::varint_encode::{write_varint, write_varint16, write_varint32, writ
 
 pub use self::varint_decode::{read_varint, read_varint16, read_varint32, read_varint64};
 
-pub use self::float_encode::{write_f16, write_f32, write_f64};
+pub use self::float_encode::{write_float16, write_float32, write_float64};
 
-pub use self::float_decode::{read_f16, read_f32, read_f64};
+pub use self::float_decode::{read_float16, read_float32, read_float64};
 
 pub use self::array::Array;
 

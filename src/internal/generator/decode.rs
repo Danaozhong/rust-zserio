@@ -8,7 +8,7 @@ use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::new::get_default_initializer;
-use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type, TypeGenerator};
+use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
@@ -83,11 +83,9 @@ pub fn decode_type(
                     ));
                 }
             } else {
-                let rust_type_name =
-                    zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
                 function.line(format!(
                     "{} = ztype::read_{}(reader);",
-                    lvalue_field_name, rust_type_name
+                    &lvalue_field_name, &fund_type.name
                 ));
             }
         }
