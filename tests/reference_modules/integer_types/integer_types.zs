@@ -7,7 +7,7 @@ struct IntegerTypesTest
     int32 i32Value;
     int64 i64Value;
     int<5> i5Value;
-    int<i5Value> varidynValue;
+    int<(i5Value - 1) + 1> varidynValue;
     varint variValue;
     varint32 vari32Value;
     varint64 vari64Value;
@@ -16,7 +16,7 @@ struct IntegerTypesTest
     uint32 u32Value;
     uint64 u64Value;
     bit<5> u5Value;
-    bit<u5Value> varudynValue;
+    bit<(u5Value - 1) + 2> varudynValue;
     varuint varuValue;
     varsize verSizeValue;
     varuint32 varu32Value;

@@ -70,7 +70,7 @@ pub fn encode_type(
                     if let Some(native_type) = &bit_length_expression.borrow().native_type {
                         if native_type.name != "uint8" {
                             length_expression_string =
-                                format!("{} as u8", length_expression_string);
+                                format!("({}) as u8", length_expression_string);
                         }
                     }
                     length_expression_string
@@ -79,12 +79,12 @@ pub fn encode_type(
             };
             if fund_type.name == "int" {
                 function.line(format!(
-                    "ztype::write_signed_bits(writer, {}, {} as u8);",
+                    "ztype::write_signed_bits(writer, {}, {});",
                     field_name, bit_length_string
                 ));
             } else {
                 function.line(format!(
-                    "ztype::write_unsigned_bits(writer, {}, {} as u8);",
+                    "ztype::write_unsigned_bits(writer, {}, {});",
                     field_name, bit_length_string
                 ));
             }

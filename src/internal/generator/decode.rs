@@ -79,7 +79,7 @@ pub fn decode_type(
                         if let Some(native_type) = &bit_length_expression.borrow().native_type {
                             if native_type.name != "uint8" {
                                 length_expression_string =
-                                    format!("{} as u8", length_expression_string);
+                                    format!("({}) as u8", length_expression_string);
                             }
                         }
                         length_expression_string
