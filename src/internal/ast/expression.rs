@@ -289,7 +289,7 @@ impl Expression {
     fn evaluate_lengthof_operator(&mut self) {
         self.fully_resolved = false;
         self.result_type = ExpressionType::Integer(0);
-        self.native_type = Some(TypeReference::new_native_type("varsize"));
+        self.native_type = Some(TypeReference::new_native_type("varsize", false));
         /*
         match self.operand1.unwrap().symbol.unwrap() {
             Symbol::Field(s, index) => {
@@ -332,7 +332,7 @@ impl Expression {
                     self.result_type =
                         ExpressionType::Integer(32 - i32::leading_zeros(value) as i32);
                     self.fully_resolved = op1.fully_resolved;
-                    self.native_type = Some(TypeReference::new_native_type("varsize"));
+                    self.native_type = Some(TypeReference::new_native_type("varsize", false));
                 }
                 _ => {
                     panic!("numbits operator can only be applied to integer expressions")
@@ -383,13 +383,13 @@ impl Expression {
             NE => value1 != value2,
             _ => panic!("unexpected integer comparison"),
         });
-        self.native_type = Some(TypeReference::new_native_type("bool"));
+        self.native_type = Some(TypeReference::new_native_type("bool", false));
     }
 
     fn evaluate_comparison_expression(&mut self) {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => {
-                self.native_type = Some(TypeReference::new_native_type("bool"));
+                self.native_type = Some(TypeReference::new_native_type("bool", false));
                 match (&op1.result_type, &op2.result_type) {
                     (ExpressionType::Integer(value1), ExpressionType::Integer(value2)) => {
                         self.evaluate_integer_comparison_expression(*value1, *value2);
@@ -497,7 +497,7 @@ impl Expression {
                     self.evaluate_float_arithmetic_expression(*value1, *value2 as f64);
                 }
                 (ExpressionType::String(str1), ExpressionType::String(str2)) => {
-                    self.native_type = Some(TypeReference::new_native_type("string"));
+                    self.native_type = Some(TypeReference::new_native_type("string", false));
                     match self.expression_type {
                         PLUS => {
                             self.result_type = ExpressionType::String(format!("{}{}", str1, str2))
@@ -671,17 +671,26 @@ fn type_reference_to_expression_type(
         if type_ref.name.as_str() == "string" {
             (
                 ExpressionType::String("".into()),
-                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+                Some(TypeReference::new_native_type(
+                    type_ref.name.as_str(),
+                    false,
+                )),
             )
         } else if type_ref.name.as_str() == "bool" {
             (
                 ExpressionType::Bool(false),
-                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+                Some(TypeReference::new_native_type(
+                    type_ref.name.as_str(),
+                    false,
+                )),
             )
         } else if type_ref.name.starts_with("float") {
             (
                 ExpressionType::Float(0.0),
-                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+                Some(TypeReference::new_native_type(
+                    type_ref.name.as_str(),
+                    false,
+                )),
             )
         } else if type_ref.name.starts_with("bit")
             || type_ref.name.starts_with("int")
@@ -692,7 +701,10 @@ fn type_reference_to_expression_type(
         {
             (
                 ExpressionType::Integer(0),
-                Some(TypeReference::new_native_type(type_ref.name.as_str())),
+                Some(TypeReference::new_native_type(
+                    type_ref.name.as_str(),
+                    false,
+                )),
             )
         } else {
             panic!("failed to determine builtin type reference type");

@@ -81,6 +81,7 @@ pub fn get_symbol_type(symbol_ref: &SymbolReference) -> TypeReference {
 
     TypeReference {
         is_builtin: false,
+        is_const: false,
         package: symbol_ref.package.clone(),
         name: type_ref_name,
         bits: 0,

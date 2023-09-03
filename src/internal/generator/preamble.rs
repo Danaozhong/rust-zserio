@@ -8,4 +8,5 @@ pub fn add_standard_imports(scope: &mut Scope) {
         "rust_zserio::ztype::array_traits::packing_context_node",
         "PackingContextNode",
     );
+    scope.import("rust_zserio::ztype", "ZserioPackableOject");
 }

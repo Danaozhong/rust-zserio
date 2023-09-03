@@ -124,6 +124,14 @@ fn generate_arithmetic_expression(
                 }
             }
         }
+        ExpressionType::String(_) => {
+            // For string operations, using "+" sucks, due to the different issues with string
+            // ownership, and mixing "String" with "str", reference, etc. The easiest
+            // solution is to just use the format macro.
+            assert!(expression.expression_type == PLUS);
+            // Inception code
+            return format!("format!(\"{{}}{{}}\", {}, {})", op1, op2,);
+        }
         _ => (),
     };
 
@@ -280,10 +288,6 @@ fn generate_identifier_expression(
     // check for early returns, where no full type addressing is needed.
     match &symbol_ref.symbol {
         Symbol::Field(f) => {
-            if f.borrow().name == "selector" {
-                print!("expression {:?}", expression);
-                print!("t");
-            }
             return format!(
                 "self.{}{}",
                 convert_field_name(&f.borrow().name),
@@ -419,7 +423,13 @@ fn generate_literal_expression(expression: &Expression) -> String {
                 String::from("false")
             }
         }
-        STRING_LITERAL => format!("\"{}\".into()", &string_value),
+        STRING_LITERAL => {
+            if expression.native_type.as_ref().unwrap().is_const {
+                return format!("\"{}\"", &string_value);
+            }
+            // need to cast into a rust string
+            format!("\"{}\".into()", &string_value)
+        }
 
         _ => panic!("unexpected comparison expression operator"),
     }

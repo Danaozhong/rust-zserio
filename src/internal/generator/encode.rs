@@ -73,8 +73,8 @@ pub fn encode_type(
             }
         } else {
             // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64
-            let rust_type_name =
-                zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
+            let rust_type_name = zserio_to_rust_type(&fund_type.name, false)
+                .expect("failed to determine native type");
             function.line(format!(
                 "ztype::write_{}(writer, {});",
                 rust_type_name, field_name

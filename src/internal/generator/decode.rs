@@ -83,8 +83,8 @@ pub fn decode_type(
                     ));
                 }
             } else {
-                let rust_type_name =
-                    zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
+                let rust_type_name = zserio_to_rust_type(&fund_type.name, false)
+                    .expect("failed to determine native type");
                 function.line(format!(
                     "{} = ztype::read_{}(reader);",
                     lvalue_field_name, rust_type_name

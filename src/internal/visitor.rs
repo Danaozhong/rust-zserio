@@ -261,7 +261,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_constDefinition(&mut self, ctx: &ConstDefinitionContext<'_>) -> Self::Return {
-        let z_const = Box::new(ZConst {
+        let mut z_const = Box::new(ZConst {
             name: ctx.id().unwrap().get_text(),
             comment: "".into(),
             zserio_type: match ZserioParserVisitorCompat::visit_typeInstantiation(
@@ -276,6 +276,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 _ => panic!("should not happen"),
             },
         });
+        z_const.zserio_type.is_const = true;
         ZserioTreeReturnType::Const(z_const)
     }
 
@@ -940,10 +941,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         // Determine the exact zserio type for this literal.
         let native_type = match literal_ctx {
             _ if literal_ctx.BOOL_LITERAL().is_some() => {
-                Some(TypeReference::new_native_type("bool"))
+                Some(TypeReference::new_native_type("bool", true))
             }
             _ if literal_ctx.STRING_LITERAL().is_some() => {
-                Some(TypeReference::new_native_type("string"))
+                Some(TypeReference::new_native_type("string", true))
             }
             _ => None,
         };
@@ -985,7 +986,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             evaluation_state: EvaluationState::NotEvaluated,
             // We assume that a lengthof expression always returns an varsize type.
             // This must match with the generated type during expression generation.
-            native_type: Some(TypeReference::new_native_type("varsize")),
+            native_type: Some(TypeReference::new_native_type("varsize", false)),
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1027,7 +1028,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
-            native_type: Some(TypeReference::new_native_type("usize")),
+            native_type: Some(TypeReference::new_native_type("varsize", false)),
         });
         match self.visit(&*ctx.expression().unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1289,7 +1290,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
-            native_type: Some(TypeReference::new_native_type("bool")),
+            native_type: Some(TypeReference::new_native_type("bool", false)),
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1314,7 +1315,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             symbol: None,
             fully_resolved: false,
             evaluation_state: EvaluationState::NotEvaluated,
-            native_type: Some(TypeReference::new_native_type("bool")),
+            native_type: Some(TypeReference::new_native_type("bool", false)),
         });
         match self.visit(&*ctx.expression(0).unwrap()) {
             ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
@@ -1392,6 +1393,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_typeReference(&mut self, ctx: &TypeReferenceContext<'_>) -> Self::Return {
         let mut type_reference = Box::new(TypeReference {
             is_builtin: false,
+            is_const: false,
             package: "".into(),
             name: "".into(),
             bits: 0,

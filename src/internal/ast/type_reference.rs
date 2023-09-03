@@ -7,6 +7,7 @@ use std::string::String;
 #[derive(Clone, Debug)]
 pub struct TypeReference {
     pub is_builtin: bool,
+    pub is_const: bool,
     pub package: String,
     pub name: String,
     pub bits: u8,
@@ -16,23 +17,13 @@ pub struct TypeReference {
 }
 
 impl TypeReference {
-    pub fn new_native_type(name: &str) -> TypeReference {
+    pub fn new_native_type(name: &str, is_const: bool) -> TypeReference {
         TypeReference {
             is_builtin: true,
+            is_const: is_const,
             package: "".into(),
             name: name.to_owned(),
             bits: 0,
-            template_arguments: vec![],
-            type_arguments: vec![],
-            length_expression: None,
-        }
-    }
-    pub fn new_native_bit_type(name: &str, num_bits: u8) -> TypeReference {
-        TypeReference {
-            is_builtin: true,
-            package: "".into(),
-            name: name.to_owned(),
-            bits: num_bits,
             template_arguments: vec![],
             type_arguments: vec![],
             length_expression: None,
