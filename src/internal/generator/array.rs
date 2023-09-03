@@ -29,6 +29,7 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
             "uint8" => "UnsignedBitFieldArrayTrait".into(),
             "uint16" => "UnsignedBitFieldArrayTrait".into(),
             "uint32" => "UnsignedBitFieldArrayTrait".into(),
+            "uint64" => "UnsignedBitFieldArrayTrait".into(),
             "varuint16" => "VarUint16ArrayTrait".into(),
             "varuint32" => "VarUint32ArrayTrait".into(),
             "varuint64" => "VarUint64ArrayTrait".into(),

@@ -15,3 +15,4 @@ import reference_modules.type_casts.type_casts.*;
 import reference_modules.optional_values.optional_values.*;
 import reference_modules.bitmask_test.bitmask_test.*;
 import reference_modules.constants.constants.*;
+import reference_modules.integer_types.integer_types.*;

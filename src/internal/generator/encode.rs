@@ -7,7 +7,7 @@ use crate::internal::generator::expression::{generate_boolean_expression, genera
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
-use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type, TypeGenerator};
+use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 use codegen::Function;
 
@@ -61,25 +61,38 @@ pub fn encode_type(
                 initialize_array_trait(type_generator, &fund_type),
                 field_name,
             ));
-        } else if fund_type.bits != 0 {
+        } else if fund_type.bits != 0 || fund_type.length_expression.is_some() {
+            let bit_length_string = match &fund_type.length_expression {
+                Some(bit_length_expression) => {
+                    let mut length_expression_string =
+                        generate_expression(&bit_length_expression.borrow(), type_generator);
+                    // check if there is a typecast needed
+                    if let Some(native_type) = &bit_length_expression.borrow().native_type {
+                        if native_type.name != "uint8" {
+                            length_expression_string =
+                                format!("({}) as u8", length_expression_string);
+                        }
+                    }
+                    length_expression_string
+                }
+                None => format!("{}", fund_type.bits),
+            };
             if fund_type.name == "int" {
                 function.line(format!(
                     "ztype::write_signed_bits(writer, {}, {});",
-                    field_name, fund_type.bits
+                    field_name, bit_length_string
                 ));
             } else {
                 function.line(format!(
                     "ztype::write_unsigned_bits(writer, {}, {});",
-                    field_name, fund_type.bits
+                    field_name, bit_length_string
                 ));
             }
         } else {
             // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64
-            let rust_type_name =
-                zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
             function.line(format!(
                 "ztype::write_{}(writer, {});",
-                rust_type_name, field_name
+                &fund_type.name, field_name
             ));
         }
     } else {

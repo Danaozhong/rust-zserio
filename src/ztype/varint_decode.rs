@@ -17,13 +17,13 @@ pub fn read_varint(reader: &mut BitReader) -> i64 {
     read_sized_int(reader, 9)
 }
 
-fn read_sized_int(reader: &mut BitReader, num_byes: u8) -> i64 {
+fn read_sized_int(reader: &mut BitReader, bit_length: u8) -> i64 {
     let mut b = reader.read_u8(8).unwrap();
     let is_negative = (b & 0x80) != 0;
     let mut has_next_byte = (b & 0x40) != 0;
     let mut value = (b & (0x3f)) as i64;
 
-    for _ in 0..num_byes - 2 {
+    for _ in 0..bit_length - 2 {
         if !has_next_byte {
             break;
         }

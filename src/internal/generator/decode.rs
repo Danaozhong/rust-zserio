@@ -8,7 +8,7 @@ use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::new::get_default_initializer;
-use crate::internal::generator::types::{convert_field_name, zserio_to_rust_type, TypeGenerator};
+use crate::internal::generator::types::{convert_field_name, TypeGenerator};
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
@@ -70,24 +70,37 @@ pub fn decode_type(
             ));
         } else {
             // nonpacked decoding
-            if fund_type.bits != 0 {
+            if fund_type.bits != 0 || fund_type.length_expression.is_some() {
+                let bit_length_string = match &fund_type.length_expression {
+                    Some(bit_length_expression) => {
+                        let mut length_expression_string =
+                            generate_expression(&bit_length_expression.borrow(), type_generator);
+                        // check if there is a typecast needed
+                        if let Some(native_type) = &bit_length_expression.borrow().native_type {
+                            if native_type.name != "uint8" {
+                                length_expression_string =
+                                    format!("({}) as u8", length_expression_string);
+                            }
+                        }
+                        length_expression_string
+                    }
+                    None => format!("{}", fund_type.bits),
+                };
                 if fund_type.name == "int" {
                     function.line(format!(
                         "{} = ztype::read_signed_bits(reader, {});",
-                        lvalue_field_name, fund_type.bits
+                        lvalue_field_name, bit_length_string
                     ));
                 } else {
                     function.line(format!(
                         "{} = ztype::read_unsigned_bits(reader, {});",
-                        lvalue_field_name, fund_type.bits
+                        lvalue_field_name, bit_length_string
                     ));
                 }
             } else {
-                let rust_type_name =
-                    zserio_to_rust_type(&fund_type.name).expect("failed to determine native type");
                 function.line(format!(
                     "{} = ztype::read_{}(reader);",
-                    lvalue_field_name, rust_type_name
+                    &lvalue_field_name, &fund_type.name
                 ));
             }
         }

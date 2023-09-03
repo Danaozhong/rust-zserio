@@ -131,6 +131,7 @@ impl Expression {
             Some(op1) => {
                 // just pass through the expression content
                 self.result_type = op1.result_type.clone();
+                self.native_type = op1.native_type.clone();
             }
             _ => panic!("paranthesized expression requries one operator"),
         }
@@ -594,13 +595,15 @@ impl Expression {
         match self.operand1.as_ref().unwrap().result_type {
             ExpressionType::Bool(condition) => {
                 if condition {
-                    self.result_type = self.operand2.as_ref().unwrap().result_type.clone();
-                    self.symbol = self.operand2.as_ref().unwrap().symbol.clone();
-                    self.fully_resolved = self.operand2.as_ref().unwrap().fully_resolved;
+                    let op2 = self.operand2.as_ref().unwrap();
+                    self.result_type = op2.result_type.clone();
+                    self.symbol = op2.symbol.clone();
+                    self.fully_resolved = op2.fully_resolved;
                 } else {
-                    self.result_type = self.operand3.as_ref().unwrap().result_type.clone();
-                    self.symbol = self.operand3.as_ref().unwrap().symbol.clone();
-                    self.fully_resolved = self.operand3.as_ref().unwrap().fully_resolved;
+                    let op3 = self.operand3.as_ref().unwrap();
+                    self.result_type = op3.result_type.clone();
+                    self.symbol = op3.symbol.clone();
+                    self.fully_resolved = op3.fully_resolved;
                 }
             }
             _ => panic!("the first operand in a ternary expression must have a boolean type, but it has {:?}", self.operand1.as_ref().unwrap()),

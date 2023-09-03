@@ -100,6 +100,7 @@ pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
         "uint8" => Ok("u8".into()),
         "uint16" => Ok("u16".into()),
         "uint32" => Ok("u32".into()),
+        "uint64" => Ok("u64".into()),
         "varuint16" => Ok("u16".into()),
         "varuint32" => Ok("u32".into()),
         "varuint64" => Ok("u64".into()),
