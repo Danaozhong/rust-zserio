@@ -17,7 +17,7 @@ pub fn evaluate_mixing_float_types(
             // Choose the float type with the highest rank.
             for float_type in ["float64", "float32", "float16"] {
                 if t1.name == float_type || t2.name == float_type {
-                    return Some(TypeReference::new_native_type(float_type, false));
+                    return Some(TypeReference::new_native_type(float_type));
                 }
             }
             panic!("unknown float types");

@@ -98,7 +98,7 @@ fn generate_zserio_read(
         zserio_read_fn,
         &format!(
             "let v: {}",
-            zserio_to_rust_type(zbitmask.zserio_type.name.as_str(), false).unwrap()
+            zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
         ),
         &String::from(""),
         &zbitmask.zserio_type,
@@ -112,7 +112,7 @@ fn generate_zserio_read(
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
     zserio_read_packed_fn.line(format!(
         "let mut v: {} = 0;",
-        zserio_to_rust_type(zbitmask.zserio_type.name.as_str(), false).unwrap()
+        zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
     ));
     decode_type(
         scope,
@@ -168,7 +168,7 @@ fn generate_zserio_bitsize(
 ) {
     let rust_type_name = format!(
         "(self.bitmask_value as {})",
-        zserio_to_rust_type(zbitmask.zserio_type.name.as_str(), false).unwrap()
+        zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
     );
 
     let bitsize_fn = impl_codegen.new_fn("zserio_bitsize");

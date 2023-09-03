@@ -21,7 +21,7 @@ impl TypeGenerator {
     pub fn ztype_to_rust_type(&self, ztype: &TypeReference) -> String {
         if ztype.is_builtin {
             // the type is a zserio built-in type, such as int32, string, bool
-            return zserio_to_rust_type(&ztype.name, ztype.is_const)
+            return zserio_to_rust_type(&ztype.name)
                 .unwrap_or_else(|_| panic!("type mapping failed {:?}", &ztype.name));
         }
         // the type is a custom type, defined in some zserio file.
@@ -87,10 +87,7 @@ pub fn constant_type_to_rust_type(name: &str) -> String {
     )
 }
 
-pub fn zserio_to_rust_type(name: &str, is_const: bool) -> Result<String, &'static str> {
-    if is_const && name == "string" {
-        return Ok("&str".into());
-    }
+pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
     match name {
         "int8" => Ok("i8".into()),
         "int16" => Ok("i16".into()),

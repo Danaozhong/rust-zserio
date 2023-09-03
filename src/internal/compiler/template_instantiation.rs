@@ -72,7 +72,6 @@ fn instantiate_struct(
 
     let new_type_ref = TypeReference {
         is_builtin: false,
-        is_const: false,
         package: pkg.name.clone(),
         name: instantiated_name.clone(),
         bits: 0,
@@ -184,7 +183,6 @@ fn instantiate_choice(
 
     let new_type_ref = TypeReference {
         is_builtin: false,
-        is_const: false,
         package: pkg.name.clone(),
         name: instantiated_name.clone(),
         bits: 0,

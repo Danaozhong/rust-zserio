@@ -424,7 +424,7 @@ fn generate_literal_expression(expression: &Expression) -> String {
             }
         }
         STRING_LITERAL => {
-            if expression.native_type.as_ref().unwrap().is_const {
+            if expression.fully_resolved {
                 return format!("\"{}\"", &string_value);
             }
             // need to cast into a rust string
