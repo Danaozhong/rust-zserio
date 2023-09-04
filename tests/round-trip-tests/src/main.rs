@@ -38,6 +38,9 @@ pub mod reference_modules {
     pub mod parameterized_array_length {
         pub mod parameterized_array_length;
     }
+    pub mod alignment {
+        pub mod alignment;
+    }
 }
 pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
@@ -48,6 +51,7 @@ pub mod bitmask_test;
 pub mod constants_test;
 pub mod integer_types_test;
 pub mod parameterized_array_length_test;
+pub mod alignment_test;
 
 use crate::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
@@ -70,6 +74,7 @@ use crate::bitmask_test::test_bitmasks;
 use crate::constants_test::test_constants;
 use crate::integer_types_test::test_integer_types;
 use crate::parameterized_array_length_test::test_parameterized_array_length;
+use crate::alignment_test::{ test_alignment_roundtrip, test_alignment };
 
 
 fn main() {
@@ -92,6 +97,8 @@ fn main() {
     test_constants();
     test_integer_types();
     test_parameterized_array_length();
+    test_alignment();
+    test_alignment_roundtrip();
 }
 
 fn test_structure() {

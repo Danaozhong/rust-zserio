@@ -133,7 +133,7 @@ pub fn encode_field(
 
     // Align the byte stream, if alignment is specified.
     if field.alignment != 0 {
-        function.line(format!("writer.align({});", field.alignment));
+        function.line(format!("ztype::align_writer(writer, {});", field.alignment));
     }
 
     if field.is_optional {

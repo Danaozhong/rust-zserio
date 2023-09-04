@@ -67,7 +67,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use super::parser::gen::zserioparser::{
-    IdContextAttrs, UnionFieldDefinitionContextAttrs, GT, RSHIFT,
+    IdContextAttrs, UnionFieldDefinitionContextAttrs, DECIMAL_LITERAL, GT, RSHIFT,
 };
 
 // the antlr implementation for Rust requires to use one single return type,
@@ -76,6 +76,7 @@ use super::parser::gen::zserioparser::{
 // return types.
 pub enum ZserioTreeReturnType {
     Str(String),
+    UInt8(u8),
     StrVec(Vec<String>),
     Package(Box<ZPackage>),
     Const(Box<ZConst>),
@@ -405,6 +406,15 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         field.is_optional = ctx.OPTIONAL().is_some();
 
+        if let Some(field_alignment_ctx) = ctx.fieldAlignment() {
+            match ZserioParserVisitorCompat::visit_fieldAlignment(self, &field_alignment_ctx) {
+                ZserioTreeReturnType::UInt8(alignment) => {
+                    field.alignment = alignment;
+                }
+                _ => panic!("unexpected field alignment type"),
+            }
+        }
+
         if let Some(field_initializer_ctx) = ctx.fieldInitializer() {
             match ZserioParserVisitorCompat::visit_fieldInitializer(self, &field_initializer_ctx) {
                 ZserioTreeReturnType::Expression(expr) => {
@@ -543,7 +553,20 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     }
 
     fn visit_fieldAlignment(&mut self, ctx: &FieldAlignmentContext<'_>) -> Self::Return {
-        return self.visit(&*ctx.expression().unwrap());
+        let field_alignment_expression = match self.visit(&*ctx.expression().unwrap()) {
+            ZserioTreeReturnType::Expression(expr) => *expr,
+            _ => panic!("failed to evaluate field alignment expression"),
+        };
+
+        if field_alignment_expression.expression_type != DECIMAL_LITERAL {
+            panic!("field alignment expression must be a decimal literal");
+        }
+        ZserioTreeReturnType::UInt8(
+            field_alignment_expression
+                .text
+                .parse::<u8>()
+                .expect("failed to parse field alignment decimal expression"),
+        )
     }
 
     fn visit_fieldTypeId(&mut self, ctx: &FieldTypeIdContext<'_>) -> Self::Return {
@@ -553,8 +576,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             _ => panic!("should not happen"),
         };
 
-        // the field data type
-
+        // Retrieve the field data type.
         let type_reference: Box<TypeReference> =
             match ZserioParserVisitorCompat::visit_typeInstantiation(
                 self,
@@ -563,7 +585,6 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 ZserioTreeReturnType::TypeReference(t) => t,
                 _ => panic!("should not happen"),
             };
-        // TODO check if alignment is set
 
         // check if the field is an array
         let mut array: Option<Array> = None;
