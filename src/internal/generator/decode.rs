@@ -133,7 +133,7 @@ pub fn decode_field(
 
     // Align the byte stream, if alignment is specified.
     if field.alignment != 0 {
-        function.line(format!("reader.align({});", field.alignment));
+        function.line(format!("ztype::align_reader(reader, {});", field.alignment));
     }
 
     if field.is_optional {

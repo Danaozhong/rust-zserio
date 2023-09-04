@@ -127,10 +127,12 @@ pub fn bitsize_field(
         ));
     }
 
-    // Align the byte stream, if alignment is specified.
+    // Align the bit count, if alignment is specified.
     if field.alignment != 0 {
-        // TODO calculate alignment size
-        //function.line(format!("writer.align({});", field.alignment));
+        function.line(format!(
+            "end_position += ztype::align_bitsize(end_position, {});",
+            field.alignment
+        ));
     }
 
     if field.is_optional {

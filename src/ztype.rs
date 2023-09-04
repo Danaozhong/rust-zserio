@@ -64,6 +64,7 @@ pub use self::extern_type::{read_extern_type, write_extern_type, ExternType};
 
 pub use self::numbits::numbits;
 
+pub use self::alignment::{align_bitsize, align_reader, align_writer};
 pub mod bits_decode;
 pub mod bits_encode;
 pub mod string_decode;
@@ -82,6 +83,7 @@ pub mod array;
 pub mod array_traits;
 pub mod bit_alignment;
 
+pub mod alignment;
 pub mod bytes_type;
 pub mod extern_type;
 pub mod float_decode;
