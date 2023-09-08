@@ -1,6 +1,6 @@
 use crate::ztype::reader::read_bytes;
 use crate::ztype::writer::write_bytes;
-use crate::ztype::{read_varsize, write_varsize};
+use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
@@ -49,4 +49,8 @@ pub fn write_extern_type(bit_writer: &mut BitWriter, extern_type: &ExternType) {
             .write_u8(last_byte, remaining_bits)
             .expect("failed to write last byte");
     }
+}
+
+pub fn bitsize_of_extern(extern_type: &ExternType) -> u64 {
+    varsize_bitsize(extern_type.bit_size) as u64 + (extern_type.bit_size as u64)
 }

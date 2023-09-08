@@ -21,10 +21,20 @@ pub fn generate_function(
     fn_gen_scope.arg_ref_self();
     fn_gen_scope.vis("pub");
 
-    // Generate the function content.
-    fn_gen_scope.line(format!(
-        "({}) as {}",
-        generate_expression(&zserio_function.result.as_ref().borrow(), type_generator),
-        type_generator.ztype_to_rust_type(&zserio_function.return_type),
-    ));
+    if zserio_function.return_type.is_builtin
+        && zserio_function.return_type.name == "string"
+        && !zserio_function.result.as_ref().borrow().fully_resolved
+    {
+        fn_gen_scope.line(format!(
+            "{}.clone()",
+            generate_expression(&zserio_function.result.as_ref().borrow(), type_generator),
+        ));
+    } else {
+        // Generate the function content.
+        fn_gen_scope.line(format!(
+            "({}) as {}",
+            generate_expression(&zserio_function.result.as_ref().borrow(), type_generator),
+            type_generator.ztype_to_rust_type(&zserio_function.return_type),
+        ));
+    }
 }

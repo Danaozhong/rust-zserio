@@ -1,35 +1,30 @@
-use crate::internal::ast::field::Field;
 use crate::internal::ast::zstruct::ZStruct;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::array::instantiate_zserio_array;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
+    packed_contexts::generate_init_packed_context_for_field,
+    packed_contexts::generate_packed_context_for_field, packed_contexts::FieldDetails,
     preamble::add_standard_imports, types::convert_field_name, types::to_rust_module_name,
     types::to_rust_type_name, types::TypeGenerator,
 };
 use codegen::Scope;
 use codegen::Struct;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 use std::path::Path;
 
-pub fn generate_struct_member_for_field(
-    type_generator: &TypeGenerator,
-    gen_struct: &mut Struct,
-    field: &Field,
-) {
-    let mut field_type = type_generator.ztype_to_rust_type(field.field_type.as_ref());
-
-    if field.array.is_some() {
-        field_type = format!("Vec<{}>", field_type.as_str());
+pub fn generate_struct_member_for_field(gen_struct: &mut Struct, field: &FieldDetails) {
+    let mut field_type = field.rust_type.clone();
+    if field.field.borrow().array.is_some() {
+        field_type = format!("Vec<{}>", &field_type);
     }
-    if field.is_optional {
-        field_type = format!("Option<{}>", field_type.as_str());
+    if field.field.borrow().is_optional {
+        field_type = format!("Option<{}>", &field_type);
     }
-    let gen_field = gen_struct.new_field(&convert_field_name(&field.name), &field_type);
-    gen_field.vis("pub");
+    gen_struct
+        .new_field(&field.field_name, &field_type)
+        .vis("pub");
 }
 
 pub fn generate_struct(
@@ -42,6 +37,16 @@ pub fn generate_struct(
 ) -> String {
     let rust_module_name = to_rust_module_name(&zstruct.name);
     let rust_type_name = to_rust_type_name(&zstruct.name);
+
+    let mut field_details = vec![];
+    for (field_index, field_rc) in zstruct.fields.iter().enumerate() {
+        field_details.push(FieldDetails::from_field(
+            field_rc,
+            field_index,
+            symbol_scope,
+            type_generator,
+        ));
+    }
 
     add_standard_imports(codegen_scope);
     // add the imports
@@ -68,13 +73,13 @@ pub fn generate_struct(
     }
 
     // Add the data fields to the struct
-    for field in &zstruct.fields {
-        generate_struct_member_for_field(type_generator, gen_struct, &field.borrow());
+    for field in &field_details {
+        generate_struct_member_for_field(gen_struct, field);
     }
 
     // generate the functions to serialize/deserialize
     let struct_impl = codegen_scope.new_impl(&rust_type_name);
-    struct_impl.impl_trait("ztype::ZserioPackableOject");
+    struct_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the struct
     let new_fn = struct_impl.new_fn("new");
@@ -96,11 +101,30 @@ pub fn generate_struct(
     new_fn.line("}");
 
     // Generate the functions to read, write and bitcount the data to/from zserio format.
-    generate_zserio_read(symbol_scope, type_generator, struct_impl, &zstruct.fields);
-    generate_zserio_write(symbol_scope, type_generator, struct_impl, &zstruct.fields);
-    generate_zserio_bitsize(symbol_scope, type_generator, struct_impl, &zstruct.fields);
+    generate_zserio_read(symbol_scope, type_generator, struct_impl, &field_details);
+    generate_zserio_write(symbol_scope, type_generator, struct_impl, &field_details);
+    generate_zserio_bitsize(symbol_scope, type_generator, struct_impl, &field_details);
 
-    // Generate all the zserio functions.
+    // Generate the packed contexts.
+    let create_packing_context_fn = struct_impl.new_fn("zserio_create_packing_context");
+    create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    for field in &field_details {
+        generate_packed_context_for_field(symbol_scope, create_packing_context_fn, field);
+    }
+
+    let init_packing_context_fn = struct_impl.new_fn("zserio_init_packing_context");
+    init_packing_context_fn.arg_ref_self();
+    init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    for field in &field_details {
+        generate_init_packed_context_for_field(
+            symbol_scope,
+            type_generator,
+            init_packing_context_fn,
+            field,
+        );
+    }
+
+    // Generate all the zserio functions (defined in the zserio language).
     let pub_impl = codegen_scope.new_impl(&rust_type_name);
     for zserio_function in &zstruct.functions {
         generate_function(pub_impl, type_generator, &zserio_function.as_ref().borrow());
@@ -119,7 +143,7 @@ fn generate_zserio_read(
     scope: &ModelScope,
     type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
-    fields: &Vec<Rc<RefCell<Field>>>,
+    fields: &Vec<FieldDetails>,
 ) {
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
@@ -129,10 +153,16 @@ fn generate_zserio_read(
             scope,
             type_generator,
             zserio_read_fn,
-            &field.borrow(),
+            &field.field.borrow(),
             false,
         );
-        decode_field(scope, type_generator, zserio_read_fn, &field.borrow(), None);
+        decode_field(
+            scope,
+            type_generator,
+            zserio_read_fn,
+            &field.field.borrow(),
+            None,
+        );
     }
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
@@ -144,16 +174,16 @@ fn generate_zserio_read(
             scope,
             type_generator,
             zserio_read_packed_fn,
-            &field.borrow(),
+            &field.field.borrow(),
             true,
         );
         decode_field(
             scope,
             type_generator,
             zserio_read_packed_fn,
-            &field.borrow(),
-            Option::from(0),
-        ); // TODO node index
+            &field.field.borrow(),
+            Option::from(field.field_index as u8),
+        );
     }
 }
 
@@ -161,14 +191,14 @@ fn generate_zserio_write(
     symbol_scope: &ModelScope,
     type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
-    fields: &Vec<Rc<RefCell<Field>>>,
+    fields: &Vec<FieldDetails>,
 ) {
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
 
     for field_rc in fields {
-        let field = field_rc.borrow();
+        let field = field_rc.field.borrow();
         instantiate_zserio_array(symbol_scope, type_generator, zserio_write_fn, &field, false);
         encode_field(symbol_scope, type_generator, zserio_write_fn, &field, None);
     }
@@ -182,16 +212,16 @@ fn generate_zserio_write(
             symbol_scope,
             type_generator,
             zserio_write_packed_fn,
-            &field.borrow(),
+            &field.field.borrow(),
             true,
         );
         encode_field(
             symbol_scope,
             type_generator,
             zserio_write_packed_fn,
-            &field.borrow(),
-            Option::from(0),
-        ); // TODO node index
+            &field.field.borrow(),
+            Option::from(field.field_index as u8),
+        );
     }
 }
 
@@ -199,7 +229,7 @@ fn generate_zserio_bitsize(
     symbol_scope: &ModelScope,
     type_generator: &TypeGenerator,
     struct_impl: &mut codegen::Impl,
-    fields: &Vec<Rc<RefCell<Field>>>,
+    fields: &Vec<FieldDetails>,
 ) {
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
     bitsize_fn.ret("u64");
@@ -211,14 +241,14 @@ fn generate_zserio_bitsize(
             symbol_scope,
             type_generator,
             bitsize_fn,
-            &field.borrow(),
+            &field.field.borrow(),
             false,
         );
         bitsize_field(
             symbol_scope,
             type_generator,
             bitsize_fn,
-            &field.borrow(),
+            &field.field.borrow(),
             None,
         );
     }
@@ -235,15 +265,15 @@ fn generate_zserio_bitsize(
             symbol_scope,
             type_generator,
             bitsize_packed_fn,
-            &field.borrow(),
+            &field.field.borrow(),
             true,
         );
         bitsize_field(
             symbol_scope,
             type_generator,
             bitsize_packed_fn,
-            &field.borrow(),
-            Option::from(0),
+            &field.field.borrow(),
+            Option::from(field.field_index as u8),
         );
     }
     bitsize_packed_fn.line("end_position - bit_position");

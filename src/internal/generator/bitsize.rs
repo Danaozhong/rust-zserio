@@ -54,7 +54,7 @@ pub fn bitsize_type_reference(
         } else if let Some(node_idx) = context_node_index {
             // packed bitsize
             function.line(format!(
-                "end_position += context_node.children[{}].context.bitsize_of(&{}, end_position, &{});",
+                "end_position += context_node.children[{}].context.as_mut().unwrap().bitsize_of(&{}, end_position, &{});",
                 node_idx,
                 initialize_array_trait(type_generator, type_reference),
                 field_name,
@@ -151,10 +151,10 @@ pub fn bitsize_field(
     }
 
     if field.array.is_some() {
+        let array_type_name = array_type_name(&field.name);
         function.line(format!(
             "end_position += {}.zserio_bitsize(&{}, end_position);",
-            array_type_name(&field.name),
-            field_name,
+            array_type_name, field_name,
         ));
     } else {
         bitsize_type_reference(

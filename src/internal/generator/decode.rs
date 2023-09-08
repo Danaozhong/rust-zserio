@@ -63,13 +63,13 @@ pub fn decode_type(
         } else if let Some(node_idx) = context_node_index {
             // packed decoding
             function.line(format!(
-                "context_node.children[{}].context.read(&{}, reader, &mut {}, 0);",
+                "context_node.children[{}].context.as_mut().unwrap().read(&{}, reader, &mut {}, 0);",
                 node_idx,
                 initialize_array_trait(type_generator, &fund_type),
                 rvalue_field_name,
             ));
         } else {
-            // nonpacked decoding
+            // non-packed decoding
             if fund_type.bits != 0 || fund_type.length_expression.is_some() {
                 let bit_length_string = match &fund_type.length_expression {
                     Some(bit_length_expression) => {
@@ -173,14 +173,10 @@ pub fn decode_field(
     if field.array.is_some() {
         // Array fields need to be serialized using the array class, which takes
         // care of the array delta compression.
-
-        // Read the length of the array, either from the bit stream,
-        // or from the array definition in zserio.
         function.line(format!(
             "let {}_array_length = {}.zserio_read_array_length(reader);",
             field_name, array_type_name,
         ));
-
         // initialize the array elements with empty values.
         let default_value = get_default_initializer(
             false, // The underlying type will never be optional (already checked).
