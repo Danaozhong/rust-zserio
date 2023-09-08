@@ -79,7 +79,7 @@ use crate::constants_test::test_constants;
 use crate::integer_types_test::test_integer_types;
 use crate::parameterized_array_length_test::test_parameterized_array_length;
 use crate::alignment_test::{ test_alignment_roundtrip, test_alignment };
-use crate::packed_arrays_test::{ test_packed_arrays, packed_arrays_serialize_to_file};
+use crate::packed_arrays_test::test_packed_arrays;
 
 fn main() {
     test_structure();
@@ -104,7 +104,8 @@ fn main() {
     test_alignment();
     test_alignment_roundtrip();
     test_packed_arrays();
-    packed_arrays_serialize_to_file();
+    // Disabled for now, comparison tests with the reference implementation are still a TODO
+    //packed_arrays_serialize_to_file();
 }
 
 fn test_structure() {
