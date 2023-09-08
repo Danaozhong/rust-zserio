@@ -6,7 +6,6 @@ use crate::ztype::read_varsize;
 use crate::ztype::{align_to, varsize_bitsize};
 
 use crate::ztype::array_traits::array_trait::ArrayTrait;
-use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 use crate::ztype::varuint_encode::write_varsize;
 
 pub struct Array<T> {
@@ -14,16 +13,9 @@ pub struct Array<T> {
     pub is_packed: bool,
     pub fixed_size: Option<usize>,
     pub is_aligned: bool,
-    pub packing_context_node: Option<PackingContextNode>,
 }
 
 impl<T> Array<T> {
-    fn create_packing_context_node_if_not_exists(&mut self) {
-        if self.packing_context_node.is_none() {
-            self.packing_context_node = PackingContextNode::new().into();
-        }
-    }
-
     pub fn zserio_write(&mut self, writer: &mut BitWriter, data: &Vec<T>) {
         if let Some(expected_array_len) = self.fixed_size {
             // for fixed-size arrays, the provided length must match
@@ -37,24 +29,28 @@ impl<T> Array<T> {
             return;
         }
         if self.is_packed {
-            self.create_packing_context_node_if_not_exists();
+            // Create the packing context, and all child-contexts
+            let mut packing_context_node = self.array_trait.create_context();
 
+            // Initialize the contexts, to identift the delta packing sizes
             for element in data {
                 self.array_trait
-                    .init_context(self.packing_context_node.as_mut().unwrap(), element);
+                    .init_context(&mut packing_context_node, element);
             }
-        }
-        for (_index, element) in data.iter().enumerate() {
-            if self.is_aligned {
-                let _ = writer.align(1);
+
+            // Actually write the data.
+            for (_index, element) in data.iter().enumerate() {
+                if self.is_aligned {
+                    let _ = writer.align(1);
+                }
+                self.array_trait
+                    .write_packed(&mut packing_context_node, writer, element);
             }
-            if self.is_packed {
-                self.array_trait.write_packed(
-                    self.packing_context_node.as_mut().unwrap(),
-                    writer,
-                    element,
-                );
-            } else {
+        } else {
+            for (_index, element) in data.iter().enumerate() {
+                if self.is_aligned {
+                    let _ = writer.align(1);
+                }
                 self.array_trait.write(writer, element);
             }
         }
@@ -71,20 +67,24 @@ impl<T> Array<T> {
     pub fn zserio_read(&mut self, reader: &mut BitReader, data: &mut Vec<T>) {
         if !data.is_empty() {
             if self.is_packed {
-                self.create_packing_context_node_if_not_exists();
-            }
-            for (index, data_item) in data.iter_mut().enumerate() {
-                if self.is_aligned {
-                    reader.align(8).expect("failed to align reader");
-                }
-                if self.is_packed {
+                // Create the packing context, and all child-contexts
+                let mut packing_context_node = self.array_trait.create_context();
+                for (index, data_item) in data.iter_mut().enumerate() {
+                    if self.is_aligned {
+                        reader.align(8).expect("failed to align reader");
+                    }
                     self.array_trait.read_packed(
-                        self.packing_context_node.as_mut().unwrap(),
+                        &mut packing_context_node,
                         reader,
                         data_item,
                         index,
                     );
-                } else {
+                }
+            } else {
+                for (index, data_item) in data.iter_mut().enumerate() {
+                    if self.is_aligned {
+                        reader.align(8).expect("failed to align reader");
+                    }
                     self.array_trait.read(reader, data_item, index);
                 }
             }
@@ -130,11 +130,11 @@ impl<T> Array<T> {
             end_position += varsize_bitsize(data.len() as u32) as u64;
         }
         if !data.is_empty() {
-            self.create_packing_context_node_if_not_exists();
+            let mut packing_context_node = self.array_trait.create_context();
 
             for element in data {
                 self.array_trait
-                    .init_context(self.packing_context_node.as_mut().unwrap(), element);
+                    .init_context(&mut packing_context_node, element);
             }
 
             for element in data {
@@ -142,7 +142,7 @@ impl<T> Array<T> {
                     end_position = align_to(8, end_position);
                 }
                 end_position += self.array_trait.bitsize_of_packed(
-                    self.packing_context_node.as_mut().unwrap(),
+                    &mut packing_context_node,
                     end_position,
                     element,
                 );

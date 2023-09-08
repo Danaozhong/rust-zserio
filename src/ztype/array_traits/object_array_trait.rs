@@ -1,7 +1,7 @@
 use crate::ztype::array_traits::array_trait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 
-use crate::ztype::ZserioPackableOject;
+use crate::ztype::ZserioPackableObject;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
@@ -9,7 +9,7 @@ pub struct ObjectArrayTrait {}
 
 impl<T> array_trait::ArrayTrait<T> for ObjectArrayTrait
 where
-    T: ZserioPackableOject,
+    T: ZserioPackableObject,
 {
     fn is_bitsizeof_constant(&self) -> bool {
         false
@@ -42,18 +42,23 @@ where
         panic!("array trait does not support delta compression");
     }
 
-    fn init_context(&self, _context_node: &mut PackingContextNode, _element: &T) {
-        // TODO
+    fn create_context(&self) -> PackingContextNode {
+        let mut packing_context_node = PackingContextNode::new();
+        T::zserio_create_packing_context(&mut packing_context_node);
+        packing_context_node
+    }
+
+    fn init_context(&self, context_node: &mut PackingContextNode, element: &T) {
+        element.zserio_init_packing_context(context_node);
     }
 
     fn bitsize_of_packed(
         &self,
-        _context_node: &mut PackingContextNode,
-        _bit_position: u64,
-        _element: &T,
+        context_node: &mut PackingContextNode,
+        bit_position: u64,
+        element: &T,
     ) -> u64 {
-        // TODO
-        0
+        element.zserio_bitsize_packed(context_node, bit_position)
     }
     fn initialize_offsets_packed(
         &self,
@@ -61,7 +66,12 @@ where
         bit_position: u64,
         element: &T,
     ) -> u64 {
-        bit_position + context_node.context.bitsize_of(self, bit_position, element)
+        bit_position
+            + context_node
+                .context
+                .as_mut()
+                .unwrap()
+                .bitsize_of(self, bit_position, element)
     }
 
     fn read_packed(

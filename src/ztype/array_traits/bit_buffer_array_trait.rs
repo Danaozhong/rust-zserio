@@ -4,9 +4,9 @@ use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-pub struct VarInt16ArrayTrait {}
+pub struct BitBufferArrayTrait {}
 
-impl array_trait::ArrayTrait<i16> for VarInt16ArrayTrait {
+impl array_trait::ArrayTrait<ztype::ExternType> for BitBufferArrayTrait {
     fn is_bitsizeof_constant(&self) -> bool {
         false
     }
@@ -15,30 +15,30 @@ impl array_trait::ArrayTrait<i16> for VarInt16ArrayTrait {
         false
     }
 
-    fn bitsize_of(&self, _bit_position: u64, value: &i16) -> u64 {
-        ztype::varint16_bitsize(*value) as u64
+    fn bitsize_of(&self, _bit_position: u64, value: &ztype::ExternType) -> u64 {
+        ztype::bitsize_of_extern(value)
     }
 
-    fn initialize_offsets(&self, bit_position: u64, value: &i16) -> u64 {
+    fn initialize_offsets(&self, bit_position: u64, value: &ztype::ExternType) -> u64 {
         bit_position + self.bitsize_of(bit_position, value)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut i16, _index: usize) {
-        *value = ztype::read_varint16(reader);
+    fn read(&self, reader: &mut BitReader, value: &mut ztype::ExternType, _index: usize) {
+        *value = ztype::read_extern_type(reader);
     }
 
-    fn write(&self, writer: &mut BitWriter, value: &i16) {
-        ztype::write_varint16(writer, *value);
+    fn write(&self, writer: &mut BitWriter, value: &ztype::ExternType) {
+        ztype::write_extern_type(writer, value);
     }
 
-    fn to_u64(&self, value: &i16) -> u64 {
-        *value as u64
+    fn to_u64(&self, _: &ztype::ExternType) -> u64 {
+        panic!("delta-encoding not supported for extern types");
     }
-    fn from_u64(&self, value: u64) -> i16 {
-        value as i16
+    fn from_u64(&self, _: u64) -> ztype::ExternType {
+        panic!("delta-encoding not supported for extern types");
     }
 
-    fn init_context(&self, context_node: &mut PackingContextNode, element: &i16) {
+    fn init_context(&self, context_node: &mut PackingContextNode, element: &ztype::ExternType) {
         context_node.context.as_mut().unwrap().init(self, element);
     }
 
@@ -46,7 +46,7 @@ impl array_trait::ArrayTrait<i16> for VarInt16ArrayTrait {
         &self,
         context_node: &mut PackingContextNode,
         bit_position: u64,
-        element: &i16,
+        element: &ztype::ExternType,
     ) -> u64 {
         context_node
             .context
@@ -59,7 +59,7 @@ impl array_trait::ArrayTrait<i16> for VarInt16ArrayTrait {
         &self,
         context_node: &mut PackingContextNode,
         bit_position: u64,
-        element: &i16,
+        element: &ztype::ExternType,
     ) -> u64 {
         bit_position
             + context_node
@@ -73,7 +73,7 @@ impl array_trait::ArrayTrait<i16> for VarInt16ArrayTrait {
         &self,
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
-        value: &mut i16,
+        value: &mut ztype::ExternType,
         index: usize,
     ) {
         context_node
@@ -87,7 +87,7 @@ impl array_trait::ArrayTrait<i16> for VarInt16ArrayTrait {
         &self,
         context_node: &mut PackingContextNode,
         writer: &mut BitWriter,
-        element: &i16,
+        element: &ztype::ExternType,
     ) {
         context_node
             .context
