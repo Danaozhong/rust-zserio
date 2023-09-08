@@ -16,6 +16,16 @@ struct ConstantTestStruct {
     {
         // Test mixing different string types, and make
         // sure the generated code handles these correctly.
-        return strValue + CONSTANT_STRING + "DummyString" + otherStrValue + CUSTOM_CONSTANT_STRING + strValue;
+        return CONSTANT_STRING + "DummyString" + CUSTOM_CONSTANT_STRING;
+    }
+
+    function string testStringConstants2()
+    {
+        return strValue;
+    }
+
+    function string testStringConstants3()
+    {
+        return otherStrValue;
     }
 };

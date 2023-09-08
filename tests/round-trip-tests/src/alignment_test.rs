@@ -1,6 +1,6 @@
 use crate::reference_modules::alignment::alignment::alignment_struct::AlignmentStruct;
 
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 

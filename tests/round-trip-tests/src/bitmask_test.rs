@@ -5,7 +5,7 @@ use crate::reference_modules::bitmask_test::bitmask_test::{
     some_bit_mask::HAS_B,    
 };
 
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
