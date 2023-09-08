@@ -5,25 +5,30 @@
 ## CI Status
 ![build](https://github.com/Danaozhong/rust-zserio/actions/workflows/test.yml/badge.svg)
 
+## How to Run
+
+You can run the code generator using the following command:
+
+```sh
+cargo run -- --root=<code_root_path> -o=<output_directory> <path_to_zserio_files>
+```
+
+This will generate the files needed to read/write `zserio`-encoded binary data.
+
 ## Development Status
 
-This project is still under construction, and not ready for use yet. A large part of the zserio syntax has been implemented, and zserio files can be successfully parsed and evaluated.
-Code generation also works, but the generated code may not always compile.
-The following open items still need to be addressed:
+Although the project is in its early stages, it is feature-complete and should work with most `zserio` applications. Successful test runs were done with sample projects, that were compared against the Python reference implementation. Nevertheless, the library does not have many users yet, and test coverage is small. If you find issues, please report them.
 
 ### Open Items
-- passing parameters between zserio compound objects.
-- index operator implementation.
-- lengthof operator implementation.
-- extern/bytes types are not implemented yet.
-- several array traits are not implemented yet, and the array traits code has a lot of c&p.
+- constraints are not evaluated yet.
 - proper unit test / e2e test setup.
-- the generated code fails the lint checks, mainly due to unnecessary includes. The include sections somehow needs to be cleaned up, and unused includes removed.
+- compare with the reference Python/C++ implementation.
+- the generated code fails the lint checks.
 - clean and structured error handling and logging.
-- the zserio union type still needs to be implemented.
-- compare the serialized binary code and compare with the reference implementation.
 - upgrade to a non-beta ANTLR parser.
 - resolve all clippy warnings.
+- performance evaluation and improvements.
+- generate a `mod.rs` file.
 
 ## Disclaimer
 
