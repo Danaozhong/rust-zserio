@@ -5,7 +5,7 @@ use std::path::Path;
 pub mod internal;
 pub mod ztype;
 
-/// Simple program to greet a person
+/// zserio generator for rust
 #[derive(Parser, Debug)]
 #[command(version = None)]
 struct Args {
