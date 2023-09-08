@@ -9,9 +9,11 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::instantiate_zserio_array, bitsize::bitsize_field, decode::decode_field,
     encode::encode_field, expression::generate_expression, file_generator::write_to_file,
-    function::generate_function, new::new_field, new::new_param, preamble::add_standard_imports,
-    types::convert_field_name, types::to_rust_module_name, types::to_rust_type_name,
-    types::TypeGenerator, zstruct::generate_struct_member_for_field,
+    function::generate_function, new::new_field, new::new_param,
+    packed_contexts::generate_init_packed_context_for_field,
+    packed_contexts::generate_packed_context_for_field, packed_contexts::FieldDetails,
+    preamble::add_standard_imports, types::convert_field_name, types::to_rust_module_name,
+    types::to_rust_type_name, types::TypeGenerator, zstruct::generate_struct_member_for_field,
 };
 
 use std::path::Path;
@@ -26,6 +28,31 @@ pub fn generate_choice(
 ) -> String {
     let rust_module_name = to_rust_module_name(&zchoice.name);
     let rust_type_name = to_rust_type_name(&zchoice.name);
+
+    let mut field_details = vec![];
+    let mut field_idx = 0;
+
+    for case in &zchoice.cases {
+        if let Some(field_rc) = &case.field {
+            field_details.push(FieldDetails::from_field(
+                field_rc,
+                field_idx,
+                symbol_scope,
+                type_generator,
+            ));
+            field_idx += 1;
+        }
+    }
+    if let Some(default_case) = &zchoice.default_case {
+        if let Some(field_rc) = &default_case.field {
+            field_details.push(FieldDetails::from_field(
+                field_rc,
+                field_idx,
+                symbol_scope,
+                type_generator,
+            ));
+        }
+    }
 
     add_standard_imports(codegen_scope);
 
@@ -50,22 +77,14 @@ pub fn generate_choice(
         gen_param_field.vis("pub");
     }
 
-    // Add the data fields for each choice case to the generated structure.
-    for case in &zchoice.cases {
-        if let Some(case_field) = &case.field {
-            generate_struct_member_for_field(type_generator, gen_choice, &case_field.borrow());
-        }
-    }
-    // Also add the field for the default case, if it is set.
-    if let Some(default_case) = &zchoice.default_case {
-        if let Some(case_field) = &default_case.field {
-            generate_struct_member_for_field(type_generator, gen_choice, &case_field.borrow());
-        }
+    // Add the data fields for each choice case field (including the default case) to the generated structure.
+    for field in &field_details {
+        generate_struct_member_for_field(gen_choice, field);
     }
 
     // generate the functions to serialize/deserialize
     let choice_impl = codegen_scope.new_impl(&rust_type_name);
-    choice_impl.impl_trait("ztype::ZserioPackableOject");
+    choice_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the struct
     let new_fn = choice_impl.new_fn("new");
@@ -81,16 +100,33 @@ pub fn generate_choice(
         );
     }
 
-    for case in &zchoice.cases {
-        if let Some(case_field) = &case.field {
-            new_field(symbol_scope, type_generator, new_fn, &case_field.borrow());
-        }
+    for field in &field_details {
+        new_field(symbol_scope, type_generator, new_fn, &field.field.borrow());
     }
     new_fn.line("}");
 
     generate_zserio_read(symbol_scope, type_generator, choice_impl, zchoice);
     generate_zserio_write(symbol_scope, type_generator, choice_impl, zchoice);
     generate_zserio_bitsize(symbol_scope, type_generator, choice_impl, zchoice);
+
+    // Generate the packed contexts.
+    let create_packing_context_fn = choice_impl.new_fn("zserio_create_packing_context");
+    create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    for field in &field_details {
+        generate_packed_context_for_field(symbol_scope, create_packing_context_fn, field);
+    }
+
+    let init_packing_context_fn = choice_impl.new_fn("zserio_init_packing_context");
+    init_packing_context_fn.arg_ref_self();
+    init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    for field in &field_details {
+        generate_init_packed_context_for_field(
+            symbol_scope,
+            type_generator,
+            init_packing_context_fn,
+            field,
+        );
+    }
 
     // Generate all the zserio functions.
     let pub_impl = codegen_scope.new_impl(&rust_type_name);

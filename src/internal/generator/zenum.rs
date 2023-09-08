@@ -1,10 +1,11 @@
 use codegen::Scope;
 
 use crate::internal::ast::{expression::ExpressionType, zenum::ZEnum};
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
-    bitsize::bitsize_type_reference, decode::decode_type, encode::encode_type,
-    file_generator::write_to_file, preamble::add_standard_imports,
+    array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
+    encode::encode_type, file_generator::write_to_file, preamble::add_standard_imports,
     types::convert_to_enum_field_name, types::to_rust_module_name, types::to_rust_type_name,
     types::zserio_to_rust_type, types::TypeGenerator,
 };
@@ -20,6 +21,9 @@ pub fn generate_enum(
 ) -> String {
     let rust_module_name = to_rust_module_name(&zenum.name);
     let rust_type_name = to_rust_type_name(&zenum.name);
+    let fundamental_type = get_fundamental_type(&zenum.enum_type, scope);
+    let rust_type_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
+
     add_standard_imports(gen_scope);
 
     // generate the struct itself
@@ -74,7 +78,7 @@ pub fn generate_enum(
     from_int_fn.line("}");
 
     let z_impl = gen_scope.new_impl(&rust_type_name);
-    z_impl.impl_trait("ztype::ZserioPackableOject");
+    z_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the enum
     let new_fn = z_impl.new_fn("new");
@@ -89,6 +93,20 @@ pub fn generate_enum(
     generate_zserio_read(scope, type_generator, z_impl, zenum);
     generate_zserio_write(scope, type_generator, z_impl, zenum);
     generate_zserio_bitsize(scope, type_generator, z_impl, zenum);
+
+    // Generate the packed contexts.
+    let create_packing_context_fn = z_impl.new_fn("zserio_create_packing_context");
+    create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    create_packing_context_fn.line("context_node.children.push(PackingContextNode { children: vec![], context: Some(DeltaContext::new()), });");
+
+    let init_packing_context_fn = z_impl.new_fn("zserio_init_packing_context");
+    init_packing_context_fn.arg_ref_self();
+    init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    init_packing_context_fn.line(format!(
+        "context_node.children[0].context.as_mut().unwrap().init(&{}, &(*self as {}));",
+        &initialize_array_trait(type_generator, &fundamental_type.fundamental_type),
+        &rust_type_type,
+    ));
 
     write_to_file(
         &gen_scope.to_string(),
@@ -115,7 +133,7 @@ fn generate_zserio_read(
         zserio_read_fn,
         &format!(
             "let v: {}",
-            zserio_to_rust_type(zenum.enum_type.name.as_str()).unwrap()
+            zserio_to_rust_type(&zenum.enum_type.name).unwrap()
         ),
         &String::from(""),
         &zenum.enum_type,

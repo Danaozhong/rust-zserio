@@ -8,6 +8,7 @@ pub mod function;
 pub mod model;
 pub mod new;
 pub mod package;
+pub mod packed_contexts;
 pub mod pass_parameters;
 pub mod preamble;
 pub mod subtype;

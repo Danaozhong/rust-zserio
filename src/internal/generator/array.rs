@@ -40,7 +40,8 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
             "bool" => "BooleanArrayTrait".into(),
             "bit" => "UnsignedBitFieldArrayTrait".into(),
             "int" => "BitFieldArrayTrait".into(),
-            "extern" => "ObjectArrayTrait".into(),
+            "extern" => "BitBufferArrayTrait".into(),
+            "bytes" => "ByteBufferArrayTrait".into(),
             _ => panic!("failed to identify array trait {:?}", &zserio_type.name),
         }
     }
@@ -100,10 +101,11 @@ pub fn instantiate_zserio_array(
     if field.array.is_none() {
         return;
     }
-
     let native_type = get_fundamental_type(&field.field_type, scope);
     let fund_type = native_type.fundamental_type;
     let rust_type = type_generator.ztype_to_rust_type(field.field_type.as_ref());
+    let is_packed = field.array.as_ref().unwrap().is_packed || force_packed;
+
     // also initialize the array part
     function.line(format!(
         "let mut {} = ztype::Array::<{}>{{",
@@ -124,12 +126,7 @@ pub fn instantiate_zserio_array(
     function.line(format!("fixed_size: {},", array_length_str));
 
     function.line(format!("is_aligned: {},", field.alignment != 0));
-    function.line(format!(
-        "is_packed: {},",
-        field.array.as_ref().unwrap().is_packed || force_packed
-    ));
 
-    function.line("packing_context_node: None,");
-
+    function.line(format!("is_packed: {},", is_packed));
     function.line("};");
 }

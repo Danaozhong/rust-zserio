@@ -1,3 +1,4 @@
+use crate::ztype::array_traits::delta_context::DeltaContext;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -15,7 +16,10 @@ pub trait ArrayTrait<T> {
     // all functions below are for using packed contexts. They provide a default implementation
     // for array traits using delta contexts.
     fn create_context(&self) -> PackingContextNode {
-        PackingContextNode::new()
+        PackingContextNode {
+            children: vec![],
+            context: Some(DeltaContext::new()),
+        }
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &T);

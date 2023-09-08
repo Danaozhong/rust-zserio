@@ -56,7 +56,7 @@ pub fn encode_type(
         } else if let Some(node_idx) = context_node_index {
             // packed encoding
             function.line(format!(
-                "context_node.children[{}].context.write(&{}, writer, &{});",
+                "context_node.children[{}].context.as_mut().unwrap().write(&{}, writer, &{});",
                 node_idx,
                 initialize_array_trait(type_generator, &fund_type),
                 field_name,

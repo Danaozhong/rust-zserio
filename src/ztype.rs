@@ -57,10 +57,10 @@ pub use self::float_decode::{read_float16, read_float32, read_float64};
 pub use self::array::Array;
 
 pub use self::bit_alignment::align_to;
-pub use self::traits::ZserioPackableOject;
+pub use self::traits::ZserioPackableObject;
 
-pub use self::bytes_type::{read_bytes_type, write_bytes_type, BytesType};
-pub use self::extern_type::{read_extern_type, write_extern_type, ExternType};
+pub use self::bytes_type::{bitsize_of_bytes, read_bytes_type, write_bytes_type, BytesType};
+pub use self::extern_type::{bitsize_of_extern, read_extern_type, write_extern_type, ExternType};
 
 pub use self::numbits::numbits;
 

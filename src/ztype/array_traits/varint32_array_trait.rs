@@ -39,7 +39,7 @@ impl array_trait::ArrayTrait<i32> for VarInt32ArrayTrait {
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &i32) {
-        context_node.context.init(self, element);
+        context_node.context.as_mut().unwrap().init(self, element);
     }
 
     fn bitsize_of_packed(
@@ -48,7 +48,11 @@ impl array_trait::ArrayTrait<i32> for VarInt32ArrayTrait {
         bit_position: u64,
         element: &i32,
     ) -> u64 {
-        context_node.context.bitsize_of(self, bit_position, element)
+        context_node
+            .context
+            .as_mut()
+            .unwrap()
+            .bitsize_of(self, bit_position, element)
     }
 
     fn initialize_offsets_packed(
@@ -57,7 +61,12 @@ impl array_trait::ArrayTrait<i32> for VarInt32ArrayTrait {
         bit_position: u64,
         element: &i32,
     ) -> u64 {
-        bit_position + context_node.context.bitsize_of(self, bit_position, element)
+        bit_position
+            + context_node
+                .context
+                .as_mut()
+                .unwrap()
+                .bitsize_of(self, bit_position, element)
     }
 
     fn read_packed(
@@ -67,7 +76,11 @@ impl array_trait::ArrayTrait<i32> for VarInt32ArrayTrait {
         value: &mut i32,
         index: usize,
     ) {
-        context_node.context.read(self, reader, value, index);
+        context_node
+            .context
+            .as_mut()
+            .unwrap()
+            .read(self, reader, value, index);
     }
 
     fn write_packed(
@@ -76,6 +89,10 @@ impl array_trait::ArrayTrait<i32> for VarInt32ArrayTrait {
         writer: &mut BitWriter,
         element: &i32,
     ) {
-        context_node.context.write(self, writer, element);
+        context_node
+            .context
+            .as_mut()
+            .unwrap()
+            .write(self, writer, element);
     }
 }

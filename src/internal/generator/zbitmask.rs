@@ -1,12 +1,13 @@
 use codegen::Scope;
 
 use crate::internal::ast::{expression::ExpressionType, zbitmask::ZBitmaskType};
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
-    bitsize::bitsize_type_reference, decode::decode_type, encode::encode_type,
-    file_generator::write_to_file, preamble::add_standard_imports, types::to_rust_constant_name,
-    types::to_rust_module_name, types::to_rust_type_name, types::zserio_to_rust_type,
-    types::TypeGenerator,
+    array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
+    encode::encode_type, file_generator::write_to_file, preamble::add_standard_imports,
+    types::to_rust_constant_name, types::to_rust_module_name, types::to_rust_type_name,
+    types::zserio_to_rust_type, types::TypeGenerator,
 };
 use std::path::Path;
 
@@ -20,11 +21,13 @@ pub fn generate_bitmask(
 ) -> String {
     let rust_module_name = to_rust_module_name(&zbitmask.name);
     let rust_type_name = to_rust_type_name(&zbitmask.name);
-    let bitmask_rust_type = type_generator.ztype_to_rust_type(&zbitmask.zserio_type);
+    let fundamental_type = get_fundamental_type(&zbitmask.zserio_type, scope);
+    let bitmask_rust_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
+
     add_standard_imports(gen_scope);
 
     // generate the bitmask type itself.
-    // Because we want to have the type implementing the type::ZserioPackableOject type trait,
+    // Because we want to have the type implementing the type::ZserioPackableObject type trait,
     // we wrap it into a small struct. The trait is implemented using this wrapper struct.
     let bitmask_wrapper_struct = gen_scope.new_struct(&rust_type_name);
     bitmask_wrapper_struct.vis("pub");
@@ -61,7 +64,7 @@ pub fn generate_bitmask(
     let mut new_scope = Scope::new();
 
     let z_impl = new_scope.new_impl(&rust_type_name);
-    z_impl.impl_trait("ztype::ZserioPackableOject");
+    z_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the enum
     let new_fn = z_impl.new_fn("new");
@@ -76,6 +79,20 @@ pub fn generate_bitmask(
     generate_zserio_read(scope, type_generator, z_impl, zbitmask);
     generate_zserio_write(scope, type_generator, z_impl, zbitmask);
     generate_zserio_bitsize(scope, type_generator, z_impl, zbitmask);
+
+    // Generate the packed contexts.
+    let create_packing_context_fn = z_impl.new_fn("zserio_create_packing_context");
+    create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    create_packing_context_fn.line("context_node.context = Some(DeltaContext::new());");
+    create_packing_context_fn.line("context_node.children.push(PackingContextNode { children: vec![], context: Some(DeltaContext::new()), });");
+
+    let init_packing_context_fn = z_impl.new_fn("zserio_init_packing_context");
+    init_packing_context_fn.arg_ref_self();
+    init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    init_packing_context_fn.line(format!("context_node.children[0].context.as_mut().unwrap().init(&{}, &(self.bitmask_value as {}));", 
+        &initialize_array_trait(type_generator, &fundamental_type.fundamental_type),
+        &bitmask_rust_type,
+    ));
 
     file_content += new_scope.to_string().as_str();
 

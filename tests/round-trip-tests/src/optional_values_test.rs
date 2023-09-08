@@ -5,7 +5,7 @@ use crate::reference_modules::optional_values::optional_values::{
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_optional_values() {
     let mut test_struct = OptionalValuesTest::new();

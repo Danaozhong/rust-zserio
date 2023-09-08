@@ -41,7 +41,7 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &String) {
-        context_node.context.init(self, element);
+        context_node.context.as_mut().unwrap().init(self, element);
     }
 
     fn bitsize_of_packed(
@@ -50,7 +50,11 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         bit_position: u64,
         element: &String,
     ) -> u64 {
-        context_node.context.bitsize_of(self, bit_position, element)
+        context_node
+            .context
+            .as_mut()
+            .unwrap()
+            .bitsize_of(self, bit_position, element)
     }
     fn initialize_offsets_packed(
         &self,
@@ -58,7 +62,12 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         bit_position: u64,
         element: &String,
     ) -> u64 {
-        bit_position + context_node.context.bitsize_of(self, bit_position, element)
+        bit_position
+            + context_node
+                .context
+                .as_mut()
+                .unwrap()
+                .bitsize_of(self, bit_position, element)
     }
 
     fn read_packed(
@@ -68,7 +77,11 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         value: &mut String,
         index: usize,
     ) {
-        context_node.context.read(self, reader, value, index);
+        context_node
+            .context
+            .as_mut()
+            .unwrap()
+            .read(self, reader, value, index);
     }
 
     fn write_packed(
@@ -77,6 +90,10 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
         writer: &mut BitWriter,
         element: &String,
     ) {
-        context_node.context.write(self, writer, element);
+        context_node
+            .context
+            .as_mut()
+            .unwrap()
+            .write(self, writer, element);
     }
 }

@@ -1,5 +1,5 @@
 use crate::reference_modules::ambiguous_types::main::ambiguous_types_struct::AmbiguousTypesStruct;
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_ambiguous_types() {
     // Create a test structure, and assign a new instance.

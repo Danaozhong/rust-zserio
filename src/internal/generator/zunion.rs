@@ -111,7 +111,7 @@ pub fn generate_union(
 
     // generate the functions to serialize/deserialize
     let union_impl = codegen_scope.new_impl(&rust_type_name);
-    union_impl.impl_trait("ztype::ZserioPackableOject");
+    union_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the struct
     let new_fn = union_impl.new_fn("new");
@@ -145,6 +145,14 @@ pub fn generate_union(
     generate_zserio_read(symbol_scope, type_generator, union_impl, zunion);
     generate_zserio_write(symbol_scope, type_generator, union_impl, zunion);
     generate_zserio_bitsize(symbol_scope, type_generator, union_impl, zunion);
+
+    // Generate the packed contexts.
+    let create_packing_context_fn = union_impl.new_fn("zserio_create_packing_context");
+    create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+
+    let init_packing_context_fn = union_impl.new_fn("zserio_init_packing_context");
+    init_packing_context_fn.arg_ref_self();
+    init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
 
     // Generate all the zserio functions.
     let pub_impl = codegen_scope.new_impl(&rust_type_name);

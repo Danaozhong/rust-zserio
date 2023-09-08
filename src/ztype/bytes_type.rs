@@ -1,6 +1,6 @@
 use crate::ztype::reader::read_bytes;
 use crate::ztype::writer::write_bytes;
-use crate::ztype::{read_varsize, write_varsize};
+use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
@@ -23,4 +23,8 @@ pub fn read_bytes_type(bit_reader: &mut BitReader) -> BytesType {
 pub fn write_bytes_type(bit_writer: &mut BitWriter, bytes_type: &BytesType) {
     write_varsize(bit_writer, bytes_type.byte_size);
     write_bytes(bit_writer, &bytes_type.data_blob);
+}
+
+pub fn bitsize_of_bytes(bytes_type: &BytesType) -> u64 {
+    varsize_bitsize(bytes_type.byte_size) as u64 + (bytes_type.byte_size as u64) * 8
 }

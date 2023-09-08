@@ -1,6 +1,6 @@
 use crate::reference_modules::type_casts::type_casts::type_cast_struct::TypeCastStruct;
 
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_type_casts() {
     // The test structure created in this test generates a function that

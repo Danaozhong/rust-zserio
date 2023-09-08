@@ -5,7 +5,7 @@ use crate::reference_modules::template_instantiation::template_instantiation::
 };
 use rust_bitwriter::BitWriter;
 
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_ambiguous_types() {
     // Create a test structure, and assign a new instance.

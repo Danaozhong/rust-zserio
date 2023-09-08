@@ -2,7 +2,7 @@ use crate::reference_modules::parameterized_array_length::parameterized_array_le
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableOject;
+use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_parameterized_array_length() {
     let test_struct = ParameterizedArrayLength {

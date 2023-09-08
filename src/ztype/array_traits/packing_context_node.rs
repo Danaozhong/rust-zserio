@@ -6,16 +6,17 @@ Each node may have children (one for each packable fields inside it).
 For example, the packing context node of a struct would contain a packing context
 node for each packable array/struct/choice field it contains as fields.
  */
+// TODO Can this be a Enum type?
 pub struct PackingContextNode {
     pub children: Vec<PackingContextNode>,
-    pub context: DeltaContext,
+    pub context: Option<DeltaContext>,
 }
 
 impl PackingContextNode {
     pub fn new() -> PackingContextNode {
         PackingContextNode {
             children: vec![],
-            context: DeltaContext::new(),
+            context: None,
         }
     }
 }
