@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 bitreader =  "0.3.8"
-rust-bitwriter = { git = "https://github.com/Danaozhong/rust-bitwriter.git", branch = "main" }
+rust-bitwriter = "0.0.1"
 rust-zserio = { path = "../.." }
 
 [build-dependencies]
