@@ -2,7 +2,7 @@ use crate::internal::ast::type_reference::TypeReference;
 use convert_case::{Case, Casing};
 use std::result::Result;
 
-const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct"];
+const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct", "self"];
 
 pub struct TypeGenerator {
     pub root_package_name: String,
@@ -42,6 +42,12 @@ impl TypeGenerator {
     }
 }
 
+pub fn remove_reserved_identifier(name: &str) -> String {
+    if RESERVED_RUST_KEYWORDS.contains(&name.to_lowercase().as_str()) {
+        return format!("z_{}", name);
+    }
+    return name.into();
+}
 pub fn to_rust_module_name(name: &str) -> String {
     name.to_case(Case::Snake)
 }
@@ -56,23 +62,20 @@ pub fn to_rust_constant_name(name: &str) -> String {
 }
 
 pub fn convert_field_name(name: &str) -> String {
-    if RESERVED_RUST_KEYWORDS.contains(&name) {
-        return format!("z_{}", name.to_case(Case::Snake));
-    }
-    name.to_case(Case::Snake)
+    remove_reserved_identifier(name).to_case(Case::Snake)
 }
 
 pub fn convert_to_enum_field_name(name: &str) -> String {
-    name.to_case(Case::UpperCamel)
+    remove_reserved_identifier(name).to_case(Case::UpperCamel)
 }
 
 pub fn convert_to_union_selector_name(field_name: &str) -> String {
-    field_name.to_case(Case::UpperCamel)
+    remove_reserved_identifier(field_name).to_case(Case::UpperCamel)
 }
 
 pub fn convert_to_function_name(name: &str) -> String {
     // Converts a function name from zserio style to rust style (snake case).
-    name.to_case(Case::Snake)
+    remove_reserved_identifier(name).to_case(Case::Snake)
 }
 
 pub fn custom_type_to_rust_type(name: &str) -> String {
