@@ -1,4 +1,4 @@
-use crate::reference_modules::bitmask_test::bitmask_test::{
+use reference_module_lib::reference_modules::bitmask_test::bitmask_test::{
     bitmask_test::BitmaskTest,
     some_bit_mask::SomeBitMask,
     some_bit_mask::HAS_A,

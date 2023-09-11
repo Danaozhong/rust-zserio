@@ -1,4 +1,4 @@
-use crate::reference_modules::integer_types::integer_types::integer_types_test::IntegerTypesTest;
+use reference_module_lib::reference_modules::integer_types::integer_types::integer_types_test::IntegerTypesTest;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 

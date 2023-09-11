@@ -1,4 +1,4 @@
-use crate::reference_modules::constants::constants::constant_test_struct::ConstantTestStruct;
+use reference_module_lib::reference_modules::constants::constants::constant_test_struct::ConstantTestStruct;
 
 use rust_zserio::ztype::ZserioPackableObject;
 

@@ -1,4 +1,4 @@
-use crate::reference_modules::packed_arrays::packed_arrays::{
+use reference_module_lib::reference_modules::packed_arrays::packed_arrays::{
     data_struct::DataStruct,
     packed_array_wrapper::PackedArrayWrapper,
     bubble_tea_size::BubbleTeaSize,

@@ -1,4 +1,4 @@
-use crate::reference_modules::alignment::alignment::alignment_struct::AlignmentStruct;
+use reference_module_lib::reference_modules::alignment::alignment::alignment_struct::AlignmentStruct;
 
 use rust_zserio::ztype::ZserioPackableObject;
 use bitreader::BitReader;

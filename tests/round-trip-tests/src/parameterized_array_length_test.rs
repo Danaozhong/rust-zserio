@@ -1,4 +1,4 @@
-use crate::reference_modules::parameterized_array_length::parameterized_array_length::parameterized_array_length::ParameterizedArrayLength;
+use reference_module_lib::reference_modules::parameterized_array_length::parameterized_array_length::parameterized_array_length::ParameterizedArrayLength;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;

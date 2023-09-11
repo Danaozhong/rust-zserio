@@ -1,4 +1,4 @@
-use crate::reference_modules::template_instantiation::template_instantiation::
+use reference_module_lib::reference_modules::template_instantiation::template_instantiation::
 {   
     instantiated_struct_1::InstantiatedStruct1,
     instantiated_struct_2::InstantiatedStruct2,

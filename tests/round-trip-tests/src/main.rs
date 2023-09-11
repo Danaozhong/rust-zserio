@@ -1,50 +1,3 @@
-pub mod reference_modules {
-    pub mod core {
-        pub mod instantiations;
-        pub mod templates;
-        pub mod types;
-    }
-    pub mod type_lookup_test {
-        pub mod other_ztype;
-        pub mod unrelated_ztype;
-        pub mod ztype;
-    }
-    pub mod parameter_passing {
-        pub mod index_operator;
-        pub mod parameter_passing;
-    }
-    pub mod ambiguous_types {
-        pub mod main;
-        pub mod other;
-    }
-    pub mod template_instantiation {
-        pub mod template_instantiation;
-    }
-    pub mod type_casts {
-        pub mod type_casts;
-    }
-    pub mod optional_values {
-        pub mod optional_values;
-    }
-    pub mod bitmask_test {
-        pub mod bitmask_test;
-    }
-    pub mod constants {
-        pub mod constants;
-    }
-    pub mod integer_types {
-        pub mod integer_types;
-    }
-    pub mod parameterized_array_length {
-        pub mod parameterized_array_length;
-    }
-    pub mod alignment {
-        pub mod alignment;
-    }
-    pub mod packed_arrays {
-        pub mod packed_arrays;
-    }
-}
 pub mod ambiguous_types_test;
 pub mod parameter_passing_test;
 pub mod template_instantiation_test;
@@ -57,16 +10,16 @@ pub mod parameterized_array_length_test;
 pub mod alignment_test;
 pub mod packed_arrays_test;
 
-use crate::reference_modules::core::types::{
+use reference_module_lib::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
     value_wrapper,
 };
 
-use crate::reference_modules::type_lookup_test::ztype::union_type::{UnionType, UnionTypeSelector};
-use crate::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
+use reference_module_lib::reference_modules::type_lookup_test::ztype::union_type::{UnionType, UnionTypeSelector};
+use reference_module_lib::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
 
 use bitreader::BitReader;
-use reference_modules::core::instantiations::instantiated_template_struct;
+use reference_module_lib::reference_modules::core::instantiations::instantiated_template_struct;
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableObject;
 
