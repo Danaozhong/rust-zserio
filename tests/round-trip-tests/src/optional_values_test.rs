@@ -1,8 +1,7 @@
-use reference_module_lib::reference_modules::optional_values::optional_values::{
-    option_enum::OptionEnum,
-    optional_values_test::OptionalValuesTest,
-};
 use bitreader::BitReader;
+use reference_module_lib::reference_modules::optional_values::optional_values::{
+    option_enum::OptionEnum, optional_values_test::OptionalValuesTest,
+};
 use rust_bitwriter::BitWriter;
 
 use rust_zserio::ztype::ZserioPackableObject;
@@ -59,7 +58,11 @@ pub fn test_optional_members() {
 /// set and deserialized.
 pub fn test_optional_arrays() {
     let mut test_struct = OptionalValuesTest::new();
-    test_struct.option_string_array = Some(vec!["Hokkien Mee".to_string(), "Kaya Toast".to_string(), "Char Kway Teow".to_string()]);
+    test_struct.option_string_array = Some(vec![
+        "Hokkien Mee".to_string(),
+        "Kaya Toast".to_string(),
+        "Char Kway Teow".to_string(),
+    ]);
     // serialize
     let mut bitwriter = BitWriter::new();
     test_struct.zserio_write(&mut bitwriter);

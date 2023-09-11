@@ -1,8 +1,6 @@
 use reference_module_lib::reference_modules::bitmask_test::bitmask_test::{
-    bitmask_test::BitmaskTest,
-    some_bit_mask::SomeBitMask,
-    some_bit_mask::HAS_A,
-    some_bit_mask::HAS_B,    
+    bitmask_test::BitmaskTest, some_bit_mask::SomeBitMask, some_bit_mask::HAS_A,
+    some_bit_mask::HAS_B,
 };
 
 use rust_zserio::ztype::ZserioPackableObject;
@@ -12,7 +10,9 @@ use rust_bitwriter::BitWriter;
 
 pub fn test_bitmasks() {
     let mut test_struct = BitmaskTest::new();
-    test_struct.selector = SomeBitMask{ bitmask_value: HAS_A | HAS_B };
+    test_struct.selector = SomeBitMask {
+        bitmask_value: HAS_A | HAS_B,
+    };
 
     test_struct.value_a = 123;
     test_struct.value_b = 456;

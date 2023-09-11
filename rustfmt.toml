@@ -1,6 +1,6 @@
 ignore = [
     "src/internal/parser/gen",
-    "tests/round-trip-tests"
+    "tests/reference-module-lib"
 ]
 
 unstable_features = true
