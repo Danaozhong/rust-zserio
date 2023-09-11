@@ -7,10 +7,18 @@ members = [
 
 [package]
 name = "rust-zserio"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+authors = ["Clemens Zangl <clemens.zangl@gmail.com>"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = """
+Rust bindings for the zserio serialization protocol.
+"""
+
+documentation = "https://docs.rs/rust-zserio"
+homepage = "https://github.com/Danaozhong/rust-zserio"
+repository = "https://github.com/Danaozhong/rust-zserio"
+license = "BSD-3-Clause"
 
 [dependencies]
 antlr-rust = "0.3.0-beta"
@@ -24,6 +32,6 @@ half = "2.3.1"
 num = "0.4.0"
 proc-macro2 = "1.0.66"
 rstest = "0.16.0"
-rust-bitwriter = { git = "https://github.com/Danaozhong/rust-bitwriter.git", branch = "main" }
+rust-bitwriter = "0.0.1"
 rust-format = "0.3.4"
 walkdir = "2.3.2"
