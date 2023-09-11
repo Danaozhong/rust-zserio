@@ -1,11 +1,11 @@
-use crate::reference_modules::integer_types::integer_types::integer_types_test::IntegerTypesTest;
 use bitreader::BitReader;
+use reference_module_lib::reference_modules::integer_types::integer_types::integer_types_test::IntegerTypesTest;
 use rust_bitwriter::BitWriter;
 
 use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_integer_types() {
-    let test_struct = IntegerTypesTest{
+    let test_struct = IntegerTypesTest {
         i_16_value: -1,
         i_32_value: -2,
         i_64_value: -3,

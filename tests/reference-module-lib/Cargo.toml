@@ -1,5 +1,5 @@
 [package]
-name = "round-trip-tests"
+name = "reference-module-lib"
 version = "0.0.1"
 edition = "2021"
 
@@ -9,7 +9,6 @@ edition = "2021"
 bitreader =  "0.3.8"
 rust-bitwriter = "0.0.1"
 rust-zserio = { path = "../.." }
-reference-module-lib = { path = "../reference-module-lib" }
 
 [build-dependencies]
 rust-zserio = { path = "../.." }

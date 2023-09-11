@@ -1,4 +1,4 @@
-use crate::reference_modules::parameter_passing::parameter_passing::{
+use reference_module_lib::reference_modules::parameter_passing::parameter_passing::{
     block::Block, parameter_passing::ParameterPassing,
 };
 

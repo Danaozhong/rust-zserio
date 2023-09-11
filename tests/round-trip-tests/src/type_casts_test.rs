@@ -1,4 +1,4 @@
-use crate::reference_modules::type_casts::type_casts::type_cast_struct::TypeCastStruct;
+use reference_module_lib::reference_modules::type_casts::type_casts::type_cast_struct::TypeCastStruct;
 
 use rust_zserio::ztype::ZserioPackableObject;
 

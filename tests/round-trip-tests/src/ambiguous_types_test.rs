@@ -1,4 +1,4 @@
-use crate::reference_modules::ambiguous_types::main::ambiguous_types_struct::AmbiguousTypesStruct;
+use reference_module_lib::reference_modules::ambiguous_types::main::ambiguous_types_struct::AmbiguousTypesStruct;
 use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_ambiguous_types() {

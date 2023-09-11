@@ -1,8 +1,8 @@
-use crate::reference_modules::alignment::alignment::alignment_struct::AlignmentStruct;
+use reference_module_lib::reference_modules::alignment::alignment::alignment_struct::AlignmentStruct;
 
-use rust_zserio::ztype::ZserioPackableObject;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
+use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_alignment() {
     let mut test_struct = AlignmentStruct::new();
@@ -19,7 +19,6 @@ pub fn test_alignment() {
     test_struct.bo_value_3 = true;
     assert!(test_struct.zserio_bitsize(0) == 21);
 }
-
 
 pub fn test_alignment_roundtrip() {
     let mut test_struct = AlignmentStruct::new();

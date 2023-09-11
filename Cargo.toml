@@ -2,6 +2,7 @@
 
 members = [
     ".",
+    "tests/reference-module-lib",
     "tests/round-trip-tests",
 ]
 

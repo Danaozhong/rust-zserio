@@ -16,7 +16,7 @@ pub fn get_type_parameter(
         Symbol::Choice(zchoice) => zchoice.borrow().type_parameters.clone(),
         Symbol::Struct(zstruct) => zstruct.borrow().type_parameters.clone(),
         Symbol::Union(zunion) => zunion.borrow().type_parameters.clone(),
-        _ => panic!("type is not parameterizable"),
+        _ => panic!("type cannot be parameterized"),
     };
 }
 

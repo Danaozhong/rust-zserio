@@ -3,6 +3,7 @@ use crate::internal::compiler::fundamental_type::{
     get_fundamental_type, FundamentalZserioTypeReference,
 };
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::casts::expression_requires_cast;
 use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
@@ -195,11 +196,25 @@ pub fn encode_field(
             // In the future, this should be replaced by using
             // proper error handling, and reporting the error back to
             // the caller.
+
+            // Check if casts are needed.
+            let mut rvalue = generate_expression(&type_argument, type_generator);
+            if expression_requires_cast(
+                &type_parameter.borrow().zserio_type,
+                type_generator,
+                &type_argument,
+            ) {
+                rvalue = format!(
+                    "{} as {}",
+                    rvalue,
+                    type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+                );
+            }
             function.line(format!(
                 "assert!({}.{} == {});",
                 &element_name,
                 convert_field_name(&type_parameter.borrow().name),
-                generate_expression(&type_argument, type_generator),
+                rvalue,
             ));
         }
 
