@@ -19,3 +19,6 @@ import reference_modules.constants.constants.*;
 import reference_modules.integer_types.integer_types.*;
 import reference_modules.alignment.alignment.*;
 import reference_modules.packed_arrays.packed_arrays.*;
+import reference_modules.subtyped_dot_expression.subtyped_enum.*;
+import reference_modules.subtyped_dot_expression.test_enum.*;
+import reference_modules.subtyped_dot_expression.test.*;
