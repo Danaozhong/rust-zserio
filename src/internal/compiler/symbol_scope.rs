@@ -244,6 +244,7 @@ fn get_symbol_name(symbol: &Symbol) -> String {
         Symbol::Choice(c) => c.as_ref().borrow().name.clone(),
         Symbol::Subtype(s) => s.as_ref().borrow().name.clone(),
         Symbol::Enum(e) => e.as_ref().borrow().name.clone(),
+        Symbol::Bitmask(bitmask) => bitmask.as_ref().borrow().name.clone(),
         _ => "".into(),
     };
 }

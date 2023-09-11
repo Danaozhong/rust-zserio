@@ -175,7 +175,7 @@ impl Expression {
     fn evaluate_dot_expression(&mut self, scope: &mut ModelScope) {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(_op2)) => match &op1.result_type {
-                ExpressionType::Enum(_z_enum) => {
+                ExpressionType::Enum(_) => {
                     self.evaluate_enum_dot_expression();
                 }
                 ExpressionType::BitMask(_) => {

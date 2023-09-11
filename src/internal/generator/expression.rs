@@ -179,23 +179,23 @@ fn generate_dot_expression(expression: &Expression, type_generator: &TypeGenerat
     let op1 = expression.operand1.as_ref().unwrap();
 
     return match &op1.result_type {
-        ExpressionType::Enum(z_enum) => {
+        ExpressionType::Enum(_) => {
+            let expr_symbol = op1.symbol.as_ref().unwrap();
             let enum_expression = format!(
                 "{}::{}",
-                custom_type_to_rust_type(&z_enum.borrow().name),
+                custom_type_to_rust_type(&expr_symbol.name),
                 convert_to_enum_field_name(&expression.operand2.as_ref().unwrap().text)
             );
-            type_generator
-                .get_full_module_path(&op1.symbol.as_ref().unwrap().package, &enum_expression)
+            type_generator.get_full_module_path(&expr_symbol.package, &enum_expression)
         }
-        ExpressionType::BitMask(z_bitmask) => {
+        ExpressionType::BitMask(_) => {
+            let bitmask_symbol = op1.symbol.as_ref().unwrap();
             let bitmask_expression = format!(
                 "{}::{}",
-                to_rust_module_name(&z_bitmask.borrow().name),
+                to_rust_module_name(&bitmask_symbol.name),
                 to_rust_constant_name(&expression.operand2.as_ref().unwrap().text)
             );
-            type_generator
-                .get_full_module_path(&op1.symbol.as_ref().unwrap().package, &bitmask_expression)
+            type_generator.get_full_module_path(&bitmask_symbol.package, &bitmask_expression)
         }
         ExpressionType::Compound => {
             match &op1
