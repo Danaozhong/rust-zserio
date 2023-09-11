@@ -7,6 +7,7 @@ pub mod optional_values_test;
 pub mod packed_arrays_test;
 pub mod parameter_passing_test;
 pub mod parameterized_array_length_test;
+pub mod subtyped_dot_expression;
 pub mod template_instantiation_test;
 pub mod type_casts_test;
 
@@ -36,6 +37,7 @@ use crate::optional_values_test::{
 use crate::packed_arrays_test::test_packed_arrays;
 use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
 use crate::parameterized_array_length_test::test_parameterized_array_length;
+use crate::subtyped_dot_expression::test_subtyped_dot_expression;
 use crate::type_casts_test::test_type_casts;
 
 fn main() {
@@ -63,6 +65,7 @@ fn main() {
     test_packed_arrays();
     // Disabled for now, comparison tests with the reference implementation are still a TODO
     //packed_arrays_serialize_to_file();
+    test_subtyped_dot_expression();
 }
 
 fn test_structure() {

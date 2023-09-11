@@ -4,6 +4,7 @@ use crate::internal::ast::evaluate_mixing_native_types::{
     evaluate_mixing_float_types, evaluate_mixing_integer_types,
 };
 use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, ScopeLocation, Symbol, SymbolReference};
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LENGTHOF, LOGICAL_AND, LOGICAL_OR,
@@ -174,7 +175,7 @@ impl Expression {
     fn evaluate_dot_expression(&mut self, scope: &mut ModelScope) {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(_op2)) => match &op1.result_type {
-                ExpressionType::Enum(_z_enum) => {
+                ExpressionType::Enum(_) => {
                     self.evaluate_enum_dot_expression();
                 }
                 ExpressionType::BitMask(_) => {
@@ -263,7 +264,8 @@ impl Expression {
             ),
         };
 
-        let compound_symbol = scope.get_symbol(&type_ref);
+        let fundamental_type = get_fundamental_type(&type_ref, scope);
+        let compound_symbol = scope.get_symbol(&fundamental_type.fundamental_type);
         scope.scope_stack.push(ScopeLocation {
             package: compound_symbol.package.clone(),
             import_symbol: None,
