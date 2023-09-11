@@ -1,3 +1,4 @@
+use crate::internal::generator::casts::expression_requires_cast;
 use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
@@ -231,12 +232,29 @@ pub fn decode_field(
             if !type_argument.fully_resolved {
                 requires_cloning = ".clone()".into();
             }
+            let mut rvalue = format!(
+                "{}{}",
+                generate_expression(&type_argument, type_generator),
+                requires_cloning
+            );
+
+            if expression_requires_cast(
+                &type_parameter.borrow().zserio_type,
+                type_generator,
+                &type_argument,
+            ) {
+                rvalue = format!(
+                    "{} as {}",
+                    rvalue,
+                    type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+                );
+            }
+
             function.line(format!(
-                "{}.{} = {}{};",
+                "{}.{} = {};",
                 element_name,
                 convert_field_name(&type_parameter.borrow().name),
-                generate_expression(&type_argument, type_generator),
-                requires_cloning,
+                rvalue,
             ));
         }
 
