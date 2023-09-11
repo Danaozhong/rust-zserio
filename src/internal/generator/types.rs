@@ -46,7 +46,7 @@ pub fn remove_reserved_identifier(name: &str) -> String {
     if RESERVED_RUST_KEYWORDS.contains(&name.to_lowercase().as_str()) {
         return format!("z_{}", name);
     }
-    return name.into();
+    name.into()
 }
 pub fn to_rust_module_name(name: &str) -> String {
     name.to_case(Case::Snake)

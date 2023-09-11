@@ -1,4 +1,5 @@
 use crate::internal::generator::file_generator::write_to_file;
+use crate::internal::generator::types::to_rust_module_name;
 use crate::internal::model::Model;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -13,11 +14,13 @@ fn add_package_to_tree(tree_node: &Rc<RefCell<ZserioModuleTreeNode>>, pkg_name: 
     let mut current_node: Rc<RefCell<ZserioModuleTreeNode>> = tree_node.clone();
     //let mut current_node = tree_node;
     for module_path in pkg_name.split('.') {
+        let rust_module_name = to_rust_module_name(module_path);
+
         if let Some(child_node) = current_node
             .clone()
             .borrow()
             .children
-            .get(&module_path.to_owned())
+            .get(&rust_module_name)
         {
             // The module is already known.
             current_node = child_node.clone();
@@ -25,7 +28,7 @@ fn add_package_to_tree(tree_node: &Rc<RefCell<ZserioModuleTreeNode>>, pkg_name: 
         }
         // The module is not known yet. Need to create it.
         current_node.borrow_mut().children.insert(
-            module_path.into(),
+            rust_module_name.clone(),
             Rc::from(RefCell::from(ZserioModuleTreeNode {
                 children: HashMap::new(),
             })),
@@ -33,7 +36,7 @@ fn add_package_to_tree(tree_node: &Rc<RefCell<ZserioModuleTreeNode>>, pkg_name: 
         let new_node = current_node
             .borrow()
             .children
-            .get(&module_path.to_owned())
+            .get(&rust_module_name)
             .unwrap()
             .clone();
         current_node = new_node;
