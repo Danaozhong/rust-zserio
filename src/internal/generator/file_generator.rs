@@ -1,3 +1,4 @@
+use crate::internal::generator::types::to_rust_module_name;
 use rust_format::{Formatter, RustFmt};
 use std::fs;
 use std::io::Write;
@@ -17,7 +18,7 @@ pub fn write_to_file(content: &String, root_path: &Path, zserio_pkg_name: &str, 
 
     let mut file_path = root_path.to_owned();
     for dir in String::from(zserio_pkg_name).split('.') {
-        file_path = file_path.join(dir);
+        file_path = file_path.join(to_rust_module_name(dir));
     }
     fs::create_dir_all(file_path.as_path()).expect("mkdir failed");
     let filename = file_path.join(String::from(file_name) + ".rs");
