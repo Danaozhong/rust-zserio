@@ -49,16 +49,16 @@ pub fn remove_reserved_identifier(name: &str) -> String {
     name.into()
 }
 pub fn to_rust_module_name(name: &str) -> String {
-    name.to_case(Case::Snake)
+    remove_reserved_identifier(name).to_case(Case::Snake)
 }
 
 pub fn to_rust_type_name(name: &str) -> String {
-    name.to_case(Case::UpperCamel)
+    remove_reserved_identifier(name).to_case(Case::UpperCamel)
 }
 
 /// Translates a zserio name to a rust constant name.
 pub fn to_rust_constant_name(name: &str) -> String {
-    name.to_ascii_uppercase()
+    remove_reserved_identifier(name).to_ascii_uppercase()
 }
 
 pub fn convert_field_name(name: &str) -> String {

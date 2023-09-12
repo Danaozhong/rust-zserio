@@ -2,9 +2,9 @@ use crate::internal::ast::package::ZPackage;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::file_generator::write_to_file;
 use crate::internal::generator::{
-    subtype::generate_subtype, types::to_rust_module_name, types::TypeGenerator,
-    zbitmask::generate_bitmask, zchoice::generate_choice, zconst::generate_constant,
-    zenum::generate_enum, zstruct::generate_struct, zunion::generate_union,
+    subtype::generate_subtype, types::TypeGenerator, zbitmask::generate_bitmask,
+    zchoice::generate_choice, zconst::generate_constant, zenum::generate_enum,
+    zstruct::generate_struct, zunion::generate_union,
 };
 use codegen::Scope;
 use std::path::Path;
@@ -15,7 +15,7 @@ pub fn generate_package(
     package_directory: &Path,
     root_package: &str,
 ) {
-    let package_name = to_rust_module_name(&package.name);
+    let package_name = &package.name;
     let mut module_names = Vec::new();
     let type_generator = TypeGenerator {
         root_package_name: root_package.to_owned(),
@@ -35,7 +35,7 @@ pub fn generate_package(
             &mut gen_scope,
             &z_struct,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -53,7 +53,7 @@ pub fn generate_package(
             &mut gen_scope,
             &z_choice,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -71,7 +71,7 @@ pub fn generate_package(
             &mut gen_scope,
             &zunion,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -85,7 +85,7 @@ pub fn generate_package(
             &mut gen_scope,
             &z_enum,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -99,7 +99,7 @@ pub fn generate_package(
             &mut gen_scope,
             &zbitmask,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -116,7 +116,7 @@ pub fn generate_package(
             &type_generator,
             &zsubtype,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -130,7 +130,7 @@ pub fn generate_package(
             &mut codegen_scope,
             &zconst,
             package_directory,
-            &package_name,
+            package_name,
         ));
     }
 
@@ -149,5 +149,5 @@ pub fn generate_package(
         mod_file_content += format!("pub mod {};\n", module_name).as_str();
     }
 
-    write_to_file(&mod_file_content, package_directory, &package_name, "mod");
+    write_to_file(&mod_file_content, package_directory, package_name, "mod");
 }
