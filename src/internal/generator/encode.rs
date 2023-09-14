@@ -101,7 +101,10 @@ pub fn encode_type(
     }
 }
 
-pub fn requires_borrowing(native_type: &FundamentalZserioTypeReference) -> bool {
+pub fn requires_borrowing(field: &Field, native_type: &FundamentalZserioTypeReference) -> bool {
+    if field.array.is_some() {
+        return true;
+    }
     if native_type.is_marshaler {
         return true;
     }
@@ -137,10 +140,13 @@ pub fn encode_field(
         function.line(format!("ztype::align_writer(writer, {});", field.alignment));
     }
 
+    let mut field_is_borrowed = false;
     if field.is_optional {
         // If the type is a marshaller, take it by reference.
+        field_is_borrowed = requires_borrowing(field, &native_type);
+
         let mut borrow_symbol = String::from("");
-        if requires_borrowing(&native_type) {
+        if field_is_borrowed {
             borrow_symbol = "&".into();
         }
 
@@ -179,7 +185,11 @@ pub fn encode_field(
                     field_name
                 ));
             } else {
-                function.line(format!("for element in &{} {{", field_name));
+                let mut borrow_symbol = String::from("");
+                if !field_is_borrowed {
+                    borrow_symbol = "&".into();
+                }
+                function.line(format!("for element in {}{} {{", borrow_symbol, field_name));
             }
         }
 

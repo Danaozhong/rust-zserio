@@ -139,7 +139,7 @@ pub fn bitsize_field(
         function.line("end_position += 1;");
         // If the type is a marshaller, take it by reference.
         let mut borrow_symbol = String::from("");
-        if requires_borrowing(&native_type) {
+        if requires_borrowing(field, &native_type) {
             borrow_symbol = "&".into();
         }
 
