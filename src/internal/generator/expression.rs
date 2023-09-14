@@ -212,9 +212,6 @@ fn generate_dot_expression(
     let op1 = expression.operand1.as_ref().unwrap();
     let op2 = expression.operand2.as_ref().unwrap();
 
-    if expression.operand2.as_ref().unwrap().text == "selector_bitmask" {
-        print!("test {:?}", expression.symbol.as_ref().unwrap());
-    }
     return match &op1.result_type {
         ExpressionType::Enum(_) => {
             let expr_symbol = op1.symbol.as_ref().unwrap();
