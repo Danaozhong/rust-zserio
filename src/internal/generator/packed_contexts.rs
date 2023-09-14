@@ -134,7 +134,7 @@ pub fn generate_init_packed_context_for_field(
     if field_details.field.borrow().is_optional {
         // If the type is a marshaller, take it by reference.
         let mut borrow_symbol = String::from("");
-        if requires_borrowing(&field_details.native_type) {
+        if requires_borrowing(&field_details.field.borrow(), &field_details.native_type) {
             borrow_symbol = "&".into();
         }
 
