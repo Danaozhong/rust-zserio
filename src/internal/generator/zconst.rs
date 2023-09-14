@@ -46,7 +46,11 @@ pub fn generate_constant(
         "pub const {}: {} = {};\n",
         to_rust_constant_name(&zconst.name),
         field_type,
-        generate_expression(&zconst.value_expression.borrow(), type_generator),
+        generate_expression(
+            &zconst.value_expression.borrow(),
+            type_generator,
+            symbol_scope
+        ),
     )
     .as_str();
 

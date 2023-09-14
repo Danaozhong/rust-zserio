@@ -131,7 +131,12 @@ pub fn generate_choice(
     // Generate all the zserio functions.
     let pub_impl = codegen_scope.new_impl(&rust_type_name);
     for zserio_function in &zchoice.functions {
-        generate_function(pub_impl, type_generator, &zserio_function.as_ref().borrow());
+        generate_function(
+            symbol_scope,
+            pub_impl,
+            type_generator,
+            &zserio_function.as_ref().borrow(),
+        );
     }
 
     write_to_file(
@@ -161,6 +166,7 @@ pub fn generate_choice_match_construct(
             case_expressions.push(generate_expression(
                 &case_expr.as_ref().borrow(),
                 type_generator,
+                symbol_scope,
             ));
         }
         let selector_expression_evaluation = case_expressions.join(" | ");

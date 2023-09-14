@@ -127,7 +127,12 @@ pub fn generate_struct(
     // Generate all the zserio functions (defined in the zserio language).
     let pub_impl = codegen_scope.new_impl(&rust_type_name);
     for zserio_function in &zstruct.functions {
-        generate_function(pub_impl, type_generator, &zserio_function.as_ref().borrow());
+        generate_function(
+            symbol_scope,
+            pub_impl,
+            type_generator,
+            &zserio_function.as_ref().borrow(),
+        );
     }
 
     write_to_file(

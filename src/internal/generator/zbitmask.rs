@@ -90,7 +90,7 @@ pub fn generate_bitmask(
     init_packing_context_fn.arg_ref_self();
     init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
     init_packing_context_fn.line(format!("context_node.children[0].context.as_mut().unwrap().init(&{}, &(self.bitmask_value as {}));", 
-        &initialize_array_trait(type_generator, &fundamental_type.fundamental_type),
+        &initialize_array_trait(scope, type_generator, &fundamental_type.fundamental_type),
         &bitmask_rust_type,
     ));
 
