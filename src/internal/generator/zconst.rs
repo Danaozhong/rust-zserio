@@ -4,22 +4,20 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::expression::generate_expression;
 use crate::internal::generator::file_generator::write_to_file;
 use crate::internal::generator::preamble::add_standard_imports;
-use crate::internal::generator::{
-    types::to_rust_constant_name, types::to_rust_module_name, types::TypeGenerator,
-};
+use crate::internal::generator::{types::to_rust_constant_name, types::TypeGenerator};
 use std::path::Path;
 
 use codegen::Scope;
 
 pub fn generate_constant(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     codegen_scope: &mut Scope,
     zconst: &ZConst,
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = to_rust_module_name(&zconst.name);
+    let rust_module_name = type_generator.to_rust_module_name(&zconst.name);
 
     add_standard_imports(codegen_scope);
 
@@ -54,6 +52,12 @@ pub fn generate_constant(
     )
     .as_str();
 
-    write_to_file(&file_content, path, package_name, &rust_module_name);
+    write_to_file(
+        type_generator,
+        &file_content,
+        path,
+        package_name,
+        &rust_module_name,
+    );
     rust_module_name
 }

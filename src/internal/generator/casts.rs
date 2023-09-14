@@ -5,7 +5,7 @@ use crate::internal::generator::types::TypeGenerator;
 pub fn requires_cast(
     target_type: &TypeReference,
     other_type: &TypeReference,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
 ) -> bool {
     let other_rust_type = type_generator.ztype_to_rust_type(other_type);
     let target_rust_type = type_generator.ztype_to_rust_type(target_type);
@@ -14,7 +14,7 @@ pub fn requires_cast(
 
 pub fn expression_requires_cast(
     target_type: &TypeReference,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     expression: &Expression,
 ) -> bool {
     match &expression.result_type {

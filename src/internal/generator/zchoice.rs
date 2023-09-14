@@ -12,22 +12,22 @@ use crate::internal::generator::{
     function::generate_function, new::new_field, new::new_param,
     packed_contexts::generate_init_packed_context_for_field,
     packed_contexts::generate_packed_context_for_field, packed_contexts::FieldDetails,
-    preamble::add_standard_imports, types::convert_field_name, types::to_rust_module_name,
-    types::to_rust_type_name, types::TypeGenerator, zstruct::generate_struct_member_for_field,
+    preamble::add_standard_imports, types::TypeGenerator,
+    zstruct::generate_struct_member_for_field,
 };
 
 use std::path::Path;
 
 pub fn generate_choice(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     codegen_scope: &mut Scope,
     zchoice: &ZChoice,
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = to_rust_module_name(&zchoice.name);
-    let rust_type_name = to_rust_type_name(&zchoice.name);
+    let rust_module_name = type_generator.to_rust_module_name(&zchoice.name);
+    let rust_type_name = type_generator.to_rust_type_name(&zchoice.name);
 
     let mut field_details = vec![];
     let mut field_idx = 0;
@@ -71,7 +71,7 @@ pub fn generate_choice(
         // painful in rust due to the lifetime checks.
         // Because I am lazy, this implementation will just copy values over.
         let gen_param_field = gen_choice.new_field(
-            convert_field_name(&param.as_ref().borrow().name),
+            type_generator.convert_field_name(&param.as_ref().borrow().name),
             param_type,
         );
         gen_param_field.vis("pub");
@@ -140,6 +140,7 @@ pub fn generate_choice(
     }
 
     write_to_file(
+        type_generator,
         &codegen_scope.to_string(),
         path,
         package_name,
@@ -150,13 +151,14 @@ pub fn generate_choice(
 
 pub fn generate_choice_match_construct(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     code_gen_fn: &mut Function,
     zchoice: &ZChoice,
     packed: bool,
-    f: &dyn Fn(&ModelScope, &TypeGenerator, &mut Function, &Field, Option<u8>),
+    f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut Function, &Field, Option<u8>),
 ) {
-    let selector_name = convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
+    let selector_name =
+        type_generator.convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
     let mut context_node_index = 0;
 
     code_gen_fn.line(format!("match self.{} {{", selector_name));
@@ -226,7 +228,7 @@ pub fn generate_choice_match_construct(
 
 fn generate_zserio_read(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     choice: &ZChoice,
 ) {
@@ -259,7 +261,7 @@ fn generate_zserio_read(
 
 fn generate_zserio_write(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     choice: &ZChoice,
 ) {
@@ -291,7 +293,7 @@ fn generate_zserio_write(
 
 fn generate_zserio_bitsize(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     choice: &ZChoice,
 ) {

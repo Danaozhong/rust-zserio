@@ -10,16 +10,13 @@ use codegen::Scope;
 use std::path::Path;
 
 pub fn generate_package(
+    type_generator: &mut TypeGenerator,
     symbol_scope: &ModelScope,
     package: &ZPackage,
     package_directory: &Path,
-    root_package: &str,
 ) {
     let package_name = &package.name;
     let mut module_names = Vec::new();
-    let type_generator = TypeGenerator {
-        root_package_name: root_package.to_owned(),
-    };
 
     // Generate  the rust code for zserio structures.
     for z_struct_ref_cell in package.structs.values() {
@@ -31,7 +28,7 @@ pub fn generate_package(
         let mut gen_scope = Scope::new();
         module_names.push(generate_struct(
             symbol_scope,
-            &type_generator,
+            type_generator,
             &mut gen_scope,
             &z_struct,
             package_directory,
@@ -49,7 +46,7 @@ pub fn generate_package(
         let mut gen_scope = Scope::new();
         module_names.push(generate_choice(
             symbol_scope,
-            &type_generator,
+            type_generator,
             &mut gen_scope,
             &z_choice,
             package_directory,
@@ -67,7 +64,7 @@ pub fn generate_package(
         let mut gen_scope = Scope::new();
         module_names.push(generate_union(
             symbol_scope,
-            &type_generator,
+            type_generator,
             &mut gen_scope,
             &zunion,
             package_directory,
@@ -81,7 +78,7 @@ pub fn generate_package(
         let mut gen_scope = Scope::new();
         module_names.push(generate_enum(
             symbol_scope,
-            &type_generator,
+            type_generator,
             &mut gen_scope,
             &z_enum,
             package_directory,
@@ -95,7 +92,7 @@ pub fn generate_package(
         let mut gen_scope = Scope::new();
         module_names.push(generate_bitmask(
             symbol_scope,
-            &type_generator,
+            type_generator,
             &mut gen_scope,
             &zbitmask,
             package_directory,
@@ -113,7 +110,7 @@ pub fn generate_package(
         let mut codegen_scope = Scope::new();
         module_names.push(generate_subtype(
             &mut codegen_scope,
-            &type_generator,
+            type_generator,
             &zsubtype,
             package_directory,
             package_name,
@@ -126,7 +123,7 @@ pub fn generate_package(
         let mut codegen_scope = Scope::new();
         module_names.push(generate_constant(
             symbol_scope,
-            &type_generator,
+            type_generator,
             &mut codegen_scope,
             &zconst,
             package_directory,
@@ -149,5 +146,11 @@ pub fn generate_package(
         mod_file_content += format!("pub mod {};\n", module_name).as_str();
     }
 
-    write_to_file(&mod_file_content, package_directory, package_name, "mod");
+    write_to_file(
+        type_generator,
+        &mod_file_content,
+        package_directory,
+        package_name,
+        "mod",
+    );
 }

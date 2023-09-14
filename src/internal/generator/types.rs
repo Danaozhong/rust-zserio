@@ -1,24 +1,63 @@
 use crate::internal::ast::type_reference::TypeReference;
 use convert_case::{Case, Casing};
-use std::result::Result;
+use std::{collections::HashMap, result::Result};
 
 const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct", "self"];
 
 pub struct TypeGenerator {
     pub root_package_name: String,
+
+    // rust is super-slow in converting strings (e.g.
+    // upper/lower/camel/snake case), we keep track of
+    // all conversions already done, and simply reuse them
+    package_convert_cache: HashMap<String, String>,
+    field_name_cache: HashMap<String, String>,
+    module_name_cache: HashMap<String, String>,
+    type_name_cache: HashMap<String, String>,
 }
 
 impl TypeGenerator {
-    pub fn zserio_package_to_rust_module(&self, package: &str) -> String {
+    pub fn new(root_package_name: String) -> Self {
+        Self {
+            root_package_name,
+            package_convert_cache: HashMap::new(),
+            field_name_cache: HashMap::new(),
+            module_name_cache: HashMap::new(),
+            type_name_cache: HashMap::new(),
+        }
+    }
+    pub fn zserio_package_to_rust_module(&mut self, package: &str) -> String {
         assert!(!package.is_empty(), "package type has not been resolved");
+
+        // Try to read from cache, if it already exists
+        if let Some(converted_package) = self.package_convert_cache.get(&package.to_owned()) {
+            return converted_package.clone();
+        }
+
         let mut root_package = String::from("crate");
         if !self.root_package_name.is_empty() {
             root_package = format!("crate::{}", &self.root_package_name);
         }
-        format!("{}::{}", &root_package, package.replace('.', "::"))
+        for module in package.split('.') {
+            root_package = format!("{}::{}", root_package, self.to_rust_module_name(module));
+        }
+        // Keep the converted string in cache
+        self.package_convert_cache
+            .insert(package.to_owned(), root_package.clone());
+        root_package
     }
 
-    pub fn ztype_to_rust_type(&self, ztype: &TypeReference) -> String {
+    pub fn convert_field_name(&mut self, name: &str) -> String {
+        if let Some(converted_field_name) = self.field_name_cache.get(&name.to_owned()) {
+            return converted_field_name.clone();
+        }
+        let converted_field_name = remove_reserved_identifier(name).to_case(Case::Snake);
+        self.field_name_cache
+            .insert(name.to_owned(), converted_field_name.clone());
+        converted_field_name
+    }
+
+    pub fn ztype_to_rust_type(&mut self, ztype: &TypeReference) -> String {
         if ztype.is_builtin {
             // the type is a zserio built-in type, such as int32, string, bool
             return zserio_to_rust_type(&ztype.name)
@@ -29,15 +68,53 @@ impl TypeGenerator {
         format!(
             "{}::{}",
             self.zserio_package_to_rust_module(&ztype.package),
-            custom_type_to_rust_type(&ztype.name)
+            self.custom_type_to_rust_type(&ztype.name)
         )
     }
 
-    pub fn get_full_module_path(&self, package: &str, rust_symbol_name: &str) -> String {
+    pub fn get_full_module_path(&mut self, package: &str, rust_symbol_name: &str) -> String {
         format!(
             "{}::{}",
             self.zserio_package_to_rust_module(package),
             rust_symbol_name,
+        )
+    }
+
+    pub fn to_rust_module_name(&mut self, name: &str) -> String {
+        // Try to read from cache, if it already exists
+        if let Some(converted_module_name) = self.module_name_cache.get(&name.to_owned()) {
+            return converted_module_name.clone();
+        }
+
+        let rust_module_name = remove_reserved_identifier(name).to_case(Case::Snake);
+        self.module_name_cache
+            .insert(name.to_owned(), rust_module_name.clone());
+        rust_module_name
+    }
+
+    pub fn to_rust_type_name(&mut self, name: &str) -> String {
+        if let Some(converted_rust_type_name) = self.type_name_cache.get(&name.to_owned()) {
+            return converted_rust_type_name.clone();
+        }
+        let rust_type_name = remove_reserved_identifier(name).to_case(Case::UpperCamel);
+        self.type_name_cache
+            .insert(name.to_owned(), rust_type_name.clone());
+        rust_type_name
+    }
+
+    pub fn custom_type_to_rust_type(&mut self, name: &str) -> String {
+        format!(
+            "{}::{}",
+            self.to_rust_module_name(name),
+            self.to_rust_type_name(name)
+        )
+    }
+
+    pub fn constant_type_to_rust_type(&mut self, name: &str) -> String {
+        format!(
+            "{}::{}",
+            self.to_rust_module_name(name),
+            to_rust_constant_name(name)
         )
     }
 }
@@ -48,21 +125,10 @@ pub fn remove_reserved_identifier(name: &str) -> String {
     }
     name.into()
 }
-pub fn to_rust_module_name(name: &str) -> String {
-    remove_reserved_identifier(name).to_case(Case::Snake)
-}
-
-pub fn to_rust_type_name(name: &str) -> String {
-    remove_reserved_identifier(name).to_case(Case::UpperCamel)
-}
 
 /// Translates a zserio name to a rust constant name.
 pub fn to_rust_constant_name(name: &str) -> String {
     remove_reserved_identifier(name).to_ascii_uppercase()
-}
-
-pub fn convert_field_name(name: &str) -> String {
-    remove_reserved_identifier(name).to_case(Case::Snake)
 }
 
 pub fn convert_to_enum_field_name(name: &str) -> String {
@@ -76,18 +142,6 @@ pub fn convert_to_union_selector_name(field_name: &str) -> String {
 pub fn convert_to_function_name(name: &str) -> String {
     // Converts a function name from zserio style to rust style (snake case).
     remove_reserved_identifier(name).to_case(Case::Snake)
-}
-
-pub fn custom_type_to_rust_type(name: &str) -> String {
-    format!("{}::{}", to_rust_module_name(name), to_rust_type_name(name))
-}
-
-pub fn constant_type_to_rust_type(name: &str) -> String {
-    format!(
-        "{}::{}",
-        to_rust_module_name(name),
-        to_rust_constant_name(name)
-    )
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {

@@ -1,5 +1,5 @@
 use crate::internal::generator::file_generator::write_to_file;
-use crate::internal::generator::types::to_rust_module_name;
+use crate::internal::generator::types::TypeGenerator;
 use crate::internal::model::Model;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -10,11 +10,15 @@ struct ZserioModuleTreeNode {
     children: HashMap<String, Rc<RefCell<ZserioModuleTreeNode>>>,
 }
 
-fn add_package_to_tree(tree_node: &Rc<RefCell<ZserioModuleTreeNode>>, pkg_name: &str) {
+fn add_package_to_tree(
+    type_generator: &mut TypeGenerator,
+    tree_node: &Rc<RefCell<ZserioModuleTreeNode>>,
+    pkg_name: &str,
+) {
     let mut current_node: Rc<RefCell<ZserioModuleTreeNode>> = tree_node.clone();
     //let mut current_node = tree_node;
     for module_path in pkg_name.split('.') {
-        let rust_module_name = to_rust_module_name(module_path);
+        let rust_module_name = type_generator.to_rust_module_name(module_path);
 
         if let Some(child_node) = current_node
             .clone()
@@ -68,14 +72,19 @@ fn generate_mod_section(
 
 /// This function generates the top-level mod file, which adds all generated packages
 /// to the known packages.
-pub fn generate_top_level_mod_file(model: &Model, package_directory: &Path, root_package: &str) {
+pub fn generate_top_level_mod_file(
+    type_generator: &mut TypeGenerator,
+    model: &Model,
+    package_directory: &Path,
+    root_package: &str,
+) {
     // Reorganize the packages into a tree structure, categorized by module.
     let module_tree_root = Rc::from(RefCell::from(ZserioModuleTreeNode {
         children: HashMap::new(),
     }));
 
     for package in model.packages.values() {
-        add_package_to_tree(&module_tree_root, &package.name);
+        add_package_to_tree(type_generator, &module_tree_root, &package.name);
     }
 
     // Generate the mod.rs file content.
@@ -96,5 +105,11 @@ pub fn generate_top_level_mod_file(model: &Model, package_directory: &Path, root
         filename = "lib";
     }
 
-    write_to_file(&mod_file_content, package_directory, "", filename);
+    write_to_file(
+        type_generator,
+        &mod_file_content,
+        package_directory,
+        "",
+        filename,
+    );
 }

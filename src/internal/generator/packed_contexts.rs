@@ -6,9 +6,7 @@ use crate::internal::compiler::fundamental_type::{
 };
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use crate::internal::generator::encode::requires_borrowing;
-use crate::internal::generator::{
-    expression::generate_boolean_expression, types::convert_field_name, types::TypeGenerator,
-};
+use crate::internal::generator::{expression::generate_boolean_expression, types::TypeGenerator};
 use codegen::Function;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -29,10 +27,10 @@ impl FieldDetails {
         field_rc: &Rc<RefCell<Field>>,
         field_index: usize,
         symbol_scope: &ModelScope,
-        type_generator: &TypeGenerator,
+        type_generator: &mut TypeGenerator,
     ) -> Self {
         let field = &field_rc.borrow();
-        let field_name = convert_field_name(&field.name);
+        let field_name = type_generator.convert_field_name(&field.name);
         let field_context_node_name = format!("field_{}_node", &field_name);
 
         FieldDetails {
@@ -114,7 +112,7 @@ pub fn generate_packed_context_for_field(
 
 pub fn generate_init_packed_context_for_field(
     model_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     fn_gen: &mut Function,
     field_details: &FieldDetails,
 ) {
