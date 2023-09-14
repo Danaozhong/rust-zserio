@@ -49,7 +49,7 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
 
 pub fn initialize_array_trait(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     zserio_type: &TypeReference,
 ) -> String {
     let mut code_str = format!(
@@ -94,7 +94,7 @@ pub fn initialize_array_trait(
 
 pub fn instantiate_zserio_array(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     field: &Field,
     force_packed: bool,

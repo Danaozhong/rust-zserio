@@ -9,13 +9,13 @@ use crate::internal::ast::{field::Field, type_reference::TypeReference};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::new::get_default_initializer;
-use crate::internal::generator::types::{convert_field_name, TypeGenerator};
+use crate::internal::generator::types::TypeGenerator;
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
 pub fn decode_type(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     lvalue_field_name: &String,
     rvalue_field_name: &String,
@@ -115,13 +115,13 @@ pub fn decode_type(
 
 pub fn decode_field(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     field: &Field,
     context_node_index: Option<u8>,
 ) {
     let native_type = get_fundamental_type(&field.field_type, scope);
-    let field_name = convert_field_name(&field.name);
+    let field_name = type_generator.convert_field_name(&field.name);
     let mut rvalue_field_name = format!("self.{}", field_name);
     let mut lvalue_field_name = rvalue_field_name.clone();
     let raw_field_type = type_generator.ztype_to_rust_type(&field.field_type);
@@ -256,7 +256,7 @@ pub fn decode_field(
             function.line(format!(
                 "{}.{} = {};",
                 element_name,
-                convert_field_name(&type_parameter.borrow().name),
+                type_generator.convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
         }
@@ -287,7 +287,7 @@ pub fn decode_field(
     if field.is_optional {
         function.line(format!(
             "self.{} = Option::from(optional_value);",
-            convert_field_name(&field.name)
+            type_generator.convert_field_name(&field.name)
         ));
         function.line("}"); // close the "if present {"
     }

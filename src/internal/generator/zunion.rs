@@ -6,9 +6,7 @@ use crate::internal::generator::array::instantiate_zserio_array;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
-    preamble::add_standard_imports, types::convert_field_name,
-    types::convert_to_union_selector_name, types::to_rust_module_name, types::to_rust_type_name,
-    types::TypeGenerator,
+    preamble::add_standard_imports, types::convert_to_union_selector_name, types::TypeGenerator,
 };
 use codegen::Scope;
 use codegen::Struct;
@@ -16,7 +14,7 @@ use codegen::Struct;
 use std::path::Path;
 
 pub fn generate_struct_member_for_field(
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     gen_struct: &mut Struct,
     field: &Field,
 ) {
@@ -28,20 +26,21 @@ pub fn generate_struct_member_for_field(
     if field.is_optional {
         field_type = format!("Option<{}>", field_type.as_str());
     }
-    let gen_field = gen_struct.new_field(&convert_field_name(&field.name), &field_type);
+    let gen_field =
+        gen_struct.new_field(&type_generator.convert_field_name(&field.name), &field_type);
     gen_field.vis("pub");
 }
 
 pub fn generate_union(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     codegen_scope: &mut Scope,
     zunion: &ZUnion,
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = to_rust_module_name(&zunion.name);
-    let rust_type_name = to_rust_type_name(&zunion.name);
+    let rust_module_name = type_generator.to_rust_module_name(&zunion.name);
+    let rust_type_name = type_generator.to_rust_type_name(&zunion.name);
 
     // add the imports
     add_standard_imports(codegen_scope);
@@ -77,7 +76,7 @@ pub fn generate_union(
         ));
     }
 
-    union_selector_from_fn_scope.line("_ => panic!(\"unsupprted value\"),");
+    union_selector_from_fn_scope.line("_ => panic!(\"unsupported value\"),");
     union_selector_from_fn_scope.line("}");
 
     // generate the union itself
@@ -94,7 +93,7 @@ pub fn generate_union(
         // painful in rust due to the lifetime checks.
         // Because I am lazy, this implementation will just copy values over.
         let gen_param_field = gen_union.new_field(
-            convert_field_name(&param.as_ref().borrow().name),
+            type_generator.convert_field_name(&param.as_ref().borrow().name),
             param_type,
         );
         gen_param_field.vis("pub");
@@ -166,6 +165,7 @@ pub fn generate_union(
     }
 
     write_to_file(
+        type_generator,
         &codegen_scope.to_string(),
         path,
         package_name,
@@ -176,14 +176,14 @@ pub fn generate_union(
 
 pub fn generate_union_match_construct(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     code_gen_fn: &mut codegen::Function,
     zunion: &ZUnion,
     packed: bool,
-    f: &dyn Fn(&ModelScope, &TypeGenerator, &mut codegen::Function, &Field, Option<u8>),
+    f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut codegen::Function, &Field, Option<u8>),
 ) {
     let mut context_node_index = 0;
-    let rust_type_name = to_rust_type_name(&zunion.name);
+    let rust_type_name = type_generator.to_rust_type_name(&zunion.name);
     let selector_type_name = format!("{}Selector", &rust_type_name);
 
     code_gen_fn.line("match &self.union_selector {");
@@ -219,11 +219,11 @@ pub fn generate_union_match_construct(
 
 fn generate_zserio_read(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {
-    let rust_type_name = to_rust_type_name(&union.name);
+    let rust_type_name = type_generator.to_rust_type_name(&union.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
@@ -258,7 +258,7 @@ fn generate_zserio_read(
 
 fn generate_zserio_write(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {
@@ -293,7 +293,7 @@ fn generate_zserio_write(
 
 fn generate_zserio_bitsize(
     symbol_scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {

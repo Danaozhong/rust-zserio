@@ -8,13 +8,13 @@ use crate::internal::generator::expression::{generate_boolean_expression, genera
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
-use crate::internal::generator::types::{convert_field_name, TypeGenerator};
+use crate::internal::generator::types::TypeGenerator;
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 use codegen::Function;
 
 pub fn encode_type(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     field_name: &String,
     field_type: &TypeReference,
@@ -101,7 +101,10 @@ pub fn encode_type(
     }
 }
 
-pub fn requires_borrowing(native_type: &FundamentalZserioTypeReference) -> bool {
+pub fn requires_borrowing(field: &Field, native_type: &FundamentalZserioTypeReference) -> bool {
+    if field.array.is_some() {
+        return true;
+    }
     if native_type.is_marshaler {
         return true;
     }
@@ -116,13 +119,13 @@ pub fn requires_borrowing(native_type: &FundamentalZserioTypeReference) -> bool 
 
 pub fn encode_field(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     field: &Field,
     context_node_index: Option<u8>,
 ) {
     let native_type = get_fundamental_type(&field.field_type, scope);
-    let mut field_name = format!("self.{}", convert_field_name(&field.name));
+    let mut field_name = format!("self.{}", type_generator.convert_field_name(&field.name));
 
     // Check if the field uses an optional clause
     if let Some(optional_clause) = &field.optional_clause {
@@ -140,7 +143,7 @@ pub fn encode_field(
     if field.is_optional {
         // If the type is a marshaller, take it by reference.
         let mut borrow_symbol = String::from("");
-        if requires_borrowing(&native_type) {
+        if requires_borrowing(field, &native_type) {
             borrow_symbol = "&".into();
         }
 
@@ -213,7 +216,7 @@ pub fn encode_field(
             function.line(format!(
                 "assert!({}.{} == {});",
                 &element_name,
-                convert_field_name(&type_parameter.borrow().name),
+                type_generator.convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
         }

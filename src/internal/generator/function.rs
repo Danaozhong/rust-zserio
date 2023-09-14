@@ -7,7 +7,7 @@ use codegen::Impl;
 pub fn generate_function(
     scope: &ModelScope,
     codegen_scope: &mut Impl,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     zserio_function: &ZFunction,
 ) {
     // Generates a rust function for a zserio function.

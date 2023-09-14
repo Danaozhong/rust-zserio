@@ -4,14 +4,14 @@ use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::encode::requires_borrowing;
 use crate::internal::generator::expression::generate_boolean_expression;
-use crate::internal::generator::types::{convert_field_name, TypeGenerator};
+use crate::internal::generator::types::TypeGenerator;
 use codegen::Function;
 
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 
 pub fn bitsize_type_reference(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     field_name: &str,
     is_marshaler: bool,
@@ -111,13 +111,13 @@ pub fn bitsize_type_reference(
 
 pub fn bitsize_field(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     function: &mut Function,
     field: &Field,
     context_node_index: Option<u8>,
 ) {
     let native_type = get_fundamental_type(&field.field_type, scope);
-    let mut field_name = format!("self.{}", convert_field_name(&field.name));
+    let mut field_name = format!("self.{}", type_generator.convert_field_name(&field.name));
 
     // Check if the field uses an optional clause
     if let Some(optional_clause) = &field.optional_clause {
@@ -139,7 +139,7 @@ pub fn bitsize_field(
         function.line("end_position += 1;");
         // If the type is a marshaller, take it by reference.
         let mut borrow_symbol = String::from("");
-        if requires_borrowing(&native_type) {
+        if requires_borrowing(field, &native_type) {
             borrow_symbol = "&".into();
         }
 

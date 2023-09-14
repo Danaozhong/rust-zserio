@@ -6,21 +6,20 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
     encode::encode_type, file_generator::write_to_file, preamble::add_standard_imports,
-    types::to_rust_constant_name, types::to_rust_module_name, types::to_rust_type_name,
-    types::zserio_to_rust_type, types::TypeGenerator,
+    types::to_rust_constant_name, types::zserio_to_rust_type, types::TypeGenerator,
 };
 use std::path::Path;
 
 pub fn generate_bitmask(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     gen_scope: &mut Scope,
     zbitmask: &ZBitmaskType,
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = to_rust_module_name(&zbitmask.name);
-    let rust_type_name = to_rust_type_name(&zbitmask.name);
+    let rust_module_name = type_generator.to_rust_module_name(&zbitmask.name);
+    let rust_type_name = type_generator.to_rust_type_name(&zbitmask.name);
     let fundamental_type = get_fundamental_type(&zbitmask.zserio_type, scope);
     let bitmask_rust_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
 
@@ -96,13 +95,19 @@ pub fn generate_bitmask(
 
     file_content += new_scope.to_string().as_str();
 
-    write_to_file(&file_content, path, package_name, &rust_module_name);
+    write_to_file(
+        type_generator,
+        &file_content,
+        path,
+        package_name,
+        &rust_module_name,
+    );
     rust_module_name
 }
 
 fn generate_zserio_read(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zbitmask: &ZBitmaskType,
 ) {
@@ -145,7 +150,7 @@ fn generate_zserio_read(
 
 fn generate_zserio_write(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zbitmask: &ZBitmaskType,
 ) {
@@ -179,7 +184,7 @@ fn generate_zserio_write(
 
 fn generate_zserio_bitsize(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zbitmask: &ZBitmaskType,
 ) {

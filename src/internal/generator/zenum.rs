@@ -6,21 +6,20 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
     encode::encode_type, file_generator::write_to_file, preamble::add_standard_imports,
-    types::convert_to_enum_field_name, types::to_rust_module_name, types::to_rust_type_name,
-    types::zserio_to_rust_type, types::TypeGenerator,
+    types::convert_to_enum_field_name, types::zserio_to_rust_type, types::TypeGenerator,
 };
 use std::path::Path;
 
 pub fn generate_enum(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     gen_scope: &mut Scope,
     zenum: &ZEnum,
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = to_rust_module_name(&zenum.name);
-    let rust_type_name = to_rust_type_name(&zenum.name);
+    let rust_module_name = type_generator.to_rust_module_name(&zenum.name);
+    let rust_type_name = type_generator.to_rust_type_name(&zenum.name);
     let fundamental_type = get_fundamental_type(&zenum.enum_type, scope);
     let rust_type_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
 
@@ -109,6 +108,7 @@ pub fn generate_enum(
     ));
 
     write_to_file(
+        type_generator,
         &gen_scope.to_string(),
         path,
         package_name,
@@ -119,11 +119,11 @@ pub fn generate_enum(
 
 fn generate_zserio_read(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     zenum: &ZEnum,
 ) {
-    let rust_type_name = to_rust_type_name(&zenum.name);
+    let rust_type_name = type_generator.to_rust_type_name(&zenum.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
@@ -163,7 +163,7 @@ fn generate_zserio_read(
 
 fn generate_zserio_write(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zenum: &ZEnum,
 ) {
@@ -200,7 +200,7 @@ fn generate_zserio_write(
 
 fn generate_zserio_bitsize(
     scope: &ModelScope,
-    type_generator: &TypeGenerator,
+    type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zenum: &ZEnum,
 ) {
