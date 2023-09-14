@@ -10,7 +10,7 @@ use codegen::Function;
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
 
 pub fn bitsize_type_reference(
-    _scope: &ModelScope,
+    scope: &ModelScope,
     type_generator: &TypeGenerator,
     function: &mut Function,
     field_name: &str,
@@ -56,7 +56,7 @@ pub fn bitsize_type_reference(
             function.line(format!(
                 "end_position += context_node.children[{}].context.as_mut().unwrap().bitsize_of(&{}, end_position, &{});",
                 node_idx,
-                initialize_array_trait(type_generator, type_reference),
+                initialize_array_trait(scope, type_generator, type_reference),
                 field_name,
             ));
         } else {
@@ -123,7 +123,7 @@ pub fn bitsize_field(
     if let Some(optional_clause) = &field.optional_clause {
         function.line(format!(
             "if {} {{",
-            generate_boolean_expression(&optional_clause.borrow(), type_generator)
+            generate_boolean_expression(&optional_clause.borrow(), type_generator, scope)
         ));
     }
 

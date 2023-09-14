@@ -22,3 +22,4 @@ import reference_modules.packed_arrays.packed_arrays.*;
 import reference_modules.subtyped_dot_expression.subtyped_enum.*;
 import reference_modules.subtyped_dot_expression.test_enum.*;
 import reference_modules.subtyped_dot_expression.test.*;
+import reference_modules.complex_dot_expression.complex_dot_expression.*;

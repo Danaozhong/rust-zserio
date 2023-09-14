@@ -1,7 +1,8 @@
 use crate::internal::ast::expression::{
     EvaluationState, Expression, ExpressionFlag, ExpressionType,
 };
-use crate::internal::compiler::symbol_scope::Symbol;
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use crate::internal::generator::types::{
     constant_type_to_rust_type, convert_field_name, convert_to_enum_field_name,
     custom_type_to_rust_type, to_rust_constant_name, to_rust_module_name, TypeGenerator,
@@ -22,8 +23,9 @@ pub struct ExpressionGenerationResult {
 pub fn generate_boolean_expression(
     expression: &Expression,
     type_generator: &TypeGenerator,
+    scope: &ModelScope,
 ) -> String {
-    let generated_code = generate_expression(expression, type_generator);
+    let generated_code = generate_expression(expression, type_generator, scope);
     match expression.result_type {
         ExpressionType::BitMask(_) => format!("{} != 0", generated_code),
         ExpressionType::Integer(_) => format!("{} != 0", generated_code),
@@ -31,31 +33,39 @@ pub fn generate_boolean_expression(
     }
 }
 
-pub fn generate_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+pub fn generate_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     assert!(expression.evaluation_state == EvaluationState::Completed);
     match expression.expression_type {
         LPAREN => format!(
             "({})",
-            generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+            generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
         ),
         RPAREN => format!(
             "{}()",
-            generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+            generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
         ),
-        LBRACKET => generate_bracketed_expression(expression, type_generator),
-        DOT => generate_dot_expression(expression, type_generator),
-        VALUEOF => generate_valueof_expression(expression, type_generator),
-        LENGTHOF => generate_lengthof_expression(expression, type_generator),
-        NUMBITS => generate_numbits_expression(expression, type_generator),
-        EQ | GE | GT | LE | LT | NE => generate_comparison_expression(expression, type_generator),
-        PLUS | MINUS | MULTIPLY | DIVIDE | MODULO => {
-            generate_arithmetic_expression(expression, type_generator)
+        LBRACKET => generate_bracketed_expression(expression, type_generator, scope),
+        DOT => generate_dot_expression(expression, type_generator, scope),
+        VALUEOF => generate_valueof_expression(expression, type_generator, scope),
+        LENGTHOF => generate_lengthof_expression(expression, type_generator, scope),
+        NUMBITS => generate_numbits_expression(expression, type_generator, scope),
+        EQ | GE | GT | LE | LT | NE => {
+            generate_comparison_expression(expression, type_generator, scope)
         }
-        QUESTIONMARK => generate_ternary_expression(expression, type_generator),
-        BANG => generate_logical_negation(expression, type_generator),
-        TILDE => generate_bitwise_negation(expression, type_generator),
-        AND | OR | XOR | LSHIFT | RSHIFT => generate_bitwise_expression(expression, type_generator),
-        LOGICAL_AND | LOGICAL_OR => generate_logical_expression(expression, type_generator),
+        PLUS | MINUS | MULTIPLY | DIVIDE | MODULO => {
+            generate_arithmetic_expression(expression, type_generator, scope)
+        }
+        QUESTIONMARK => generate_ternary_expression(expression, type_generator, scope),
+        BANG => generate_logical_negation(expression, type_generator, scope),
+        TILDE => generate_bitwise_negation(expression, type_generator, scope),
+        AND | OR | XOR | LSHIFT | RSHIFT => {
+            generate_bitwise_expression(expression, type_generator, scope)
+        }
+        LOGICAL_AND | LOGICAL_OR => generate_logical_expression(expression, type_generator, scope),
         ID => generate_identifier_expression(expression, type_generator),
         BOOL_LITERAL | OCTAL_LITERAL | HEXADECIMAL_LITERAL | BINARY_LITERAL | DECIMAL_LITERAL
         | FLOAT_LITERAL | DOUBLE_LITERAL | STRING_LITERAL => {
@@ -72,6 +82,7 @@ pub fn generate_expression(expression: &Expression, type_generator: &TypeGenerat
 fn generate_unary_arithmetic_expression(
     expression: &Expression,
     type_generator: &TypeGenerator,
+    scope: &ModelScope,
 ) -> String {
     format!(
         "{}{}",
@@ -80,23 +91,24 @@ fn generate_unary_arithmetic_expression(
             MINUS => "-",
             _ => panic!("unexpected unary arithmetic expression operator"),
         },
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
     )
 }
 
 fn generate_arithmetic_expression(
     expression: &Expression,
     type_generator: &TypeGenerator,
+    scope: &ModelScope,
 ) -> String {
     if expression.operand2.is_none() {
         // an arithmetic expression may be +5 or -5, i.e. a sign
         // of a float or integer expression.
-        return generate_unary_arithmetic_expression(expression, type_generator);
+        return generate_unary_arithmetic_expression(expression, type_generator, scope);
     }
 
     // Check if casts are required
-    let mut op1 = generate_expression(expression.operand1.as_ref().unwrap(), type_generator);
-    let mut op2 = generate_expression(expression.operand2.as_ref().unwrap(), type_generator);
+    let mut op1 = generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope);
+    let mut op2 = generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope);
 
     let mut expression_type = None;
     let mut op1_rust_type = None;
@@ -167,24 +179,50 @@ fn generate_arithmetic_expression(
 fn generate_bracketed_expression(
     expression: &Expression,
     type_generator: &TypeGenerator,
+    scope: &ModelScope,
 ) -> String {
     format!(
         "{}[{}]",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
-        generate_expression(expression.operand2.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
+        generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope),
     )
 }
 
-fn generate_dot_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn is_bitmask_expression(expression: &Expression, scope: &ModelScope) -> bool {
+    if let Some(expr_symbol) = &expression.symbol {
+        let fund_type = match &expr_symbol.symbol {
+            Symbol::Field(field) => get_fundamental_type(&field.borrow().field_type, scope),
+            Symbol::Parameter(param) => get_fundamental_type(&param.borrow().zserio_type, scope),
+            _ => return false,
+        };
+        if fund_type.fundamental_type.is_builtin {
+            return false;
+        }
+        return matches!(
+            scope.get_symbol(&fund_type.fundamental_type).symbol,
+            Symbol::Bitmask(_)
+        );
+    }
+    false
+}
+fn generate_dot_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     let op1 = expression.operand1.as_ref().unwrap();
+    let op2 = expression.operand2.as_ref().unwrap();
 
+    if expression.operand2.as_ref().unwrap().text == "selector_bitmask" {
+        print!("test {:?}", expression.symbol.as_ref().unwrap());
+    }
     return match &op1.result_type {
         ExpressionType::Enum(_) => {
             let expr_symbol = op1.symbol.as_ref().unwrap();
             let enum_expression = format!(
                 "{}::{}",
                 custom_type_to_rust_type(&expr_symbol.name),
-                convert_to_enum_field_name(&expression.operand2.as_ref().unwrap().text)
+                convert_to_enum_field_name(&op2.text)
             );
             type_generator.get_full_module_path(&expr_symbol.package, &enum_expression)
         }
@@ -193,82 +231,58 @@ fn generate_dot_expression(expression: &Expression, type_generator: &TypeGenerat
             let bitmask_expression = format!(
                 "{}::{}",
                 to_rust_module_name(&bitmask_symbol.name),
-                to_rust_constant_name(&expression.operand2.as_ref().unwrap().text)
+                to_rust_constant_name(&op2.text)
             );
             type_generator.get_full_module_path(&bitmask_symbol.package, &bitmask_expression)
         }
         ExpressionType::Compound => {
-            match &op1
-                .symbol
-                .as_ref()
-                .expect("failed to retrieve the symbol of compound expression")
-                .symbol
-            {
-                Symbol::Field(z_field) => {
-                    let op2 = expression
-                        .operand2
-                        .as_ref()
-                        .expect("a dot expression must have two operands");
+            let left_operand = generate_expression(op1, type_generator, scope);
+            let mut right_side = match op2.flag {
+                ExpressionFlag::IsDotExpressionRightOperand => convert_field_name(&op2.text),
+                _ => panic!("failed to generate right side of field dot expression"),
+            };
 
-                    let right_side = match op2.flag {
-                        ExpressionFlag::IsDotExpressionRightOperand => {
-                            convert_field_name(&op2.text)
-                        }
-                        _ => panic!("failed to generate right side of field dot expression"),
-                    };
-
-                    format!(
-                        "self.{}.{}",
-                        convert_field_name(&z_field.borrow().name),
-                        right_side,
-                    )
-                }
-                Symbol::Parameter(z_param) => {
-                    let op2 = expression
-                        .operand2
-                        .as_ref()
-                        .expect("a dot expression must have two operands");
-
-                    let right_side = match op2.flag {
-                        ExpressionFlag::IsDotExpressionRightOperand => {
-                            convert_field_name(&op2.text)
-                        }
-                        _ => panic!("failed to generate right side of field dot expression"),
-                    };
-                    format!(
-                        "self.{}.{}",
-                        convert_field_name(&z_param.borrow().name),
-                        right_side,
-                    )
-                }
-                _ => panic!(
-                    "unsupported symbol type for dot expression generation {:?}",
-                    op1.symbol
-                ),
+            // Special handling for bitmask types. Bit masks are actually a struct, having a "bitmask"
+            // value field. Hence, when generating bit masks, this field need to be referenced as well.
+            if is_bitmask_expression(expression, scope) {
+                right_side = format!("{}.bitmask_value", right_side);
             }
+            format!("{}.{}", &left_operand, right_side,)
         }
         _ => panic!("unsupported dot expression {:?}", op1),
     };
 }
 
-fn generate_valueof_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_valueof_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "ztype::valueof({})",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }
 
-fn generate_lengthof_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_lengthof_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "({}.len() as u32)",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }
 
-fn generate_numbits_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_numbits_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "({} as u32)",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }
 
@@ -321,7 +335,11 @@ fn generate_identifier_expression(
     type_generator.get_full_module_path(&symbol_ref.package, &rust_symbol_name)
 }
 
-fn generate_ternary_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_ternary_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "
 if {} {{
@@ -329,30 +347,42 @@ if {} {{
 }} else {{
     {}
 }}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
-        generate_expression(expression.operand2.as_ref().unwrap(), type_generator),
-        generate_expression(expression.operand3.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
+        generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope),
+        generate_expression(expression.operand3.as_ref().unwrap(), type_generator, scope),
     )
 }
 
-fn generate_logical_negation(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_logical_negation(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "!{}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }
 
-fn generate_bitwise_negation(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_bitwise_negation(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "~{}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator)
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }
 
-fn generate_bitwise_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_bitwise_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "{} {} {}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
         match expression.expression_type {
             AND => "&",
             OR => "|",
@@ -361,30 +391,35 @@ fn generate_bitwise_expression(expression: &Expression, type_generator: &TypeGen
             RSHIFT => ">>",
             _ => panic!("unexpected bitwise expression operator"),
         },
-        generate_expression(expression.operand2.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope),
     )
 }
 
-fn generate_logical_expression(expression: &Expression, type_generator: &TypeGenerator) -> String {
+fn generate_logical_expression(
+    expression: &Expression,
+    type_generator: &TypeGenerator,
+    scope: &ModelScope,
+) -> String {
     format!(
         "{} {} {}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
         match expression.expression_type {
             LOGICAL_AND => "&&",
             LOGICAL_OR => "||",
             _ => panic!("unexpected logical expression operator"),
         },
-        generate_expression(expression.operand2.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope),
     )
 }
 
 fn generate_comparison_expression(
     expression: &Expression,
     type_generator: &TypeGenerator,
+    scope: &ModelScope,
 ) -> String {
     format!(
         "{} {} {}",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
         match expression.expression_type {
             EQ => "==",
             LE => "<=",
@@ -394,7 +429,7 @@ fn generate_comparison_expression(
             NE => "!=",
             _ => panic!("unexpected comparison expression operator"),
         },
-        generate_expression(expression.operand2.as_ref().unwrap(), type_generator),
+        generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope),
     )
 }
 

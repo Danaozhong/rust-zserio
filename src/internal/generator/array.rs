@@ -48,6 +48,7 @@ pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
 }
 
 pub fn initialize_array_trait(
+    scope: &ModelScope,
     type_generator: &TypeGenerator,
     zserio_type: &TypeReference,
 ) -> String {
@@ -62,7 +63,7 @@ pub fn initialize_array_trait(
         if let Some(length_expression) = &zserio_type.length_expression {
             code_str += format!(
                 "num_bits: ({}) as u8,\n",
-                generate_expression(&length_expression.borrow(), type_generator)
+                generate_expression(&length_expression.borrow(), type_generator, scope)
             )
             .as_str();
         } else {
@@ -114,12 +115,12 @@ pub fn instantiate_zserio_array(
     ));
     function.line(format!(
         "array_trait: Box::new({}),",
-        initialize_array_trait(type_generator, fund_type.as_ref())
+        initialize_array_trait(scope, type_generator, fund_type.as_ref())
     ));
     let array_length_str = match &field.array.as_ref().unwrap().array_length_expression {
         Some(array_length_expression) => format!(
             "Some(({}) as usize)",
-            generate_expression(&array_length_expression.borrow(), type_generator)
+            generate_expression(&array_length_expression.borrow(), type_generator, scope)
         ),
         None => "None".to_owned(),
     };

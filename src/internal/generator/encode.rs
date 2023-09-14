@@ -59,14 +59,14 @@ pub fn encode_type(
             function.line(format!(
                 "context_node.children[{}].context.as_mut().unwrap().write(&{}, writer, &{});",
                 node_idx,
-                initialize_array_trait(type_generator, &fund_type),
+                initialize_array_trait(scope, type_generator, &fund_type),
                 field_name,
             ));
         } else if fund_type.bits != 0 || fund_type.length_expression.is_some() {
             let bit_length_string = match &fund_type.length_expression {
                 Some(bit_length_expression) => {
                     let mut length_expression_string =
-                        generate_expression(&bit_length_expression.borrow(), type_generator);
+                        generate_expression(&bit_length_expression.borrow(), type_generator, scope);
                     // check if there is a typecast needed
                     if let Some(native_type) = &bit_length_expression.borrow().native_type {
                         if native_type.name != "uint8" {
@@ -128,7 +128,7 @@ pub fn encode_field(
     if let Some(optional_clause) = &field.optional_clause {
         function.line(format!(
             "if {} {{",
-            generate_boolean_expression(&optional_clause.borrow(), type_generator)
+            generate_boolean_expression(&optional_clause.borrow(), type_generator, scope)
         ));
     }
 
@@ -198,7 +198,7 @@ pub fn encode_field(
             // the caller.
 
             // Check if casts are needed.
-            let mut rvalue = generate_expression(&type_argument, type_generator);
+            let mut rvalue = generate_expression(&type_argument, type_generator, scope);
             if expression_requires_cast(
                 &type_parameter.borrow().zserio_type,
                 type_generator,
@@ -230,7 +230,7 @@ pub fn encode_field(
             function.line(format!(
                 "assert!({}.len() == ({}) as usize);",
                 &field_name,
-                &generate_expression(&array_length_expr.borrow(), type_generator),
+                &generate_expression(&array_length_expr.borrow(), type_generator, scope),
             ));
         }
 

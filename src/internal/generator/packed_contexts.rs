@@ -125,7 +125,7 @@ pub fn generate_init_packed_context_for_field(
     if let Some(optional_clause) = &field_details.field.borrow().optional_clause {
         fn_gen.line(format!(
             "if {} {{",
-            generate_boolean_expression(&optional_clause.borrow(), type_generator)
+            generate_boolean_expression(&optional_clause.borrow(), type_generator, model_scope)
         ));
     }
 
@@ -159,7 +159,11 @@ pub fn generate_init_packed_context_for_field(
         fn_gen.line(format!(
             "{}_delta_context.init(&{}, &{});",
             &field_details.field_context_node_name,
-            initialize_array_trait(type_generator, &field_details.native_type.fundamental_type),
+            initialize_array_trait(
+                model_scope,
+                type_generator,
+                &field_details.native_type.fundamental_type
+            ),
             &field_name
         ));
     }

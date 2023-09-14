@@ -157,7 +157,12 @@ pub fn generate_union(
     // Generate all the zserio functions.
     let pub_impl = codegen_scope.new_impl(&rust_type_name);
     for zserio_function in &zunion.functions {
-        generate_function(pub_impl, type_generator, &zserio_function.as_ref().borrow());
+        generate_function(
+            symbol_scope,
+            pub_impl,
+            type_generator,
+            &zserio_function.as_ref().borrow(),
+        );
     }
 
     write_to_file(

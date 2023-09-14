@@ -104,7 +104,7 @@ pub fn generate_enum(
     init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
     init_packing_context_fn.line(format!(
         "context_node.children[0].context.as_mut().unwrap().init(&{}, &(*self as {}));",
-        &initialize_array_trait(type_generator, &fundamental_type.fundamental_type),
+        &initialize_array_trait(scope, type_generator, &fundamental_type.fundamental_type),
         &rust_type_type,
     ));
 
