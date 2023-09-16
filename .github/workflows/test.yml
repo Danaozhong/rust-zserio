@@ -32,8 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
     - name: Install dependencies
-      run: pip install zserio
+      run: pip install "zserio==2.11.0"
     - name: Generate python zserio bindings
       run: |
           cd tests
