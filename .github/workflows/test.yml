@@ -43,6 +43,7 @@ jobs:
     - name: Generate the artifacts using Python
       run: |
           cd tests/compare-ref-impl-tests/python
+          poetry install
           poetry run python main.py
     - name: Run the rust test cases to read the python artifacts
       run: cargo run -p compare-ref-impl-tests
