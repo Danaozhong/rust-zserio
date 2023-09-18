@@ -115,8 +115,8 @@ impl DeltaContext {
     ) -> u64 {
         if !self.processing_started {
             self.processing_started = true;
+            self.finish_init();
 
-            // self.finish_init();
             return self.bitsize_of_descriptor() + self.bitsize_of_unpacked(array_traits, element);
         }
         if !self.is_packed {
