@@ -13,13 +13,20 @@ use super::compiler::symbol_scope::ScopeLocation;
 pub mod package;
 use crate::internal::compiler::template_instantiation::instantiate_type;
 
+/// A data structure containing all zserio files related to each other.
 pub struct Model {
+    /// All zserio packages.
     pub packages: HashMap<String, ZPackage>,
+
+    /// An auto-generated symbol scope, which registers the paths of each
+    /// symbol within `packages`.
     pub scope: ModelScope,
 }
 
 impl Model {
     /// Loads a complete zserio model from a directory.
+    /// It iterates over a directoy, and parses all `*.zs` files,
+    /// and loads them into a `Model` structure.
     pub fn from_filesystem(directory: &Path) -> Self {
         let mut packages = HashMap::new();
 
@@ -44,6 +51,13 @@ impl Model {
         }
     }
 
+    /// Evaluates a zserio model by
+    /// 1) instantiatng all templates.
+    /// 2) perform a type resolution and ensure that all types
+    ///    are correctly referenced.
+    /// 3) evaluate all expressions.
+    /// Currently, this function will panic if there is an error
+    /// during any of the above steps.
     pub fn evaluate(&mut self) {
         self.scope = ModelScope::build_scope(&self.packages);
 
