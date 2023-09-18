@@ -32,7 +32,7 @@ impl<T> Array<T> {
             // Create the packing context, and all child-contexts
             let mut packing_context_node = self.array_trait.create_context();
 
-            // Initialize the contexts, to identift the delta packing sizes
+            // Initialize the contexts, to identify the delta packing sizes
             for element in data {
                 self.array_trait
                     .init_context(&mut packing_context_node, element);
@@ -97,27 +97,50 @@ impl<T> Array<T> {
             end_position += varsize_bitsize(data.len() as u32) as u64;
         }
         if !data.is_empty() {
-            if self.array_trait.is_bitsizeof_constant() {
-                // Since the bitsize is anyway constant, just pass the first element
-                let element_size = self.array_trait.bitsize_of(end_position, &data[0]);
-                if self.is_aligned {
-                    // make sure the first element is aligned
-                    end_position = align_to(8, end_position);
-
-                    // count all array elements alignment positions
-                    end_position += (data.len() - 1) as u64 * align_to(8, element_size);
+            if self.is_packed {
+                // Packing is used
+                // Create the packing context, and all child-contexts
+                let mut packing_context_node = self.array_trait.create_context();
+                // Initialize the contexts, to identify the delta packing sizes
+                for element in data {
+                    self.array_trait
+                        .init_context(&mut packing_context_node, element);
                 }
 
-                // count the actual payload
-                end_position += data.len() as u64 * element_size;
-            } else {
-                // the bitsize of each array element may differ, as such, each element need to be
-                // added individually.
-                for element in data {
+                for data_item in data {
                     if self.is_aligned {
                         end_position = align_to(8, end_position);
                     }
-                    end_position += self.array_trait.bitsize_of(end_position, element);
+                    end_position += self.array_trait.bitsize_of_packed(
+                        &mut packing_context_node,
+                        end_position,
+                        data_item,
+                    );
+                }
+            } else {
+                // Array is not packed
+                if self.array_trait.is_bitsizeof_constant() {
+                    // Since the bitsize is anyway constant, just pass the first element
+                    let element_size = self.array_trait.bitsize_of(end_position, &data[0]);
+                    if self.is_aligned {
+                        // make sure the first element is aligned
+                        end_position = align_to(8, end_position);
+
+                        // count all array elements alignment positions
+                        end_position += (data.len() - 1) as u64 * align_to(8, element_size);
+                    }
+
+                    // count the actual payload
+                    end_position += data.len() as u64 * element_size;
+                } else {
+                    // the bitsize of each array element may differ, as such, each element need to be
+                    // added individually.
+                    for element in data {
+                        if self.is_aligned {
+                            end_position = align_to(8, end_position);
+                        }
+                        end_position += self.array_trait.bitsize_of(end_position, element);
+                    }
                 }
             }
         }
