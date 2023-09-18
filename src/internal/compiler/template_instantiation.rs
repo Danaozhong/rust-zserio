@@ -10,6 +10,11 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+/// Instantiates a templated type reference.
+/// If a non-templated type reference is passed, a clone of that reference will be returned.
+/// If the type reference is templated, the template will be instantiated, and the instantiated
+/// type reference returned.
+/// `name` is the name of the new instantiated type reference.
 pub fn instantiate_type(
     pkg: &mut ZPackage,
     scope: &mut ModelScope,

@@ -6,23 +6,36 @@ use crate::internal::compiler::symbol_scope::{ModelScope, PackageScope, Symbol};
 use std::cell::RefCell;
 use std::rc::Rc;
 #[derive(Debug)]
+
+/// This struct stores the definition of a zserio union type.
 pub struct ZUnion {
+    /// The name of the union.
     pub name: String,
+
+    /// The comment added to the union in the zserio file.
     pub comment: String,
+
+    /// The template parameters (if any).
     pub template_parameters: Vec<String>,
+
+    /// The parameters passed to the union (if any).
     pub type_parameters: Vec<Rc<RefCell<Parameter>>>,
+
+    /// All fields of the union.
     pub fields: Vec<Rc<RefCell<Field>>>,
+
+    /// All zserio functions added to the union.
     pub functions: Vec<Rc<RefCell<ZFunction>>>,
 }
 
 impl ZUnion {
+    /// Evaluates all expressions within the union type.
     pub fn evaluate(&self, scope: &mut ModelScope) {
         // Ignore unions that are templated. They cannot be evaluated. Only their templated
         // instances will be evaluated.
         if !self.template_parameters.is_empty() {
             return;
         }
-
         for param in &self.type_parameters {
             param.as_ref().borrow().zserio_type.evaluate(scope);
         }
@@ -35,6 +48,7 @@ impl ZUnion {
     }
 }
 
+/// Adds the union (and all literals within) to the scope.
 pub fn add_zunion_to_scope(z_union: &Rc<RefCell<ZUnion>>, package_scope: &mut PackageScope) {
     // Create a local scope, which contains all symbols within this union type
     let mut local_symbols = HashMap::new();

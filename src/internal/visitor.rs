@@ -607,7 +607,6 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         }
         ZserioTreeReturnType::Field(Box::new(Field {
             name: field_name.clone(),
-            zserio_name: field_name,
             comment: "".into(),
             is_optional: false,
             alignment: 0,
