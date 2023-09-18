@@ -7,6 +7,11 @@ pub struct FundamentalZserioTypeReference {
     pub is_marshaler: bool,
 }
 
+/// Resolves the most fundamental type of a type, i.e. it removes all `subtype` indirections.
+/// The returned result type is either a zserio built-in type (int32, varint, etc), bitmask,
+/// enum, or a compound type (struct, choice, etc).
+/// Returns a FundamentalZserioTypeReference, which tells if type casts are needed, and if the
+/// fundamental type is a marshaler type.
 pub fn get_fundamental_type(
     type_ref: &TypeReference,
     scope: &ModelScope,
@@ -27,14 +32,6 @@ pub fn get_fundamental_type(
         // We call get_symbol() instead of resolve_symbol(), because we
         // expect the type reference to already be fully resolved.
         let current_symbol_ref = scope.get_symbol(&current_type_ref);
-        /*
-        scope.scope_stack.push(
-            ScopeLocation {
-                package: current_symbol_ref.package.clone(),
-                import_symbol: None,
-                symbol_name: current_symbol_ref,
-            }
-        ); */
         let mut new_type_ref = match current_symbol_ref.symbol {
             Symbol::Bitmask(_)
             | Symbol::Choice(_)
@@ -67,6 +64,12 @@ pub fn get_fundamental_type(
     }
 }
 
+/// Returns a type reference for a symbol.
+/// For example, if a struct symbol is passed, the resulting TypeReference
+/// will reference the correct package and name.
+///
+/// Limitations of this function is that it will not reflect the template arguments
+/// or type arguments, so don't expect these values to be set correctly.
 pub fn get_symbol_type(symbol_ref: &SymbolReference) -> TypeReference {
     let type_ref_name = match &symbol_ref.symbol {
         Symbol::Bitmask(bitmask) => bitmask.borrow().name.clone(),

@@ -23,7 +23,12 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+    // Load the zserio files (*.zs) from the filesystem.
     let mut model = Model::from_filesystem(Path::new(args.zserio_path.as_str()));
+
+    // Ensure that the model is correct, by evaluating templates, types, and expressions.
     model.evaluate();
+
+    // Generate the rust files.
     generate_model(&mut model, Path::new(args.out.as_str()), &args.root);
 }

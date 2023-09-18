@@ -33,10 +33,7 @@ fn abs_difference(x: u64, y: u64) -> u64 {
     }
 }
 
-/**
- * Returns the minimum number of bits required to represent x. the result is 0 for x == 0.
- */
-
+/// Returns the minimum number of bits required to represent x. the result is 0 for x == 0.
 const BIT_LENGTH_BYTE: &str = "\x00\x01\x02\x02\x03\x03\x03\x03\x04\x04\x04\x04\x04\x04\x04\x04\
  \x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\
  \x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\
@@ -54,7 +51,16 @@ const BIT_LENGTH_BYTE: &str = "\x00\x01\x02\x02\x03\x03\x03\x03\x04\x04\x04\x04\
  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08";
 
-fn len64(mut x: u64) -> u8 {
+/// Returns the bit length of a u64 value.
+/// For example:
+/// ```rust
+/// use rust_zserio::ztype::array_traits::delta_context;
+/// assert!(delta_context::len64(0) == 0);
+/// assert!(delta_context::len64(1) == 1);
+/// assert!(delta_context::len64(7) == 3);
+/// assert!(delta_context::len64(8) == 4);
+/// ```
+pub fn len64(mut x: u64) -> u8 {
     let mut n = 0u8;
     if x >= 1 << 32 {
         x >>= 32;

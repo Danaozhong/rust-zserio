@@ -71,9 +71,6 @@ pub fn generate_expression(
             generate_literal_expression(expression)
         }
         INDEX => generate_index_operator(),
-        /*
-        0xFFFFF => (), // Ignore
-         */
         _ => panic!("unsupported expression type"),
     }
 }
