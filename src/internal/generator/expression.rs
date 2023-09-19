@@ -276,7 +276,7 @@ fn generate_numbits_expression(
     scope: &ModelScope,
 ) -> String {
     format!(
-        "({} as u32)",
+        "(ztype::numbits({}) as u32)",
         generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }

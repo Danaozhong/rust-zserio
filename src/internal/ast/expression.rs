@@ -293,22 +293,8 @@ impl Expression {
         self.fully_resolved = false;
         self.result_type = ExpressionType::Integer(0);
         self.native_type = Some(TypeReference::new_native_type("varsize"));
-        /*
-        match self.operand1.unwrap().symbol.unwrap() {
-            Symbol::Field(s, index) => {
-                match &s.as_ref().borrow().fields[index].array {
-                    Some(array) => {
-                        if let Some(array_length_expr) = array.array_length_expression {
-
-                        }
-                    }
-                    _ => panic!(""),
-                }
-            }
-            _ => panic!("not implemented")
-        }
-         */
     }
+
     fn evaluate_valueof_operator(&mut self) {
         match &self.operand1 {
             Some(op1) => match &op1.result_type {
