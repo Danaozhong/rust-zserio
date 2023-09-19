@@ -9,9 +9,10 @@ members = [
 
 [package]
 name = "rust-zserio"
-version = "0.0.2"
+version = "0.0.0"
 edition = "2021"
 authors = ["Clemens Zangl <clemens.zangl@gmail.com>"]
+exclude = [".pre-commit-config.yaml"]
 
 description = """
 Rust bindings for the zserio serialization protocol.
