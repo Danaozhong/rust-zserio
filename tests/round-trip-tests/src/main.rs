@@ -2,6 +2,7 @@ pub mod alignment_test;
 pub mod ambiguous_types_test;
 pub mod bitmask_test;
 pub mod constants_test;
+pub mod expr_numbits_test;
 pub mod integer_types_test;
 pub mod optional_values_test;
 pub mod packed_arrays_test;
@@ -30,6 +31,7 @@ use crate::alignment_test::{test_alignment, test_alignment_roundtrip};
 use crate::ambiguous_types_test::test_ambiguous_types;
 use crate::bitmask_test::test_bitmasks;
 use crate::constants_test::test_constants;
+use crate::expr_numbits_test::test_expr_numbits;
 use crate::integer_types_test::test_integer_types;
 use crate::optional_values_test::{
     test_optional_arrays, test_optional_members, test_optional_values,
@@ -63,9 +65,8 @@ fn main() {
     test_alignment();
     test_alignment_roundtrip();
     test_packed_arrays();
-    // Disabled for now, comparison tests with the reference implementation are still a TODO
-    //packed_arrays_serialize_to_file();
     test_subtyped_dot_expression();
+    test_expr_numbits();
 }
 
 fn test_structure() {
