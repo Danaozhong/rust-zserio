@@ -1,0 +1,22 @@
+name: Release rust-zserio crate
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Release using cargo publish
+      run: |
+        sed -i 's/0.0.0/${{ github.ref_name }}/g' Cargo.toml
+        cat Cargo.toml
+        cargo publish --allow-dirty
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
