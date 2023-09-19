@@ -1,6 +1,6 @@
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::bits_decode::read_signed_bits;
-use crate::ztype::{self, read_unsigned_bits};
+use crate::ztype::{self, numbits, read_unsigned_bits};
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -33,50 +33,6 @@ fn abs_difference(x: u64, y: u64) -> u64 {
     }
 }
 
-/// Returns the minimum number of bits required to represent x. the result is 0 for x == 0.
-const BIT_LENGTH_BYTE: &str = "\x00\x01\x02\x02\x03\x03\x03\x03\x04\x04\x04\x04\x04\x04\x04\x04\
- \x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\x05\
- \x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\
- \x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\x06\
- \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
- \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
- \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
- \x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
- \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08";
-
-/// Returns the bit length of a u64 value.
-/// For example:
-/// ```rust
-/// use rust_zserio::ztype::array_traits::delta_context;
-/// assert!(delta_context::len64(0) == 0);
-/// assert!(delta_context::len64(1) == 1);
-/// assert!(delta_context::len64(7) == 3);
-/// assert!(delta_context::len64(8) == 4);
-/// ```
-pub fn len64(mut x: u64) -> u8 {
-    let mut n = 0u8;
-    if x >= 1 << 32 {
-        x >>= 32;
-        n = 32;
-    }
-    if x >= 1 << 16 {
-        x >>= 16;
-        n += 16
-    }
-    if x >= 1 << 8 {
-        x >>= 8;
-        n += 8;
-    }
-    n + BIT_LENGTH_BYTE.chars().nth(x as usize).unwrap() as u8
-}
-
 impl DeltaContext {
     pub fn new() -> DeltaContext {
         DeltaContext {
@@ -102,7 +58,7 @@ impl DeltaContext {
         } else if self.max_bit_number <= MAX_BIT_NUMBER_LIMIT {
             self.is_packed = true;
             let delta = abs_difference(array_trait.to_u64(element), self.previous_element);
-            let max_bit_number = len64(delta);
+            let max_bit_number = numbits(delta);
             if max_bit_number > self.max_bit_number {
                 self.max_bit_number = max_bit_number;
                 if self.max_bit_number > MAX_BIT_NUMBER_LIMIT {
