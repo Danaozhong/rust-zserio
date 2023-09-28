@@ -5,15 +5,23 @@
 ## CI Status
 ![build](https://github.com/Danaozhong/rust-zserio/actions/workflows/test.yml/badge.svg)
 
-## How to Run
+## Quick Start
 
-You can run the code generator using the following command:
+Install rust-zserio using:
 
 ```sh
-cargo run -- --root=<code_root_path> -o=<output_directory> <path_to_zserio_files>
+cargo install rust-zserio
 ```
 
-This will generate the files needed to read/write `zserio`-encoded binary data.
+## Generate zserio Bindings
+
+The code generator is executed using the following command:
+
+```sh
+rust-zserio --root=<code_root_path> -o=<output_directory> <path_to_zserio_files>
+```
+
+This will generate the files needed to read/write `zserio`-encoded binary data. The `root` CLI flag is optional, and specifies a crate prefix. If the prefix is set, rust-zserio will generate a `mod.rs` file. In case the code is generated without a prefix, rust-zserio assumes that the crate will be built as a library, and generates a `lib.rs` instead.
 
 ## Development Status
 
@@ -22,15 +30,13 @@ Although the project is in its early stages, it is feature-complete and should w
 ### Open Items
 - constraints are not evaluated yet.
 - proper unit test / e2e test setup.
-- compare with the reference Python/C++ implementation.
 - the generated code fails the lint checks.
 - clean and structured error handling and logging.
 - upgrade to a non-beta ANTLR parser.
 - resolve all clippy warnings.
 - performance evaluation and improvements.
-- generate a `mod.rs` file.
 
 ## Disclaimer
 
-This is my very first rust project written in my spare time, so the code is far from perfect. I am happy to receive any suggestions and to learn on how to write better rust code, so please raise a PR or an issue if you have suggestions!
+This is my very first Rust project written in my spare time, and the code is far from perfect. I am happy to receive any suggestions and to learn on how to write better Rust code, so please feel welcome to raise a PR!
 
