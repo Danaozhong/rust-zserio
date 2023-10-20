@@ -1,6 +1,7 @@
 use crate::internal::generator::file_generator::write_to_file;
 use crate::internal::generator::types::TypeGenerator;
 use crate::internal::model::Model;
+use itertools::Itertools;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::Path;
@@ -61,7 +62,12 @@ fn generate_mod_section(
         *file_content += format!("pub mod {} {{\n", mod_name).as_str();
     }
     // Generate the "pub mod X;" for all children.
-    for (child_name, child_node) in module_tree_node.borrow().children.iter() {
+    for (child_name, child_node) in module_tree_node
+        .borrow()
+        .children
+        .iter()
+        .sorted_by_key(|x| x.0)
+    {
         generate_mod_section(file_content, child_name, child_node);
     }
 
