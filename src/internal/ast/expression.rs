@@ -7,9 +7,9 @@ use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, ScopeLocation, Symbol, SymbolReference};
 use crate::internal::parser::gen::zserioparser::{
-    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LENGTHOF, LOGICAL_AND, LOGICAL_OR,
-    LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK, RPAREN,
-    RSHIFT, TILDE, VALUEOF, XOR,
+    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, ISSET, LBRACKET, LE, LENGTHOF, LOGICAL_AND,
+    LOGICAL_OR, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK,
+    RPAREN, RSHIFT, TILDE, VALUEOF, XOR,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -109,6 +109,7 @@ impl Expression {
             RPAREN => self.evaluate_function_call_expression(scope),
             LBRACKET => self.evaluate_array_element(scope),
             DOT => self.evaluate_dot_expression(scope),
+            ISSET => self.evaluate_isset_expression(),
             LENGTHOF => self.evaluate_lengthof_operator(),
             VALUEOF => self.evaluate_valueof_operator(),
             NUMBITS => self.evaluate_numbits_operator(),
@@ -295,18 +296,32 @@ impl Expression {
         self.native_type = Some(TypeReference::new_native_type("varsize"));
     }
 
+    fn evaluate_isset_expression(&mut self) {
+        match (&self.operand1, &self.operand2) {
+            (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
+                (ExpressionType::BitMask(_), ExpressionType::Integer(_)) => {
+                    self.result_type = ExpressionType::Bool(false);
+                }
+                _ => panic!(
+                    "the isset(bitmask, value_to_check) expression requires two bitmask parameters"
+                ),
+            },
+            _ => panic!("the isset(bitmask, value_to_check) expression requires two operators"),
+        }
+    }
+
     fn evaluate_valueof_operator(&mut self) {
         match &self.operand1 {
             Some(op1) => match &op1.result_type {
                 ExpressionType::BitMask(bitmask) => {
                     self.result_type = ExpressionType::Integer(0);
                     self.fully_resolved = false;
-                    self.native_type = Some(*bitmask.borrow().zserio_type.clone());
+                    self.native_type = Some(*bitmask.as_ref().borrow().zserio_type.clone());
                 },
                 ExpressionType::Enum(zenum) => {
                     self.result_type = ExpressionType::Integer(0);
                     self.fully_resolved = false;
-                    self.native_type = Some(*zenum.borrow().enum_type.clone());
+                    self.native_type = Some(*zenum.as_ref().borrow().enum_type.clone());
                 },
                 _ => panic!("valueof operator can only be applied to bitmask or enum expressions, but was called for {:?}", op1)
             },

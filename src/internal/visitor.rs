@@ -991,6 +991,47 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         self.visit(&*ctx.expression().unwrap())
     }
 
+    fn visit_isSetExpression(&mut self, ctx: &IsSetExpressionContext<'_>) -> Self::Return {
+        // Parses an isset() expression of a bitmask.
+        let mut expression = Box::new(Expression {
+            expression_type: ctx.operator.as_ref().unwrap().token_type,
+            text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
+            operand1: None,
+            operand2: None,
+            operand3: None,
+            result_type: ExpressionType::Bool(true),
+            symbol: None,
+            fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
+        });
+        match self.visit(&*ctx.expression(0).unwrap()) {
+            ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
+            _ => panic!(),
+        }
+        match self.visit(&*ctx.expression(1).unwrap()) {
+            ZserioTreeReturnType::Expression(e) => {
+                // A special rule seems to apply for isset(), that for the second
+                // operand, explicit typing the bitmask type is not needed,
+                // as it can be deduced from the first operand.
+                // for example:
+                // isset(value, Bitmask.HAS_A)
+                // and
+                // isset(value, HAS_A)
+                // are both legal zserio code, but:
+                // (value & Bitmask.HAS_A) == Bitmask.HAS_A
+                // is legal, while the variant below is not:
+                // (value & HAS_A) == Bitmask.HAS_A
+                // One could argue that this is inconsistent.
+                // Raised it here: https://github.com/ndsev/zserio/discussions/617
+                expression.operand2 = Option::from(e);
+            }
+            _ => panic!("the isset expression requires two expressions"),
+        }
+        ZserioTreeReturnType::Expression(expression)
+    }
+
     fn visit_lengthofExpression(&mut self, ctx: &LengthofExpressionContext<'_>) -> Self::Return {
         let mut expression = Box::new(Expression {
             expression_type: ctx.operator.as_ref().unwrap().token_type,

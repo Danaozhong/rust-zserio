@@ -8,9 +8,9 @@ use crate::internal::generator::types::{
 };
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, BINARY_LITERAL, BOOL_LITERAL, DECIMAL_LITERAL, DIVIDE, DOT, DOUBLE_LITERAL, EQ,
-    FLOAT_LITERAL, GE, GT, HEXADECIMAL_LITERAL, ID, INDEX, LBRACKET, LE, LENGTHOF, LOGICAL_AND,
-    LOGICAL_OR, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OCTAL_LITERAL, OR, PLUS,
-    QUESTIONMARK, RPAREN, RSHIFT, STRING_LITERAL, TILDE, VALUEOF, XOR,
+    FLOAT_LITERAL, GE, GT, HEXADECIMAL_LITERAL, ID, INDEX, ISSET, LBRACKET, LE, LENGTHOF,
+    LOGICAL_AND, LOGICAL_OR, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS,
+    OCTAL_LITERAL, OR, PLUS, QUESTIONMARK, RPAREN, RSHIFT, STRING_LITERAL, TILDE, VALUEOF, XOR,
 };
 
 pub struct ExpressionGenerationResult {
@@ -49,6 +49,7 @@ pub fn generate_expression(
         ),
         LBRACKET => generate_bracketed_expression(expression, type_generator, scope),
         DOT => generate_dot_expression(expression, type_generator, scope),
+        ISSET => generate_isset_expression(expression, type_generator, scope),
         VALUEOF => generate_valueof_expression(expression, type_generator, scope),
         LENGTHOF => generate_lengthof_expression(expression, type_generator, scope),
         NUMBITS => generate_numbits_expression(expression, type_generator, scope),
@@ -246,6 +247,18 @@ fn generate_dot_expression(
         }
         _ => panic!("unsupported dot expression {:?}", op1),
     };
+}
+
+fn generate_isset_expression(
+    expression: &Expression,
+    type_generator: &mut TypeGenerator,
+    scope: &ModelScope,
+) -> String {
+    format!(
+        "{} & ({}) != 0",
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
+        generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope)
+    )
 }
 
 fn generate_valueof_expression(
