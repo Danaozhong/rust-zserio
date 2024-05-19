@@ -5,9 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug 'rust-zserio' (Windows)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/target/debug/rust-zserio.exe",
+            "args": [
+                "-o=tests/reference-module-lib/src",
+                "tests/reference_modules",
+            ],
+            "environment": [],
+            "externalConsole": true,
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "cargo build"
+        },
+        {
+            "name": "Debug 'rust-zserio' (LLDB)",
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rust-zserio'",
             "cargo": {
                 "args": [
                     "build",
