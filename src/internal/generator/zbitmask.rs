@@ -1,6 +1,6 @@
 use codegen::Scope;
 
-use crate::internal::ast::{expression::ExpressionType, zbitmask::ZBitmaskType};
+use crate::internal::ast::zbitmask::ZBitmaskType;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
@@ -41,23 +41,14 @@ pub fn generate_bitmask(
     // therefore, we need to manually create them.
     let mut file_content = gen_scope.to_string() + "\n\n";
 
-    let mut bitmask_value = 1;
     for item in &zbitmask.values {
-        if let Some(value_expression) = &item.value {
-            match value_expression.as_ref().borrow().result_type {
-                ExpressionType::Integer(v) => bitmask_value = v,
-                _ => panic!("only integer value expressions are supported"),
-            }
-        }
-
         file_content += format!(
             "pub const {}: {} = {};\n",
             &to_rust_constant_name(&item.name),
             &bitmask_rust_type,
-            bitmask_value,
+            item.value,
         )
         .as_str();
-        bitmask_value *= 2;
     }
 
     let mut new_scope = Scope::new();

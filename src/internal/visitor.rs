@@ -336,12 +336,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_bitmaskValue(&mut self, ctx: &BitmaskValueContext<'_>) -> Self::Return {
         let mut z_bitmask_value = ZBitmaskValue {
             name: ctx.id().unwrap().get_text(),
-            value: None,
+            value: 0,
+            value_expression: None,
         };
         if let Some(expression) = ctx.expression() {
             match self.visit(&*expression) {
                 ZserioTreeReturnType::Expression(expr) => {
-                    z_bitmask_value.value = Option::from(Rc::from(RefCell::from(*expr)))
+                    z_bitmask_value.value_expression = Option::from(Rc::from(RefCell::from(*expr)))
                 }
                 _ => panic!("wrong type returned from expression"),
             }
