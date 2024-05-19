@@ -132,8 +132,8 @@ impl Expression {
         match &self.operand1 {
             Some(op1) => {
                 // just pass through the expression content
-                self.result_type = op1.result_type.clone();
-                self.native_type = op1.native_type.clone();
+                self.result_type.clone_from(&op1.result_type);
+                self.native_type.clone_from(&op1.native_type);
             }
             _ => panic!("paranthesized expression requries one operator"),
         }

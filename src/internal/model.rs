@@ -31,7 +31,7 @@ impl Model {
         let mut packages = HashMap::new();
 
         for entry in WalkDir::new(directory) {
-            let path = entry.unwrap().path().to_owned();
+            let path = entry.unwrap().into_path();
             if path.is_dir() {
                 continue;
             }
@@ -52,7 +52,7 @@ impl Model {
     }
 
     /// Evaluates a zserio model by
-    /// 1) instantiating all templates.
+    /// 1) instantiatng all templates.
     /// 2) perform a type resolution and ensure that all types
     ///    are correctly referenced.
     /// 3) evaluate all expressions.

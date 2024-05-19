@@ -7,8 +7,8 @@ pub fn test_constants() {
     // requires a lot of type casts.
     // The test passes if the generated structure compiles.
     let mut test_struct = ConstantTestStruct::new();
-    test_struct.str_value = "StrValue".to_owned();
-    test_struct.other_str_value = "Other".to_owned();
+    test_struct.str_value = String::from("StrValue");
+    test_struct.other_str_value = String::from("Other");
 
     // CONSTANT_STRING + "DummyString" + CONSTANT_STRING;
     let expected_result = "TestDummyStringTest";

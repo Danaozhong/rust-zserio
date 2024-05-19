@@ -20,7 +20,7 @@ impl TypeReference {
         TypeReference {
             is_builtin: true,
             package: "".into(),
-            name: name.to_owned(),
+            name: name.to_string(),
             bits: 0,
             template_arguments: vec![],
             type_arguments: vec![],

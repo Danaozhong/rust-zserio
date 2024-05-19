@@ -55,7 +55,7 @@ impl ZBitmaskType {
             value.value = bitmask_value;
 
             // Pick the next bit for the next bitmask value.
-            bitmask_value = bitmask_value << 1;
+            bitmask_value <<= 1;
         }
         self.zserio_type.evaluate(scope);
     }
