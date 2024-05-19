@@ -11,6 +11,7 @@ pub fn generate_model(model: &mut Model, package_directory: &Path, root_package:
     let scope = &mut model.scope;
     // Generate the rust interface files for all packages.
     for package in model.packages.values() {
+        println!("generating rust code for package {0}...", package.name);
         generate_package(&mut type_generator, scope, package, package_directory);
     }
 

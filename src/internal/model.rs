@@ -31,7 +31,7 @@ impl Model {
         let mut packages = HashMap::new();
 
         for entry in WalkDir::new(directory) {
-            let path = entry.unwrap().path().to_owned();
+            let path = entry.unwrap().into_path();
             if path.is_dir() {
                 continue;
             }

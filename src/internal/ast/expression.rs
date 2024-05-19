@@ -7,9 +7,9 @@ use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, ScopeLocation, Symbol, SymbolReference};
 use crate::internal::parser::gen::zserioparser::{
-    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, LBRACKET, LE, LENGTHOF, LOGICAL_AND, LOGICAL_OR,
-    LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK, RPAREN,
-    RSHIFT, TILDE, VALUEOF, XOR,
+    AND, BANG, DIVIDE, DOT, EQ, GE, GT, ID, INDEX, ISSET, LBRACKET, LE, LENGTHOF, LOGICAL_AND,
+    LOGICAL_OR, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK,
+    RPAREN, RSHIFT, TILDE, VALUEOF, XOR,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -109,6 +109,7 @@ impl Expression {
             RPAREN => self.evaluate_function_call_expression(scope),
             LBRACKET => self.evaluate_array_element(scope),
             DOT => self.evaluate_dot_expression(scope),
+            ISSET => self.evaluate_isset_expression(),
             LENGTHOF => self.evaluate_lengthof_operator(),
             VALUEOF => self.evaluate_valueof_operator(),
             NUMBITS => self.evaluate_numbits_operator(),
@@ -131,8 +132,8 @@ impl Expression {
         match &self.operand1 {
             Some(op1) => {
                 // just pass through the expression content
-                self.result_type = op1.result_type.clone();
-                self.native_type = op1.native_type.clone();
+                self.result_type.clone_from(&op1.result_type);
+                self.native_type.clone_from(&op1.native_type);
             }
             _ => panic!("paranthesized expression requries one operator"),
         }
@@ -147,7 +148,7 @@ impl Expression {
                 );
                 self.symbol = Option::from(SymbolReference {
                     symbol: Symbol::Function(func.clone()),
-                    name: func.borrow().name.clone(),
+                    name: func.as_ref().borrow().name.clone(),
                     package: "".into(),
                 });
             }
@@ -218,7 +219,7 @@ impl Expression {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => match &op1.result_type {
                 ExpressionType::BitMask(z_bitmask) => {
-                    for bitmask_value in &z_bitmask.borrow().values {
+                    for bitmask_value in &z_bitmask.as_ref().borrow().values {
                         if bitmask_value.name == op2.text {
                             self.result_type = ExpressionType::Integer(0);
                             self.fully_resolved = false;
@@ -237,11 +238,7 @@ impl Expression {
         }
     }
 
-    fn evaluate_compound_dot_expression(
-        &mut self,
-        //compound_symbol: &Symbol,
-        scope: &mut ModelScope,
-    ) {
+    fn evaluate_compound_dot_expression(&mut self, scope: &mut ModelScope) {
         let type_ref = match &self
             .operand1
             .as_ref()
@@ -251,7 +248,7 @@ impl Expression {
             .unwrap()
             .symbol
         {
-            Symbol::Field(z_field) => z_field.borrow().field_type.clone(),
+            Symbol::Field(z_field) => z_field.as_ref().borrow().field_type.clone(),
             Symbol::Parameter(param) => {
                 // A parameter dot expression happens when inside a choice or enum,
                 // the type paremter is called, and the type paramter is of
@@ -295,18 +292,32 @@ impl Expression {
         self.native_type = Some(TypeReference::new_native_type("varsize"));
     }
 
+    fn evaluate_isset_expression(&mut self) {
+        match (&self.operand1, &self.operand2) {
+            (Some(op1), Some(op2)) => match (&op1.result_type, &op2.result_type) {
+                (ExpressionType::BitMask(_), ExpressionType::Integer(_)) => {
+                    self.result_type = ExpressionType::Bool(false);
+                }
+                _ => panic!(
+                    "the isset(bitmask, value_to_check) expression requires two bitmask parameters"
+                ),
+            },
+            _ => panic!("the isset(bitmask, value_to_check) expression requires two operators"),
+        }
+    }
+
     fn evaluate_valueof_operator(&mut self) {
         match &self.operand1 {
             Some(op1) => match &op1.result_type {
                 ExpressionType::BitMask(bitmask) => {
                     self.result_type = ExpressionType::Integer(0);
                     self.fully_resolved = false;
-                    self.native_type = Some(*bitmask.borrow().zserio_type.clone());
+                    self.native_type = Some(*bitmask.as_ref().borrow().zserio_type.clone());
                 },
                 ExpressionType::Enum(zenum) => {
                     self.result_type = ExpressionType::Integer(0);
                     self.fully_resolved = false;
-                    self.native_type = Some(*zenum.borrow().enum_type.clone());
+                    self.native_type = Some(*zenum.as_ref().borrow().enum_type.clone());
                 },
                 _ => panic!("valueof operator can only be applied to bitmask or enum expressions, but was called for {:?}", op1)
             },
@@ -334,7 +345,7 @@ impl Expression {
     fn evaluate_unary_arithmetic_expression(&mut self) {
         match &self.operand1 {
             Some(op1) => {
-                self.native_type = op1.native_type.clone();
+                self.native_type.clone_from(&op1.native_type);
                 match op1.result_type {
                     ExpressionType::Integer(value) => match self.expression_type {
                         PLUS => self.result_type = ExpressionType::Integer(value),
@@ -507,7 +518,7 @@ impl Expression {
             Some(op1) => match op1.result_type {
                 ExpressionType::Bool(value) => {
                     self.result_type = ExpressionType::Bool(!value);
-                    self.native_type = op1.native_type.clone();
+                    self.native_type.clone_from(&op1.native_type);
                 }
                 _ => {
                     panic!("logical negation expression can only be applied to boolean expressions")
@@ -522,7 +533,7 @@ impl Expression {
             Some(op1) => match op1.result_type {
                 ExpressionType::Integer(value) => {
                     self.result_type = ExpressionType::Integer(!value);
-                    self.native_type = op1.native_type.clone();
+                    self.native_type.clone_from(&op1.native_type);
                 }
                 _ => {
                     panic!("bitwise negation expression can only be applied to integer expressions")
@@ -584,13 +595,13 @@ impl Expression {
             ExpressionType::Bool(condition) => {
                 if condition {
                     let op2 = self.operand2.as_ref().unwrap();
-                    self.result_type = op2.result_type.clone();
-                    self.symbol = op2.symbol.clone();
+                    self.result_type.clone_from(&op2.result_type);
+                    self.symbol.clone_from(&op2.symbol);
                     self.fully_resolved = op2.fully_resolved;
                 } else {
                     let op3 = self.operand3.as_ref().unwrap();
-                    self.result_type = op3.result_type.clone();
-                    self.symbol = op3.symbol.clone();
+                    self.result_type.clone_from(&op3.result_type);
+                    self.symbol.clone_from(&op3.symbol);
                     self.fully_resolved = op3.fully_resolved;
                 }
             }
@@ -632,7 +643,7 @@ fn symbol_to_expression_type(
         Symbol::Choice(_) => (ExpressionType::Compound, None),
         Symbol::Enum(z_enum) => (ExpressionType::Enum(z_enum.clone()), None),
         Symbol::Field(field) => {
-            type_reference_to_expression_type(&field.borrow().field_type, scope)
+            type_reference_to_expression_type(&field.as_ref().borrow().field_type, scope)
         }
         Symbol::Parameter(param) => {
             type_reference_to_expression_type(&param.as_ref().borrow().zserio_type, scope)

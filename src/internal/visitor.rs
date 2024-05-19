@@ -38,10 +38,11 @@ use crate::internal::parser::gen::zserioparser::{
     FunctionDefinitionContext, FunctionDefinitionContextAttrs, FunctionTypeContextAttrs, IdContext,
     IdentifierExpressionContext, IdentifierExpressionContextAttrs, ImportDeclarationContext,
     ImportDeclarationContextAttrs, IndexExpressionContext, IndexExpressionContextAttrs,
-    InstantiateDeclarationContext, InstantiateDeclarationContextAttrs, LengthofExpressionContext,
-    LengthofExpressionContextAttrs, LiteralContextAttrs, LiteralExpressionContext,
-    LiteralExpressionContextAttrs, LogicalAndExpressionContext, LogicalAndExpressionContextAttrs,
-    LogicalOrExpressionContext, LogicalOrExpressionContextAttrs, MultiplicativeExpressionContext,
+    InstantiateDeclarationContext, InstantiateDeclarationContextAttrs, IsSetExpressionContext,
+    IsSetExpressionContextAttrs, LengthofExpressionContext, LengthofExpressionContextAttrs,
+    LiteralContextAttrs, LiteralExpressionContext, LiteralExpressionContextAttrs,
+    LogicalAndExpressionContext, LogicalAndExpressionContextAttrs, LogicalOrExpressionContext,
+    LogicalOrExpressionContextAttrs, MultiplicativeExpressionContext,
     MultiplicativeExpressionContextAttrs, NumbitsExpressionContext, NumbitsExpressionContextAttrs,
     PackageDeclarationContext, PackageDeclarationContextAttrs, PackageNameDefinitionContext,
     PackageNameDefinitionContextAttrs, ParameterDefinitionContext, ParameterDefinitionContextAttrs,
@@ -202,7 +203,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                             ZserioTreeReturnType::BitmaskType(bitmask_type) => package
                                 .bitmask_types
                                 .push(Rc::new(RefCell::new(*bitmask_type))),
-                            ZserioTreeReturnType::Str(s) => println!("unknown str: {0}", s),
+                            ZserioTreeReturnType::Str(_) => {}
                             ZserioTreeReturnType::StrVec(s) => {
                                 println!("unknown str vec: {0}", s[0])
                             }
@@ -336,12 +337,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
     fn visit_bitmaskValue(&mut self, ctx: &BitmaskValueContext<'_>) -> Self::Return {
         let mut z_bitmask_value = ZBitmaskValue {
             name: ctx.id().unwrap().get_text(),
-            value: None,
+            value: 0,
+            value_expression: None,
         };
         if let Some(expression) = ctx.expression() {
             match self.visit(&*expression) {
                 ZserioTreeReturnType::Expression(expr) => {
-                    z_bitmask_value.value = Option::from(Rc::from(RefCell::from(*expr)))
+                    z_bitmask_value.value_expression = Option::from(Rc::from(RefCell::from(*expr)))
                 }
                 _ => panic!("wrong type returned from expression"),
             }
@@ -379,7 +381,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 ZserioTreeReturnType::Field(f) => {
                     zserio_struct.fields.push(Rc::from(RefCell::from(*f)))
                 }
-                _ => println!(),
+                _ => panic!(),
             }
         }
         for function_ctx in ctx.functionDefinition_all() {
@@ -513,27 +515,25 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             default_case: None,
             functions: vec![],
         });
-        match ctx.templateParameters() {
-            Some(x) => match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
+        if let Some(x) = ctx.templateParameters() {
+            match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
                 ZserioTreeReturnType::StrVec(n) => choice.template_parameters = n,
-                _ => println!("should not happen"),
-            },
-            None => println!("struct has no template parameters"),
+                _ => println!("template parameters should be a list of strings"),
+            }
         }
 
-        match ctx.typeParameters() {
-            Some(x) => match ZserioParserVisitorCompat::visit_typeParameters(self, &x) {
+        if let Some(ctx) = ctx.typeParameters() {
+            match ZserioParserVisitorCompat::visit_typeParameters(self, &ctx) {
                 ZserioTreeReturnType::Parameters(ps) => choice.type_parameters = ps,
-                _ => println!("should not happen"),
-            },
-            None => println!("struct has no template parameters"),
+                _ => panic!("type parameters return type mismatch"),
+            }
         }
 
         // visit all the cases of the choice
         for choice_case_ctx in ctx.choiceCases_all() {
             match self.visit_choiceCases(&choice_case_ctx) {
                 ZserioTreeReturnType::ChoiceCase(choice_case) => choice.cases.push(choice_case),
-                _ => panic!("should not happen"),
+                _ => panic!("choice case type mismatch"),
             };
         }
 
@@ -989,6 +989,47 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         ctx: &DynamicLengthArgumentContext<'_>,
     ) -> Self::Return {
         self.visit(&*ctx.expression().unwrap())
+    }
+
+    fn visit_isSetExpression(&mut self, ctx: &IsSetExpressionContext<'_>) -> Self::Return {
+        // Parses an isset() expression of a bitmask.
+        let mut expression = Box::new(Expression {
+            expression_type: ctx.operator.as_ref().unwrap().token_type,
+            text: ctx.operator.as_ref().unwrap().get_text().into(),
+            flag: ExpressionFlag::None,
+            operand1: None,
+            operand2: None,
+            operand3: None,
+            result_type: ExpressionType::Bool(true),
+            symbol: None,
+            fully_resolved: false,
+            evaluation_state: EvaluationState::NotEvaluated,
+            native_type: None,
+        });
+        match self.visit(&*ctx.expression(0).unwrap()) {
+            ZserioTreeReturnType::Expression(e) => expression.operand1 = Option::from(e),
+            _ => panic!(),
+        }
+        match self.visit(&*ctx.expression(1).unwrap()) {
+            ZserioTreeReturnType::Expression(e) => {
+                // A special rule seems to apply for isset(), that for the second
+                // operand, explicit typing the bitmask type is not needed,
+                // as it can be deduced from the first operand.
+                // for example:
+                // isset(value, Bitmask.HAS_A)
+                // and
+                // isset(value, HAS_A)
+                // are both legal zserio code, but:
+                // (value & Bitmask.HAS_A) == Bitmask.HAS_A
+                // is legal, while the variant below is not:
+                // (value & HAS_A) == Bitmask.HAS_A
+                // One could argue that this is inconsistent.
+                // Raised it here: https://github.com/ndsev/zserio/discussions/617
+                expression.operand2 = Option::from(e);
+            }
+            _ => panic!("the isset expression requires two expressions"),
+        }
+        ZserioTreeReturnType::Expression(expression)
     }
 
     fn visit_lengthofExpression(&mut self, ctx: &LengthofExpressionContext<'_>) -> Self::Return {

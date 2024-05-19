@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cargo build",
+            "command": "cargo", // command "cargo build" did not work for me
+            "args": [
+                "build",
+                "--bin=rust-zserio",
+                "--package=rust-zserio"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

@@ -34,7 +34,7 @@ fn get_test_data() -> PackedArrayWrapper {
 
     test_struct.packed_array[2].bo_value_2 = true;
     test_struct.packed_array[2].i_16_value_3 = 453;
-    test_struct.packed_array[2].str_value_4 = "Milo Dinosaur".to_owned();
+    test_struct.packed_array[2].str_value_4 = "Milo Dinosaur".into();
 
     test_struct.standard_array[0].u_32_packed_array = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     test_struct.standard_array[1].u_32_packed_array =

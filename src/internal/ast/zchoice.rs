@@ -159,7 +159,7 @@ pub fn add_choice_to_scope(z_choice: &Rc<RefCell<ZChoice>>, package_scope: &mut 
         local_symbols.insert(param.name.clone(), Symbol::Parameter(rc_param.clone()));
     }
     // Add the fields to the scope.
-    for (_i, choice_case) in z_choice.borrow().cases.iter().enumerate() {
+    for choice_case in z_choice.borrow().cases.iter() {
         if let Some(field_rc) = &choice_case.field {
             let field = field_rc.as_ref().borrow();
             local_symbols.insert(field.name.clone(), Symbol::Field(field_rc.clone()));

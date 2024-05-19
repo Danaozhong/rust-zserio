@@ -37,7 +37,7 @@ pub fn generate_constant(
     // Workaround for string types: rust does not allow consts of String type,
     // it only supports &str constants.
     if field_type == "String" {
-        field_type = "&str".to_owned();
+        "&str".clone_into(&mut field_type);
     }
 
     file_content += format!(
