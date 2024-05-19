@@ -453,7 +453,7 @@ fn generate_literal_expression(expression: &Expression) -> String {
         ExpressionType::Integer(v) => int_value = *v,
         ExpressionType::Bool(b) => bool_value = *b,
         ExpressionType::Float(f) => float_value = *f,
-        ExpressionType::String(s) => string_value = s.clone(),
+        ExpressionType::String(s) => string_value.clone_from(s),
         _ => panic!(),
     };
 

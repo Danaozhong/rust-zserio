@@ -85,6 +85,6 @@ pub fn resolve_type_reference(type_reference: &mut TypeReference, scope: &ModelS
     }
     let symbol_ref = scope.resolve_symbol(&type_reference.name, true);
     if type_reference.package.is_empty() {
-        type_reference.package = symbol_ref.package.clone();
+        type_reference.package.clone_from(&symbol_ref.package);
     }
 }

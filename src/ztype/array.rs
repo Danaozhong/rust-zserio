@@ -39,7 +39,7 @@ impl<T> Array<T> {
             }
 
             // Actually write the data.
-            for (_index, element) in data.iter().enumerate() {
+            for element in data.iter() {
                 if self.is_aligned {
                     let _ = writer.align(1);
                 }
@@ -47,7 +47,7 @@ impl<T> Array<T> {
                     .write_packed(&mut packing_context_node, writer, element);
             }
         } else {
-            for (_index, element) in data.iter().enumerate() {
+            for element in data.iter() {
                 if self.is_aligned {
                     let _ = writer.align(1);
                 }
@@ -64,7 +64,7 @@ impl<T> Array<T> {
         }
     }
 
-    pub fn zserio_read(&mut self, reader: &mut BitReader, data: &mut Vec<T>) {
+    pub fn zserio_read(&mut self, reader: &mut BitReader, data: &mut [T]) {
         if !data.is_empty() {
             if self.is_packed {
                 // Create the packing context, and all child-contexts

@@ -30,7 +30,7 @@ impl TypeGenerator {
         assert!(!package.is_empty(), "package type has not been resolved");
 
         // Try to read from cache, if it already exists
-        if let Some(converted_package) = self.package_convert_cache.get(&package.to_owned()) {
+        if let Some(converted_package) = self.package_convert_cache.get(package) {
             return converted_package.clone();
         }
 
@@ -48,7 +48,7 @@ impl TypeGenerator {
     }
 
     pub fn convert_field_name(&mut self, name: &str) -> String {
-        if let Some(converted_field_name) = self.field_name_cache.get(&name.to_owned()) {
+        if let Some(converted_field_name) = self.field_name_cache.get(name) {
             return converted_field_name.clone();
         }
         let converted_field_name = remove_reserved_identifier(name).to_case(Case::Snake);
@@ -82,7 +82,7 @@ impl TypeGenerator {
 
     pub fn to_rust_module_name(&mut self, name: &str) -> String {
         // Try to read from cache, if it already exists
-        if let Some(converted_module_name) = self.module_name_cache.get(&name.to_owned()) {
+        if let Some(converted_module_name) = self.module_name_cache.get(name) {
             return converted_module_name.clone();
         }
 
@@ -93,7 +93,7 @@ impl TypeGenerator {
     }
 
     pub fn to_rust_type_name(&mut self, name: &str) -> String {
-        if let Some(converted_rust_type_name) = self.type_name_cache.get(&name.to_owned()) {
+        if let Some(converted_rust_type_name) = self.type_name_cache.get(name) {
             return converted_rust_type_name.clone();
         }
         let rust_type_name = remove_reserved_identifier(name).to_case(Case::UpperCamel);

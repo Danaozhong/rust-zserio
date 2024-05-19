@@ -345,7 +345,7 @@ impl Expression {
     fn evaluate_unary_arithmetic_expression(&mut self) {
         match &self.operand1 {
             Some(op1) => {
-                self.native_type = op1.native_type.clone();
+                self.native_type.clone_from(&op1.native_type);
                 match op1.result_type {
                     ExpressionType::Integer(value) => match self.expression_type {
                         PLUS => self.result_type = ExpressionType::Integer(value),
@@ -518,7 +518,7 @@ impl Expression {
             Some(op1) => match op1.result_type {
                 ExpressionType::Bool(value) => {
                     self.result_type = ExpressionType::Bool(!value);
-                    self.native_type = op1.native_type.clone();
+                    self.native_type.clone_from(&op1.native_type);
                 }
                 _ => {
                     panic!("logical negation expression can only be applied to boolean expressions")
@@ -533,7 +533,7 @@ impl Expression {
             Some(op1) => match op1.result_type {
                 ExpressionType::Integer(value) => {
                     self.result_type = ExpressionType::Integer(!value);
-                    self.native_type = op1.native_type.clone();
+                    self.native_type.clone_from(&op1.native_type);
                 }
                 _ => {
                     panic!("bitwise negation expression can only be applied to integer expressions")
@@ -595,13 +595,13 @@ impl Expression {
             ExpressionType::Bool(condition) => {
                 if condition {
                     let op2 = self.operand2.as_ref().unwrap();
-                    self.result_type = op2.result_type.clone();
-                    self.symbol = op2.symbol.clone();
+                    self.result_type.clone_from(&op2.result_type);
+                    self.symbol.clone_from(&op2.symbol);
                     self.fully_resolved = op2.fully_resolved;
                 } else {
                     let op3 = self.operand3.as_ref().unwrap();
-                    self.result_type = op3.result_type.clone();
-                    self.symbol = op3.symbol.clone();
+                    self.result_type.clone_from(&op3.result_type);
+                    self.symbol.clone_from(&op3.symbol);
                     self.fully_resolved = op3.fully_resolved;
                 }
             }

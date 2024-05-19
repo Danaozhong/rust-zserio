@@ -48,7 +48,9 @@ pub fn get_fundamental_type(
 
         // Make sure that the type arguments are passed to the
         // fundamental type.
-        new_type_ref.type_arguments = current_type_ref.type_arguments.clone();
+        new_type_ref
+            .type_arguments
+            .clone_from(&current_type_ref.type_arguments);
         current_type_ref = new_type_ref;
 
         if is_marshaler {

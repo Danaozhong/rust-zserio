@@ -69,7 +69,7 @@ fn instantiate_struct(
     pkg: &mut ZPackage,
     scope: &mut ModelScope,
     z_struct: &ZStruct,
-    template_arguments: &Vec<TypeReference>,
+    template_arguments: &[TypeReference],
     instantiated_name: &String,
 ) -> TypeReference {
     assert!(!z_struct.template_parameters.is_empty());
@@ -180,7 +180,7 @@ fn instantiate_choice(
     pkg: &mut ZPackage,
     scope: &mut ModelScope,
     z_choice: &ZChoice,
-    template_arguments: &Vec<TypeReference>,
+    template_arguments: &[TypeReference],
     instantiated_name: &String,
 ) -> TypeReference {
     assert!(!z_choice.template_parameters.is_empty());
@@ -329,9 +329,7 @@ pub fn instantiate_field(
         // Iterate over the teamplate parameters and instantiate them.
         let mut new_template_arguments = vec![];
 
-        for (_index, template_parameter) in
-            new_field.field_type.template_arguments.iter().enumerate()
-        {
+        for template_parameter in new_field.field_type.template_arguments.iter() {
             if instantiated_types.contains_key(&template_parameter.name) {
                 new_template_arguments.push(instantiated_types[&template_parameter.name].clone());
             } else {
