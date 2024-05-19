@@ -88,7 +88,6 @@ pub fn initialize_array_trait(
     }
 
     code_str += "}";
-    print!("{}", code_str);
     code_str
 }
 

@@ -52,7 +52,7 @@ impl Model {
     }
 
     /// Evaluates a zserio model by
-    /// 1) instantiatng all templates.
+    /// 1) instantiating all templates.
     /// 2) perform a type resolution and ensure that all types
     ///    are correctly referenced.
     /// 3) evaluate all expressions.

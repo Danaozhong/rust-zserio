@@ -148,7 +148,7 @@ impl Expression {
                 );
                 self.symbol = Option::from(SymbolReference {
                     symbol: Symbol::Function(func.clone()),
-                    name: func.borrow().name.clone(),
+                    name: func.as_ref().borrow().name.clone(),
                     package: "".into(),
                 });
             }
@@ -219,7 +219,7 @@ impl Expression {
         match (&self.operand1, &self.operand2) {
             (Some(op1), Some(op2)) => match &op1.result_type {
                 ExpressionType::BitMask(z_bitmask) => {
-                    for bitmask_value in &z_bitmask.borrow().values {
+                    for bitmask_value in &z_bitmask.as_ref().borrow().values {
                         if bitmask_value.name == op2.text {
                             self.result_type = ExpressionType::Integer(0);
                             self.fully_resolved = false;
@@ -238,11 +238,7 @@ impl Expression {
         }
     }
 
-    fn evaluate_compound_dot_expression(
-        &mut self,
-        //compound_symbol: &Symbol,
-        scope: &mut ModelScope,
-    ) {
+    fn evaluate_compound_dot_expression(&mut self, scope: &mut ModelScope) {
         let type_ref = match &self
             .operand1
             .as_ref()
@@ -252,7 +248,7 @@ impl Expression {
             .unwrap()
             .symbol
         {
-            Symbol::Field(z_field) => z_field.borrow().field_type.clone(),
+            Symbol::Field(z_field) => z_field.as_ref().borrow().field_type.clone(),
             Symbol::Parameter(param) => {
                 // A parameter dot expression happens when inside a choice or enum,
                 // the type paremter is called, and the type paramter is of
@@ -647,7 +643,7 @@ fn symbol_to_expression_type(
         Symbol::Choice(_) => (ExpressionType::Compound, None),
         Symbol::Enum(z_enum) => (ExpressionType::Enum(z_enum.clone()), None),
         Symbol::Field(field) => {
-            type_reference_to_expression_type(&field.borrow().field_type, scope)
+            type_reference_to_expression_type(&field.as_ref().borrow().field_type, scope)
         }
         Symbol::Parameter(param) => {
             type_reference_to_expression_type(&param.as_ref().borrow().zserio_type, scope)

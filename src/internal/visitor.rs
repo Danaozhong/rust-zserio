@@ -202,7 +202,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                             ZserioTreeReturnType::BitmaskType(bitmask_type) => package
                                 .bitmask_types
                                 .push(Rc::new(RefCell::new(*bitmask_type))),
-                            ZserioTreeReturnType::Str(s) => println!("unknown str: {0}", s),
+                            ZserioTreeReturnType::Str(_) => {}
                             ZserioTreeReturnType::StrVec(s) => {
                                 println!("unknown str vec: {0}", s[0])
                             }
@@ -379,7 +379,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 ZserioTreeReturnType::Field(f) => {
                     zserio_struct.fields.push(Rc::from(RefCell::from(*f)))
                 }
-                _ => println!(),
+                _ => panic!(),
             }
         }
         for function_ctx in ctx.functionDefinition_all() {
@@ -513,27 +513,25 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             default_case: None,
             functions: vec![],
         });
-        match ctx.templateParameters() {
-            Some(x) => match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
+        if let Some(x) = ctx.templateParameters() {
+            match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
                 ZserioTreeReturnType::StrVec(n) => choice.template_parameters = n,
-                _ => println!("should not happen"),
-            },
-            None => println!("struct has no template parameters"),
+                _ => println!("template parameters should be a list of strings"),
+            }
         }
 
-        match ctx.typeParameters() {
-            Some(x) => match ZserioParserVisitorCompat::visit_typeParameters(self, &x) {
+        if let Some(ctx) = ctx.typeParameters() {
+            match ZserioParserVisitorCompat::visit_typeParameters(self, &ctx) {
                 ZserioTreeReturnType::Parameters(ps) => choice.type_parameters = ps,
-                _ => println!("should not happen"),
-            },
-            None => println!("struct has no template parameters"),
+                _ => panic!("type parameters return type mismatch"),
+            }
         }
 
         // visit all the cases of the choice
         for choice_case_ctx in ctx.choiceCases_all() {
             match self.visit_choiceCases(&choice_case_ctx) {
                 ZserioTreeReturnType::ChoiceCase(choice_case) => choice.cases.push(choice_case),
-                _ => panic!("should not happen"),
+                _ => panic!("choice case type mismatch"),
             };
         }
 

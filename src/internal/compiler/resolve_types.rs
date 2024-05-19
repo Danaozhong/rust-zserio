@@ -33,9 +33,6 @@ pub fn resolve_choice_types(z_choice: &ZChoice, scope: &ModelScope) {
     }
     for case in &z_choice.cases {
         if let Some(field) = &case.field {
-            if field.borrow().name == "IsoDetails" {
-                print!("test");
-            }
             resolve_type_reference(field.borrow_mut().field_type.as_mut(), scope);
         }
     }
