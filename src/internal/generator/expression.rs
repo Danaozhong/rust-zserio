@@ -1,6 +1,7 @@
 use crate::internal::ast::expression::{
     EvaluationState, Expression, ExpressionFlag, ExpressionType,
 };
+use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use crate::internal::generator::types::{convert_to_enum_field_name, TypeGenerator};
 use crate::internal::parser::gen::zserioparser::{
@@ -182,6 +183,24 @@ fn generate_bracketed_expression(
     )
 }
 
+fn is_bitmask_expression(expression: &Expression, scope: &ModelScope) -> bool {
+    if let Some(expr_symbol) = &expression.symbol {
+        let fund_type = match &expr_symbol.symbol {
+            Symbol::Field(field) => get_fundamental_type(&field.borrow().field_type, scope),
+            Symbol::Parameter(param) => get_fundamental_type(&param.borrow().zserio_type, scope),
+            _ => return false,
+        };
+        if fund_type.fundamental_type.is_builtin {
+            return false;
+        }
+        return matches!(
+            scope.get_symbol(&fund_type.fundamental_type).symbol,
+            Symbol::Bitmask(_)
+        );
+    }
+    false
+}
+
 fn generate_dot_expression(
     expression: &Expression,
     type_generator: &mut TypeGenerator,
@@ -240,9 +259,19 @@ fn generate_valueof_expression(
     type_generator: &mut TypeGenerator,
     scope: &ModelScope,
 ) -> String {
+    let native_type = expression.native_type.as_ref().unwrap();
+    let fundamental_type = get_fundamental_type(native_type, scope);
+    let bitmask_suffix = if is_bitmask_expression(expression.operand1.as_ref().unwrap(), scope) {
+        ".bits()"
+    } else {
+        ""
+    };
+
     format!(
-        "ztype::valueof({})",
-        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
+        "{}{} as {}",
+        generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
+        bitmask_suffix,
+        type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type),
     )
 }
 

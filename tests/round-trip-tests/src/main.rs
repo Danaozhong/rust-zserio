@@ -13,6 +13,7 @@ pub mod parameterized_array_length_test;
 pub mod subtyped_dot_expression;
 pub mod template_instantiation_test;
 pub mod type_casts_test;
+pub mod valueof_operator_test;
 
 use reference_module_lib::reference_modules::core::types::{
     basic_choice::BasicChoice, color::Color, extern_test_case::ExternTestCase, some_enum::SomeEnum,
@@ -45,6 +46,7 @@ use crate::parameter_passing_test::{test_index_operator, test_parameter_passing}
 use crate::parameterized_array_length_test::test_parameterized_array_length;
 use crate::subtyped_dot_expression::test_subtyped_dot_expression;
 use crate::type_casts_test::test_type_casts;
+use crate::valueof_operator_test::test_valueof_operator;
 
 fn main() {
     test_structure();
@@ -74,6 +76,7 @@ fn main() {
     test_packed_arrays();
     test_subtyped_dot_expression();
     test_expr_numbits();
+    test_valueof_operator();
 }
 
 fn test_structure() {
