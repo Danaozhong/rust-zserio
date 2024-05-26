@@ -27,3 +27,4 @@ import reference_modules.subtyped_dot_expression.test.*;
 import reference_modules.complex_dot_expression.complex_dot_expression.*;
 import reference_modules.optional_array.optional_array.*;
 import reference_modules.expr_numbits.expr_numbits.*;
+import reference_modules.valueof_operator.valueof_operator.*;

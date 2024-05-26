@@ -70,4 +70,7 @@ pub mod reference_modules {
     pub mod user {
         pub mod testobject;
     }
+    pub mod valueof_operator {
+        pub mod valueof_operator;
+    }
 }
