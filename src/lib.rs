@@ -1,9 +1,11 @@
+//!
 //! [zserio](http://zserio.org/) serialization bindings for rust.
 //! `zserio` is a binary serialization language, similar to Protobuf. The key features are:
 //! - It features a rich schema.
 //! - Programming language agnostic.
 //! - Compact and easy to use.
 //! - Good and fast out-of the box compression.
+//!
 //! The syntax is similar to C/C++, which makes zserio code easy to read.
 //!
 //! Example:

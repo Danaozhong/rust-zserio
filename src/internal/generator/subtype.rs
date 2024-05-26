@@ -17,7 +17,7 @@ pub fn generate_subtype(
     let rust_module_name = type_generator.to_rust_module_name(&subtype.name);
     let type_alias_scope = codegen_scope.new_type_alias(
         type_generator.to_rust_type_name(&subtype.name),
-        &type_generator.ztype_to_rust_type(&subtype.zserio_type),
+        type_generator.ztype_to_rust_type(&subtype.zserio_type),
     );
     type_alias_scope.vis("pub");
 

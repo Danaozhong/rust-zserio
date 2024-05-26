@@ -7,6 +7,7 @@ pub mod expr_numbits_test;
 pub mod integer_types_test;
 pub mod optional_values_test;
 pub mod packed_arrays_test;
+pub mod parameter_passing_bitmask_test;
 pub mod parameter_passing_test;
 pub mod parameterized_array_length_test;
 pub mod subtyped_dot_expression;
@@ -39,6 +40,7 @@ use crate::optional_values_test::{
     test_optional_arrays, test_optional_members, test_optional_values,
 };
 use crate::packed_arrays_test::test_packed_arrays;
+use crate::parameter_passing_bitmask_test::test_passing_bitmask_parameter;
 use crate::parameter_passing_test::{test_index_operator, test_parameter_passing};
 use crate::parameterized_array_length_test::test_parameterized_array_length;
 use crate::subtyped_dot_expression::test_subtyped_dot_expression;
@@ -54,6 +56,7 @@ fn main() {
     test_type_lookup();
     test_union_type();
     test_parameter_passing();
+    test_passing_bitmask_parameter();
     test_index_operator();
     test_ambiguous_types();
     test_type_casts();
