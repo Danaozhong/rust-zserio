@@ -3,9 +3,7 @@ use crate::internal::ast::expression::{
 };
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
-use crate::internal::generator::types::{
-    convert_to_enum_field_name, to_rust_constant_name, TypeGenerator,
-};
+use crate::internal::generator::types::{convert_to_enum_field_name, TypeGenerator};
 use crate::internal::parser::gen::zserioparser::{
     AND, BANG, BINARY_LITERAL, BOOL_LITERAL, DECIMAL_LITERAL, DIVIDE, DOT, DOUBLE_LITERAL, EQ,
     FLOAT_LITERAL, GE, GT, HEXADECIMAL_LITERAL, ID, INDEX, ISSET, LBRACKET, LE, LENGTHOF,
@@ -202,6 +200,7 @@ fn is_bitmask_expression(expression: &Expression, scope: &ModelScope) -> bool {
     }
     false
 }
+
 fn generate_dot_expression(
     expression: &Expression,
     type_generator: &mut TypeGenerator,
@@ -224,25 +223,19 @@ fn generate_dot_expression(
             let bitmask_symbol = op1.symbol.as_ref().unwrap();
             let bitmask_expression = format!(
                 "{}::{}",
-                type_generator.to_rust_module_name(&bitmask_symbol.name),
-                to_rust_constant_name(&op2.text)
+                type_generator.custom_type_to_rust_type(&bitmask_symbol.name),
+                convert_to_enum_field_name(&op2.text)
             );
             type_generator.get_full_module_path(&bitmask_symbol.package, &bitmask_expression)
         }
         ExpressionType::Compound => {
             let left_operand = generate_expression(op1, type_generator, scope);
-            let mut right_side = match op2.flag {
+            let right_side = match op2.flag {
                 ExpressionFlag::IsDotExpressionRightOperand => {
                     type_generator.convert_field_name(&op2.text)
                 }
                 _ => panic!("failed to generate right side of field dot expression"),
             };
-
-            // Special handling for bitmask types. Bit masks are actually a struct, having a "bitmask"
-            // value field. Hence, when generating bit masks, this field need to be referenced as well.
-            if is_bitmask_expression(expression, scope) {
-                right_side = format!("{}.bitmask_value", right_side);
-            }
             format!("{}.{}", &left_operand, right_side,)
         }
         _ => panic!("unsupported dot expression {:?}", op1),
@@ -300,27 +293,18 @@ fn generate_identifier_expression(
 ) -> String {
     let symbol_ref = expression.symbol.as_ref().unwrap();
 
-    // Workaround for bitmasks - bitmasks are wrapped in a special structure,
-    // so when referencing them, we need to apply the wrapper.
-    let bitmask_workaround = match &expression.result_type {
-        ExpressionType::BitMask(_) => String::from(".bitmask_value"),
-        _ => String::from(""),
-    };
-
     // check for early returns, where no full type addressing is needed.
     match &symbol_ref.symbol {
         Symbol::Field(f) => {
             return format!(
-                "self.{}{}",
+                "self.{}",
                 type_generator.convert_field_name(&f.borrow().name),
-                &bitmask_workaround
             );
         }
         Symbol::Parameter(p) => {
             return format!(
-                "self.{}{}",
-                type_generator.convert_field_name(&p.borrow().name),
-                &bitmask_workaround
+                "self.{}",
+                type_generator.convert_field_name(&p.borrow().name)
             )
         }
         Symbol::Function(z_function) => {
@@ -337,9 +321,7 @@ fn generate_identifier_expression(
         Symbol::Choice(c) => type_generator.custom_type_to_rust_type(&c.borrow().name),
         Symbol::Union(u) => type_generator.custom_type_to_rust_type(&u.borrow().name),
         Symbol::Enum(e) => type_generator.custom_type_to_rust_type(&e.borrow().name),
-        Symbol::Bitmask(bitmask) => {
-            type_generator.custom_type_to_rust_type(&bitmask.borrow().name) + ".bitmask_value"
-        }
+        Symbol::Bitmask(bitmask) => type_generator.custom_type_to_rust_type(&bitmask.borrow().name),
         Symbol::Const(zconst) => type_generator.constant_type_to_rust_type(&zconst.borrow().name),
         _ => panic!("unsupported identifier type {:?}", expression.symbol),
     };

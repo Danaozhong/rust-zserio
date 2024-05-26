@@ -25,6 +25,7 @@ license = "BSD-3-Clause"
 
 [dependencies]
 antlr-rust = "0.3.0-beta"
+bitmask-enum = "2.2.4"
 bitreader =  "0.3.8"
 bitstream-io = "1.6.0"
 clap = { version="4.2.7", features = [ "derive" ] }

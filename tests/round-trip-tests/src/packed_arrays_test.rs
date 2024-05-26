@@ -1,7 +1,7 @@
 use bitreader::BitReader;
 use reference_module_lib::reference_modules::packed_arrays::packed_arrays::{
-    bubble_tea_addons, bubble_tea_size::BubbleTeaSize, data_struct::DataStruct,
-    packed_array_wrapper::PackedArrayWrapper,
+    bubble_tea_addons::BubbleTeaAddons, bubble_tea_size::BubbleTeaSize,
+    data_struct::DataStruct, packed_array_wrapper::PackedArrayWrapper,
 };
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::array_traits::packing_context_node::PackingContextNode;
@@ -28,9 +28,9 @@ fn get_test_data() -> PackedArrayWrapper {
     test_struct.packed_array[1].size = BubbleTeaSize::ColdMedium;
     test_struct.packed_array[2].size = BubbleTeaSize::ColdLarge;
 
-    test_struct.packed_array[0].tea_addons.bitmask_value =
-        bubble_tea_addons::HAS_BLACK_SUGAR | bubble_tea_addons::HAS_ICE;
-    test_struct.packed_array[1].tea_addons.bitmask_value = bubble_tea_addons::HAS_CREAM_CHEESE;
+    test_struct.packed_array[0].tea_addons =
+        BubbleTeaAddons::HasBlackSugar | BubbleTeaAddons::HasIce;
+    test_struct.packed_array[1].tea_addons = BubbleTeaAddons::HasCreamCheese;
 
     test_struct.packed_array[2].bo_value_2 = true;
     test_struct.packed_array[2].i_16_value_3 = 453;

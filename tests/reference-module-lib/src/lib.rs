@@ -45,6 +45,9 @@ pub mod reference_modules {
         pub mod index_operator;
         pub mod parameter_passing;
     }
+    pub mod parameter_passing_bitmask {
+        pub mod parameter_passing_bitmask;
+    }
     pub mod parameterized_array_length {
         pub mod parameterized_array_length;
     }
@@ -66,5 +69,8 @@ pub mod reference_modules {
     }
     pub mod user {
         pub mod testobject;
+    }
+    pub mod valueof_operator {
+        pub mod valueof_operator;
     }
 }

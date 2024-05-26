@@ -6,7 +6,7 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
     encode::encode_type, file_generator::write_to_file, preamble::add_standard_imports,
-    types::to_rust_constant_name, types::zserio_to_rust_type, types::TypeGenerator,
+    types::convert_to_enum_field_name, types::zserio_to_rust_type, types::TypeGenerator,
 };
 use std::path::Path;
 
@@ -24,45 +24,40 @@ pub fn generate_bitmask(
     let bitmask_rust_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
 
     add_standard_imports(gen_scope);
+    gen_scope.import("bitmask_enum", "bitmask");
+
+    let mut file_content = gen_scope.to_string();
+    file_content += "\n\n";
+    file_content += format!("#[bitmask({})]", bitmask_rust_type).as_str();
+
+    let mut bitmask_scope = Scope::new();
 
     // generate the bitmask type itself.
     // Because we want to have the type implementing the type::ZserioPackableObject type trait,
-    // we wrap it into a small struct. The trait is implemented using this wrapper struct.
-    let bitmask_wrapper_struct = gen_scope.new_struct(&rust_type_name);
-    bitmask_wrapper_struct.vis("pub");
-    bitmask_wrapper_struct.derive("Clone");
-    bitmask_wrapper_struct.derive("Copy");
-    bitmask_wrapper_struct.derive("PartialEq");
-
-    let bitmask_value_field = bitmask_wrapper_struct.new_field("bitmask_value", &bitmask_rust_type);
-    bitmask_value_field.vis("pub");
-
-    // the code generator doesn't support consts (https://github.com/carllerche/codegen/issues/17),
-    // therefore, we need to manually create them.
-    let mut file_content = gen_scope.to_string() + "\n\n";
+    // we wrap it into a bitmask_enum.
+    // https://github.com/Lukas3674/rust-bitmask-enum
+    // The zserio-related traits are implemented using this bitmask enum type..
+    let bitmask_enum = bitmask_scope.new_enum(&rust_type_name);
+    bitmask_enum.vis("pub");
 
     for item in &zbitmask.values {
-        file_content += format!(
-            "pub const {}: {} = {};\n",
-            &to_rust_constant_name(&item.name),
-            &bitmask_rust_type,
-            item.value,
-        )
-        .as_str();
+        bitmask_enum.new_variant(format!(
+            "{} = {}",
+            convert_to_enum_field_name(&item.name),
+            item.value
+        ));
     }
 
-    let mut new_scope = Scope::new();
-
-    let z_impl = new_scope.new_impl(&rust_type_name);
+    let z_impl = bitmask_scope.new_impl(&rust_type_name);
     z_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the enum
     let new_fn = z_impl.new_fn("new");
     new_fn.ret("Self");
     new_fn.line(format!(
-        "{} {{ bitmask_value: {} }}",
+        "{}::{}",
         &rust_type_name,
-        to_rust_constant_name(&zbitmask.values[0].name)
+        convert_to_enum_field_name(&zbitmask.values[0].name)
     ));
 
     // generate the functions to serialize/deserialize
@@ -79,13 +74,13 @@ pub fn generate_bitmask(
     let init_packing_context_fn = z_impl.new_fn("zserio_init_packing_context");
     init_packing_context_fn.arg_ref_self();
     init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
-    init_packing_context_fn.line(format!("context_node.children[0].context.as_mut().unwrap().init(&{}, &(self.bitmask_value as {}));", 
+    init_packing_context_fn.line(format!(
+        "context_node.children[0].context.as_mut().unwrap().init(&{}, &(self.bits as {}));",
         &initialize_array_trait(scope, type_generator, &fundamental_type.fundamental_type),
         &bitmask_rust_type,
     ));
 
-    file_content += new_scope.to_string().as_str();
-
+    file_content += bitmask_scope.to_string().as_str();
     write_to_file(
         type_generator,
         &file_content,
@@ -117,7 +112,7 @@ fn generate_zserio_read(
         &zbitmask.zserio_type,
         None,
     );
-    zserio_read_fn.line("self.bitmask_value = v;");
+    zserio_read_fn.line("self.bits = v;");
 
     let zserio_read_packed_fn = impl_codegen.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
@@ -136,7 +131,7 @@ fn generate_zserio_read(
         &zbitmask.zserio_type,
         Option::from(0),
     );
-    zserio_read_packed_fn.line("self.bitmask_value = v");
+    zserio_read_packed_fn.line("self.bits = v");
 }
 
 fn generate_zserio_write(
@@ -145,7 +140,7 @@ fn generate_zserio_write(
     impl_codegen: &mut codegen::Impl,
     zbitmask: &ZBitmaskType,
 ) {
-    let rust_type_name = "self.bitmask_value".into();
+    let rust_type_name = "self.bits".into();
 
     let zserio_write_fn = impl_codegen.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
@@ -180,7 +175,7 @@ fn generate_zserio_bitsize(
     zbitmask: &ZBitmaskType,
 ) {
     let rust_type_name = format!(
-        "(self.bitmask_value as {})",
+        "(self.bits as {})",
         zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
     );
 

@@ -1,6 +1,5 @@
 use reference_module_lib::reference_modules::bitmask_isset::bitmask_isset::{
-    bitmask_test::BitmaskTest, some_bit_mask::SomeBitMask, some_bit_mask::FLAG_A,
-    some_bit_mask::FLAG_B, some_bit_mask::FLAG_C,
+    bitmask_test::BitmaskTest, some_bit_mask::SomeBitMask,
 };
 
 use rust_zserio::ztype::ZserioPackableObject;
@@ -10,9 +9,7 @@ use rust_bitwriter::BitWriter;
 
 pub fn test_bitmask_isset_round_trip() {
     let mut test_struct = BitmaskTest::new();
-    test_struct.value = SomeBitMask {
-        bitmask_value: FLAG_A | FLAG_B,
-    };
+    test_struct.value = SomeBitMask::FlagA | SomeBitMask::FlagB;
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -31,9 +28,7 @@ pub fn test_bitmask_isset_round_trip() {
 
 pub fn test_bitmask_isset_operator() {
     let mut test_struct = BitmaskTest::new();
-    test_struct.value = SomeBitMask {
-        bitmask_value: FLAG_A | FLAG_B,
-    };
+    test_struct.value = SomeBitMask::FlagA | SomeBitMask::FlagB;
 
     // Ensure that the isset() operator works correctly.
     assert!(test_struct.has_a());
@@ -44,16 +39,14 @@ pub fn test_bitmask_isset_operator() {
     // Change the bitmask value. The value change should reflect
     // in the output of the functions that use the isset()
     // operator.
-    test_struct.value = SomeBitMask {
-        bitmask_value: FLAG_C,
-    };
+    test_struct.value = SomeBitMask::FlagC;
 
     assert!(!test_struct.has_a());
     assert!(!test_struct.has_b());
     assert!(test_struct.has_c());
     assert!(test_struct.has_a_or_c());
 
-    test_struct.value = SomeBitMask { bitmask_value: 0 };
+    test_struct.value = SomeBitMask::none();
     assert!(!test_struct.has_a());
     assert!(!test_struct.has_b());
     assert!(!test_struct.has_c());
