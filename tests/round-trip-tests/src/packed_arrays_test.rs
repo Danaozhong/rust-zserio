@@ -1,7 +1,7 @@
 use bitreader::BitReader;
 use reference_module_lib::reference_modules::packed_arrays::packed_arrays::{
-    bubble_tea_addons::BubbleTeaAddons, bubble_tea_size::BubbleTeaSize,
-    data_struct::DataStruct, packed_array_wrapper::PackedArrayWrapper,
+    bubble_tea_addons::BubbleTeaAddons, bubble_tea_size::BubbleTeaSize, data_struct::DataStruct,
+    packed_array_wrapper::PackedArrayWrapper,
 };
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::array_traits::packing_context_node::PackingContextNode;

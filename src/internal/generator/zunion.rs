@@ -27,7 +27,7 @@ pub fn generate_struct_member_for_field(
         field_type = format!("Option<{}>", field_type.as_str());
     }
     let gen_field =
-        gen_struct.new_field(&type_generator.convert_field_name(&field.name), &field_type);
+        gen_struct.new_field(type_generator.convert_field_name(&field.name), &field_type);
     gen_field.vis("pub");
 }
 

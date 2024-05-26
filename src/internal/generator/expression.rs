@@ -1,7 +1,6 @@
 use crate::internal::ast::expression::{
     EvaluationState, Expression, ExpressionFlag, ExpressionType,
 };
-use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use crate::internal::generator::types::{convert_to_enum_field_name, TypeGenerator};
 use crate::internal::parser::gen::zserioparser::{
@@ -181,24 +180,6 @@ fn generate_bracketed_expression(
         generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope),
         generate_expression(expression.operand2.as_ref().unwrap(), type_generator, scope),
     )
-}
-
-fn is_bitmask_expression(expression: &Expression, scope: &ModelScope) -> bool {
-    if let Some(expr_symbol) = &expression.symbol {
-        let fund_type = match &expr_symbol.symbol {
-            Symbol::Field(field) => get_fundamental_type(&field.borrow().field_type, scope),
-            Symbol::Parameter(param) => get_fundamental_type(&param.borrow().zserio_type, scope),
-            _ => return false,
-        };
-        if fund_type.fundamental_type.is_builtin {
-            return false;
-        }
-        return matches!(
-            scope.get_symbol(&fund_type.fundamental_type).symbol,
-            Symbol::Bitmask(_)
-        );
-    }
-    false
 }
 
 fn generate_dot_expression(

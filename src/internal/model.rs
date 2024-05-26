@@ -25,7 +25,7 @@ pub struct Model {
 
 impl Model {
     /// Loads a complete zserio model from a directory.
-    /// It iterates over a directoy, and parses all `*.zs` files,
+    /// It iterates over a directory, and parses all `*.zs` files,
     /// and loads them into a `Model` structure.
     pub fn from_filesystem(directory: &Path) -> Self {
         let mut packages = HashMap::new();
@@ -52,10 +52,11 @@ impl Model {
     }
 
     /// Evaluates a zserio model by
-    /// 1) instantiatng all templates.
+    /// 1) instantiating all templates.
     /// 2) perform a type resolution and ensure that all types
     ///    are correctly referenced.
     /// 3) evaluate all expressions.
+    ///
     /// Currently, this function will panic if there is an error
     /// during any of the above steps.
     pub fn evaluate(&mut self) {
