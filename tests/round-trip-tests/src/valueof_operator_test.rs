@@ -16,7 +16,7 @@ pub fn test_valueof_operator() {
 
     // Change the bitmask, and assume the value is correctly deduced.
     zstruct.color = Color::Green | Color::Blue;
-    assert!(zstruct.get_value_of_color() == 6);
+    assert!(zstruct.get_value_of_color() == 12);
 
     zstruct.color = Color::none();
     assert!(zstruct.get_value_of_color() == 0);

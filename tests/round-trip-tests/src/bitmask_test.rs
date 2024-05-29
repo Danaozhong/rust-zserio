@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::bitmask_test::bitmask_test::{
-    bitmask_test::BitmaskTest, some_bit_mask::SomeBitMask,
+    bitmask_test::BitmaskTest, bitmask_with_zero::BitmaskWithZero, some_bit_mask::SomeBitMask,
 };
 
 use rust_zserio::ztype::ZserioPackableObject;
@@ -33,4 +33,12 @@ pub fn test_bitmasks() {
 
     // The following field should still be 0, because the condition is not used.
     assert!(other_test_struct.value_c == 0);
+}
+
+pub fn test_bitmask_values_with_zero() {
+    // test the assigned values of the bitmask.
+    assert!(BitmaskWithZero::NoValue == 0);
+    assert!(BitmaskWithZero::ValueA == 1);
+    assert!(BitmaskWithZero::ValueB == 4);
+    assert!(BitmaskWithZero::ValueC == 8);
 }
