@@ -48,14 +48,19 @@ impl ZBitmaskType {
                     ExpressionType::Integer(v) => v as u64,
                     _ => panic!("only integer bitmask values are supported"),
                 };
-                if expr_bitmask_value < bitmask_value {
+                if expr_bitmask_value < bitmask_value && expr_bitmask_value != 0 {
                     panic!("expression redefines bitmask value");
                 }
+                bitmask_value = expr_bitmask_value;
             }
             value.value = bitmask_value;
 
             // Pick the next bit for the next bitmask value.
-            bitmask_value <<= 1;
+            if bitmask_value == 0 {
+                bitmask_value = 1;
+            } else {
+                bitmask_value <<= 1;
+            }
         }
         self.zserio_type.evaluate(scope);
     }
