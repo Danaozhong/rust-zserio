@@ -33,7 +33,7 @@ use rust_zserio::ztype::ZserioPackableObject;
 use crate::alignment_test::{test_alignment, test_alignment_roundtrip};
 use crate::ambiguous_types_test::test_ambiguous_types;
 use crate::bitmask_isset_test::{test_bitmask_isset_operator, test_bitmask_isset_round_trip};
-use crate::bitmask_test::test_bitmasks;
+use crate::bitmask_test::{test_bitmask_values_with_zero, test_bitmasks};
 use crate::constants_test::test_constants;
 use crate::expr_numbits_test::test_expr_numbits;
 use crate::integer_types_test::test_integer_types;
@@ -66,6 +66,7 @@ fn main() {
     test_optional_members();
     test_optional_arrays();
     test_bitmasks();
+    test_bitmask_values_with_zero();
     test_bitmask_isset_operator();
     test_bitmask_isset_round_trip();
     test_constants();

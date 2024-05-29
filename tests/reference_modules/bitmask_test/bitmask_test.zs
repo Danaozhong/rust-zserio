@@ -13,3 +13,11 @@ struct BitmaskTest {
     int32 valueB if (selector & SomeBitMask.HAS_B) == SomeBitMask.HAS_B;
     int32 valueC if (selector & SomeBitMask.HAS_C) == SomeBitMask.HAS_C;
 };
+
+bitmask uint8 BitmaskWithZero
+{
+    NO_VALUE = 0,
+    VALUE_A,
+    VALUE_B = 0x04,
+    VALUE_C,
+};
