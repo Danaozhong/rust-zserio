@@ -28,6 +28,7 @@ pub fn generate_enum(
     // generate the struct itself
     let gen_enum = gen_scope.new_enum(&rust_type_name);
     gen_enum.vis("pub");
+    gen_enum.derive("Debug");
     gen_enum.derive("Clone");
     gen_enum.derive("Copy");
     gen_enum.derive("PartialEq");
