@@ -4,7 +4,7 @@ use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ExternType {
     pub bit_size: u32,
     pub data_blob: Vec<u8>,

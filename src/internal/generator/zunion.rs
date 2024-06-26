@@ -49,6 +49,7 @@ pub fn generate_union(
     // the current selection of the union.
     let selector_type_name = format!("{}Selector", &rust_type_name);
     let union_selector_gen_scope = codegen_scope.new_enum(&selector_type_name);
+    union_selector_gen_scope.derive("Debug");
     union_selector_gen_scope.derive("Copy");
     union_selector_gen_scope.derive("Clone");
     union_selector_gen_scope.derive("PartialEq");
@@ -82,6 +83,7 @@ pub fn generate_union(
     // generate the union itself
     let gen_union = codegen_scope.new_struct(&rust_type_name);
     gen_union.vis("pub");
+    gen_union.derive("Debug");
     gen_union.derive("Clone");
     gen_union.derive("PartialEq");
 

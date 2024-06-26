@@ -53,6 +53,7 @@ pub fn generate_struct(
     // generate the struct itself
     let gen_struct = codegen_scope.new_struct(&rust_type_name);
     gen_struct.vis("pub");
+    gen_struct.derive("Debug");
     gen_struct.derive("Clone");
     gen_struct.derive("PartialEq");
 
