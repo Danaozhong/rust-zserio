@@ -71,7 +71,7 @@ impl<T> Array<T> {
                 let mut packing_context_node = self.array_trait.create_context();
                 for (index, data_item) in data.iter_mut().enumerate() {
                     if self.is_aligned {
-                        reader.align(8).expect("failed to align reader");
+                        reader.align(1).expect("failed to align reader");
                     }
                     self.array_trait.read_packed(
                         &mut packing_context_node,
@@ -83,7 +83,7 @@ impl<T> Array<T> {
             } else {
                 for (index, data_item) in data.iter_mut().enumerate() {
                     if self.is_aligned {
-                        reader.align(8).expect("failed to align reader");
+                        reader.align(1).expect("failed to align reader");
                     }
                     self.array_trait.read(reader, data_item, index);
                 }
