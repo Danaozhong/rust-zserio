@@ -43,6 +43,9 @@ pub struct Field {
     /// (Optional) An expression, providing a default value for the field.
     pub initializer: Option<Rc<RefCell<Expression>>>,
 
+    /// (Optional) an expression
+    pub offset: Option<Rc<RefCell<Expression>>>,
+
     /// (Optional) A constraint which restricts the possible values that can be assigned.
     pub constraint: Option<Rc<RefCell<Expression>>>,
 

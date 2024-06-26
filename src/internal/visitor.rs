@@ -416,11 +416,20 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 _ => panic!("unexpected field alignment type"),
             }
         }
+    
+        if let Some(offset_ctx) = ctx.fieldOffset() {
+            match ZserioParserVisitorCompat::visit_fieldOffset(self, &offset_ctx) {
+                ZserioTreeReturnType::Expression(expr) => {
+                    field.offset = Option::from(Rc::from(RefCell::from(*expr)));
+                }
+                _ => panic!("unexpected field alignment type"),
+            }
+        }
 
         if let Some(field_initializer_ctx) = ctx.fieldInitializer() {
             match ZserioParserVisitorCompat::visit_fieldInitializer(self, &field_initializer_ctx) {
                 ZserioTreeReturnType::Expression(expr) => {
-                    field.initializer = Option::from(Rc::from(RefCell::from(*expr)))
+                    field.initializer = Option::from(Rc::from(RefCell::from(*expr)));
                 }
                 _ => panic!("unexpected field initializer type"),
             }
@@ -432,7 +441,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 &field_optional_clause_ctx,
             ) {
                 ZserioTreeReturnType::Expression(expr) => {
-                    field.optional_clause = Option::from(Rc::from(RefCell::from(*expr)))
+                    field.optional_clause = Option::from(Rc::from(RefCell::from(*expr)));
                 }
                 _ => panic!("unexpected field optional clause type"),
             }

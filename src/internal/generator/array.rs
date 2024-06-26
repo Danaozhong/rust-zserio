@@ -125,7 +125,7 @@ pub fn instantiate_zserio_array(
     };
     function.line(format!("fixed_size: {},", array_length_str));
 
-    function.line(format!("is_aligned: {},", field.alignment != 0));
+    function.line(format!("is_aligned: {},", use_indexed_offset));
 
     function.line(format!("is_packed: {},", is_packed));
     function.line("};");
