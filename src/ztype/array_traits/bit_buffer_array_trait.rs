@@ -24,7 +24,7 @@ impl array_trait::ArrayTrait<ztype::ExternType> for BitBufferArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut ztype::ExternType, _index: usize) {
-        *value = ztype::read_extern_type(reader);
+        *value = ztype::read_extern_type(reader).unwrap();
     }
 
     fn write(&self, writer: &mut BitWriter, value: &ztype::ExternType) {

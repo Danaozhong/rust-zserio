@@ -24,7 +24,7 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut ztype::BytesType, _index: usize) {
-        *value = ztype::read_bytes_type(reader);
+        *value = ztype::read_bytes_type(reader).unwrap();
     }
 
     fn write(&self, writer: &mut BitWriter, value: &ztype::BytesType) {

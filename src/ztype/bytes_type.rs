@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::ztype::reader::read_bytes;
 use crate::ztype::writer::write_bytes;
 use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
@@ -11,12 +12,12 @@ pub struct BytesType {
 }
 
 /// Reads an zserio bytes type from a bit stream.
-pub fn read_bytes_type(bit_reader: &mut BitReader) -> BytesType {
-    let byte_size = read_varsize(bit_reader).unwrap();
-    BytesType {
+pub fn read_bytes_type(bit_reader: &mut BitReader) -> Result<BytesType> {
+    let byte_size = read_varsize(bit_reader)?;
+    Ok(BytesType {
         byte_size,
-        data_blob: read_bytes(bit_reader, byte_size),
-    }
+        data_blob: read_bytes(bit_reader, byte_size)?,
+    })
 }
 
 /// Writes a zserio bytes type to a bitstream.

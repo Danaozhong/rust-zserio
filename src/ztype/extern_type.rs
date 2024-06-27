@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::ztype::reader::read_bytes;
 use crate::ztype::writer::write_bytes;
 use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
@@ -11,12 +12,12 @@ pub struct ExternType {
 }
 
 /// Reads an zserio extern type from a bit stream.
-pub fn read_extern_type(bit_reader: &mut BitReader) -> ExternType {
-    let bit_size = read_varsize(bit_reader).unwrap();
+pub fn read_extern_type(bit_reader: &mut BitReader) -> Result<ExternType> {
+    let bit_size = read_varsize(bit_reader)?;
     let num_of_full_bytes = bit_size / 8;
     let remaining_bits = (bit_size % 8) as u8;
 
-    let mut extern_bytes = read_bytes(bit_reader, num_of_full_bytes);
+    let mut extern_bytes = read_bytes(bit_reader, num_of_full_bytes)?;
     if remaining_bits != 0 {
         let mut last_byte = bit_reader
             .read_u8(remaining_bits)
@@ -25,10 +26,10 @@ pub fn read_extern_type(bit_reader: &mut BitReader) -> ExternType {
         last_byte <<= bit_shift;
         extern_bytes.push(last_byte);
     }
-    ExternType {
+    Ok(ExternType {
         bit_size,
         data_blob: extern_bytes,
-    }
+    })
 }
 
 /// Writes a zserio extern type to a bitstream.

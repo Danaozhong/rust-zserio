@@ -47,12 +47,12 @@ pub fn decode_type(
             ));
         } else if fund_type.name == "extern" {
             function.line(format!(
-                "{} = ztype::read_extern_type(reader);",
+                "{} = ztype::read_extern_type(reader).unwrap();",
                 lvalue_field_name
             ));
         } else if fund_type.name == "bytes" {
             function.line(format!(
-                "{} = ztype::read_bytes_type(reader);",
+                "{} = ztype::read_bytes_type(reader).unwrap();",
                 lvalue_field_name
             ));
         } else if fund_type.name == "bool" {
