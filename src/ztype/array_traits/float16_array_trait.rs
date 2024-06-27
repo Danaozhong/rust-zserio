@@ -24,7 +24,7 @@ impl array_trait::ArrayTrait<f32> for Float16ArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut f32, _index: usize) {
-        *value = ztype::read_float16(reader)
+        *value = ztype::read_float16(reader).unwrap();
     }
 
     fn write(&self, writer: &mut BitWriter, value: &f32) {

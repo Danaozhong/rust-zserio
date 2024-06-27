@@ -24,7 +24,7 @@ impl array_trait::ArrayTrait<f64> for Float64ArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut f64, _index: usize) {
-        *value = ztype::read_float64(reader)
+        *value = ztype::read_float64(reader).unwrap();
     }
 
     fn write(&self, writer: &mut BitWriter, value: &f64) {

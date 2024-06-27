@@ -231,7 +231,7 @@ fn generate_zserio_read(
     zserio_read_fn.arg("reader", "&mut BitReader");
 
     zserio_read_fn.line(format!(
-        "self.union_selector = {}Selector::from_u32(ztype::read_varsize(reader));",
+        "self.union_selector = {}Selector::from_u32(ztype::read_varsize(reader).unwrap());",
         rust_type_name
     ));
 

@@ -108,7 +108,7 @@ impl DeltaContext {
             return;
         }
         if self.max_bit_number > 0 {
-            let delta = read_signed_bits(reader, self.max_bit_number + 1);
+            let delta = read_signed_bits(reader, self.max_bit_number + 1).unwrap();
             self.previous_element = (self.previous_element as i64 + delta) as u64;
         }
         *value = array_traits.from_u64(self.previous_element);
@@ -172,7 +172,7 @@ impl DeltaContext {
             .expect("failed to read if the context is packed");
         if self.is_packed {
             // read how many bits are used for the delta encoding of each element
-            self.max_bit_number = read_unsigned_bits(reader, MAX_BIT_NUMBER_BITS) as u8;
+            self.max_bit_number = read_unsigned_bits(reader, MAX_BIT_NUMBER_BITS).unwrap() as u8;
         }
     }
 

@@ -31,7 +31,7 @@ impl array_trait::ArrayTrait<name> for UnsignedBitFieldArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut name, _index: usize) {
-        *value = read_unsigned_bits(reader, self.bitsize_of(0, &0u8) as u8) as name;
+        *value = read_unsigned_bits(reader, self.bitsize_of(0, &0u8) as u8).unwrap() as name;
     }
 
     fn write(&self, writer: &mut BitWriter, value: &name) {

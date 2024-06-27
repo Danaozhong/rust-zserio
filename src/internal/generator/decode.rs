@@ -42,7 +42,7 @@ pub fn decode_type(
         if fund_type.name == "string" {
             // string types
             function.line(format!(
-                "{} = ztype::read_string(reader);",
+                "{} = ztype::read_string(reader).unwrap();",
                 lvalue_field_name
             ));
         } else if fund_type.name == "extern" {
@@ -92,18 +92,18 @@ pub fn decode_type(
                 };
                 if fund_type.name == "int" {
                     function.line(format!(
-                        "{} = ztype::read_signed_bits(reader, {});",
+                        "{} = ztype::read_signed_bits(reader, {}).unwrap();",
                         lvalue_field_name, bit_length_string
                     ));
                 } else {
                     function.line(format!(
-                        "{} = ztype::read_unsigned_bits(reader, {});",
+                        "{} = ztype::read_unsigned_bits(reader, {}).unwrap();",
                         lvalue_field_name, bit_length_string
                     ));
                 }
             } else {
                 function.line(format!(
-                    "{} = ztype::read_{}(reader);",
+                    "{} = ztype::read_{}(reader).unwrap();",
                     &lvalue_field_name, &fund_type.name
                 ));
             }

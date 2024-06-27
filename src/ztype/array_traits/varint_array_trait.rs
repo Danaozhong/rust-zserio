@@ -24,7 +24,7 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut i64, _index: usize) {
-        *value = ztype::read_varint(reader);
+        *value = ztype::read_varint(reader).unwrap();
     }
 
     fn write(&self, writer: &mut BitWriter, value: &i64) {
