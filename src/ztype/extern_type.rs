@@ -12,7 +12,7 @@ pub struct ExternType {
 
 /// Reads an zserio extern type from a bit stream.
 pub fn read_extern_type(bit_reader: &mut BitReader) -> ExternType {
-    let bit_size = read_varsize(bit_reader);
+    let bit_size = read_varsize(bit_reader).unwrap();
     let num_of_full_bytes = bit_size / 8;
     let remaining_bits = (bit_size % 8) as u8;
 

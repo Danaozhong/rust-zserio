@@ -60,7 +60,7 @@ impl<T> Array<T> {
         if let Some(expected_array_len) = self.fixed_size {
             expected_array_len
         } else {
-            read_varsize(reader) as usize
+            read_varsize(reader).unwrap() as usize
         }
     }
 

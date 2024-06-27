@@ -12,7 +12,7 @@ pub struct BytesType {
 
 /// Reads an zserio bytes type from a bit stream.
 pub fn read_bytes_type(bit_reader: &mut BitReader) -> BytesType {
-    let byte_size = read_varsize(bit_reader);
+    let byte_size = read_varsize(bit_reader).unwrap();
     BytesType {
         byte_size,
         data_blob: read_bytes(bit_reader, byte_size),

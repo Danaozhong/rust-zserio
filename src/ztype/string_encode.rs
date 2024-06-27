@@ -5,7 +5,6 @@ use crate::ztype::unsigned_bitsize;
 
 use super::varuint_encode::write_varsize;
 
-#[must_use]
 pub fn write_string(writer: &mut BitWriter, s: &str) -> Result<()> {
     write_varsize(writer, s.len() as u32);
 
