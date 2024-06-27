@@ -44,5 +44,8 @@
 //! This will generate the interface files in rust, that allow reading/writing zserio-encoded
 //! data.
 //! [Optional] The `root` CLI flag is optional, ane enforces an overall crate prefix to the generated code.
+mod error;
 pub mod internal;
 pub mod ztype;
+
+pub use self::error::*;
