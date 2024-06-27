@@ -2,6 +2,7 @@ use crate::error::Result;
 use crate::ztype::reader::read_bytes;
 use crate::ztype::writer::write_bytes;
 use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
+use crate::ZserioError;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
@@ -33,23 +34,25 @@ pub fn read_extern_type(bit_reader: &mut BitReader) -> Result<ExternType> {
 }
 
 /// Writes a zserio extern type to a bitstream.
-pub fn write_extern_type(bit_writer: &mut BitWriter, extern_type: &ExternType) {
-    write_varsize(bit_writer, extern_type.bit_size);
+pub fn write_extern_type(bit_writer: &mut BitWriter, extern_type: &ExternType) -> Result<()> {
+    write_varsize(bit_writer, extern_type.bit_size)?;
     let num_of_full_bytes = (extern_type.bit_size / 8) as usize;
     let remaining_bits = (extern_type.bit_size % 8) as u8;
     write_bytes(
         bit_writer,
         &extern_type.data_blob[0..num_of_full_bytes].to_vec(),
-    );
+    )?;
     if remaining_bits != 0 {
-        let mut last_byte = *extern_type.data_blob.last().unwrap();
+        let mut last_byte = *extern_type
+            .data_blob
+            .last()
+            .ok_or(ZserioError::DataError("last byte for extern is missing"))?;
         let bit_shift = 8 - remaining_bits;
         last_byte >>= bit_shift;
 
-        bit_writer
-            .write_u8(last_byte, remaining_bits)
-            .expect("failed to write last byte");
+        bit_writer.write_u8(last_byte, remaining_bits)?;
     }
+    Ok(())
 }
 
 pub fn bitsize_of_extern(extern_type: &ExternType) -> u64 {

@@ -73,9 +73,9 @@ fn main() {
     test_bitmask_isset_round_trip();
     test_constants();
     test_integer_types();
-    test_parameterized_array_length();
-    test_alignment();
-    test_alignment_roundtrip();
+    test_parameterized_array_length().unwrap();
+    test_alignment().unwrap();
+    test_alignment_roundtrip().unwrap();
     test_packed_arrays();
     test_subtyped_dot_expression();
     test_expr_numbits();

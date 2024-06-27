@@ -60,7 +60,9 @@ pub fn compare_bitlength_calculations_with_python_reference<T: ZserioPackableObj
         serde_json::from_str(&json_file_content).expect("failed to parse file content as json");
 
     // Calculate the unpacked bitsize
-    let actual_bitsize = zserio_object.zserio_bitsize(0);
+    let actual_bitsize = zserio_object
+        .zserio_bitsize(0)
+        .expect("can not determine bitsize");
     assert_eq!(
         python_reference_json.bitsize, actual_bitsize,
         "bitsize calculations don't match"
@@ -69,7 +71,9 @@ pub fn compare_bitlength_calculations_with_python_reference<T: ZserioPackableObj
     // Calculate the packed bitsize
     let mut packing_context = PackingContextNode::new();
     T::zserio_create_packing_context(&mut packing_context);
-    let actual_packed_bitsize = zserio_object.zserio_bitsize_packed(&mut packing_context, 0);
+    let actual_packed_bitsize = zserio_object
+        .zserio_bitsize_packed(&mut packing_context, 0)
+        .unwrap();
     assert_eq!(
         python_reference_json.bitsize_packed, actual_packed_bitsize,
         "packed bitsize calculations don't match"

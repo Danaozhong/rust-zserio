@@ -300,7 +300,7 @@ fn generate_zserio_bitsize(
     union: &ZUnion,
 ) {
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
-    bitsize_fn.ret("u64");
+    bitsize_fn.ret("Result<u64>");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
@@ -315,10 +315,10 @@ fn generate_zserio_bitsize(
         false,
         &bitsize_field,
     );
-    bitsize_fn.line("end_position - bit_position");
+    bitsize_fn.line("Ok(end_position - bit_position)");
 
     let bitsize_packed_fn = struct_impl.new_fn("zserio_bitsize_packed");
-    bitsize_packed_fn.ret("u64");
+    bitsize_packed_fn.ret("Result<u64>");
     bitsize_packed_fn.arg_ref_self();
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
@@ -331,5 +331,5 @@ fn generate_zserio_bitsize(
         true,
         &bitsize_field,
     );
-    bitsize_packed_fn.line("end_position - bit_position");
+    bitsize_packed_fn.line("Ok(end_position - bit_position)");
 }

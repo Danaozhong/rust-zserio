@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::ztype;
 use crate::ztype::array_traits::array_trait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
@@ -15,20 +16,26 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         false
     }
 
-    fn bitsize_of(&self, _bit_position: u64, value: &ztype::BytesType) -> u64 {
-        ztype::bitsize_of_bytes(value)
+    fn bitsize_of(&self, _bit_position: u64, value: &ztype::BytesType) -> Result<u64> {
+        Ok(ztype::bitsize_of_bytes(value))
     }
 
-    fn initialize_offsets(&self, bit_position: u64, value: &ztype::BytesType) -> u64 {
-        bit_position + self.bitsize_of(bit_position, value)
+    fn initialize_offsets(&self, bit_position: u64, value: &ztype::BytesType) -> Result<u64> {
+        Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut ztype::BytesType, _index: usize) {
-        *value = ztype::read_bytes_type(reader).unwrap();
+    fn read(
+        &self,
+        reader: &mut BitReader,
+        value: &mut ztype::BytesType,
+        _index: usize,
+    ) -> Result<()> {
+        *value = ztype::read_bytes_type(reader)?;
+        Ok(())
     }
 
-    fn write(&self, writer: &mut BitWriter, value: &ztype::BytesType) {
-        ztype::write_bytes_type(writer, value);
+    fn write(&self, writer: &mut BitWriter, value: &ztype::BytesType) -> Result<()> {
+        ztype::write_bytes_type(writer, value)
     }
 
     fn to_u64(&self, _: &ztype::BytesType) -> u64 {
@@ -38,8 +45,12 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         panic!("delta-encoding not supported for extern types");
     }
 
-    fn init_context(&self, context_node: &mut PackingContextNode, element: &ztype::BytesType) {
-        context_node.context.as_mut().unwrap().init(self, element);
+    fn init_context(
+        &self,
+        context_node: &mut PackingContextNode,
+        element: &ztype::BytesType,
+    ) -> Result<()> {
+        context_node.context.as_mut().unwrap().init(self, element)
     }
 
     fn bitsize_of_packed(
@@ -47,7 +58,7 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         context_node: &mut PackingContextNode,
         bit_position: u64,
         element: &ztype::BytesType,
-    ) -> u64 {
+    ) -> Result<u64> {
         context_node
             .context
             .as_mut()
@@ -60,13 +71,13 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         context_node: &mut PackingContextNode,
         bit_position: u64,
         element: &ztype::BytesType,
-    ) -> u64 {
-        bit_position
+    ) -> Result<u64> {
+        Ok(bit_position
             + context_node
                 .context
                 .as_mut()
                 .unwrap()
-                .bitsize_of(self, bit_position, element)
+                .bitsize_of(self, bit_position, element)?)
     }
 
     fn read_packed(
@@ -75,12 +86,12 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         reader: &mut BitReader,
         value: &mut ztype::BytesType,
         index: usize,
-    ) {
+    ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index);
+            .read(self, reader, value, index)
     }
 
     fn write_packed(
@@ -88,11 +99,11 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         context_node: &mut PackingContextNode,
         writer: &mut BitWriter,
         element: &ztype::BytesType,
-    ) {
+    ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .write(self, writer, element);
+            .write(self, writer, element)
     }
 }

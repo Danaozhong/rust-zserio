@@ -3,6 +3,7 @@ use codegen::Scope;
 pub fn add_standard_imports(scope: &mut Scope) {
     scope.import("rust_bitwriter", "BitWriter");
     scope.import("bitreader", "BitReader");
+    scope.import("rust_zserio", "Result");
     scope.import("rust_zserio", "ztype");
 
     scope.import(

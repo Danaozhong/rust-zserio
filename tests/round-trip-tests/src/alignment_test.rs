@@ -3,24 +3,26 @@ use reference_module_lib::reference_modules::alignment::alignment::alignment_str
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableObject;
+use rust_zserio::Result;
 
-pub fn test_alignment() {
+pub fn test_alignment() -> Result<()> {
     let mut test_struct = AlignmentStruct::new();
 
     // Even though bo_value_4 is not set, the alignment of the field is still taken into
     // account, because the "is present" bit is written, and this bit takes the alignment
     // into account.
-    assert!(test_struct.zserio_bitsize(0) == 17);
+    assert_eq!(test_struct.zserio_bitsize(0)?, 17);
 
     test_struct.bo_value_4 = Some(true);
-    assert!(test_struct.zserio_bitsize(0) == 18);
+    assert_eq!(test_struct.zserio_bitsize(0)?, 18);
 
     // Set the condition to serialize bo_value_5 to true (bo_value_5 depends on bo_value_3).
     test_struct.bo_value_3 = true;
-    assert!(test_struct.zserio_bitsize(0) == 21);
+    assert_eq!(test_struct.zserio_bitsize(0)?, 21);
+    Ok(())
 }
 
-pub fn test_alignment_roundtrip() {
+pub fn test_alignment_roundtrip() -> Result<()> {
     let mut test_struct = AlignmentStruct::new();
     test_struct.bo_value_4 = Some(true);
     // Set the condition to serialize bo_value_5 to true (bo_value_5 depends on bo_value_3).
@@ -29,7 +31,7 @@ pub fn test_alignment_roundtrip() {
     // serialize
     let mut bitwriter = BitWriter::new();
     test_struct.zserio_write(&mut bitwriter);
-    assert!(test_struct.zserio_bitsize(0) == bitwriter.bit_count());
+    assert_eq!(test_struct.zserio_bitsize(0)?, bitwriter.bit_count());
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
@@ -39,5 +41,6 @@ pub fn test_alignment_roundtrip() {
     other_test_struct.zserio_read(&mut bitreader);
 
     // expect them to be identical.
-    assert!(test_struct == other_test_struct);
+    assert_eq!(test_struct, other_test_struct);
+    Ok(())
 }

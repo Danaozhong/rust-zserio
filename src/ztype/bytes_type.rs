@@ -21,9 +21,10 @@ pub fn read_bytes_type(bit_reader: &mut BitReader) -> Result<BytesType> {
 }
 
 /// Writes a zserio bytes type to a bitstream.
-pub fn write_bytes_type(bit_writer: &mut BitWriter, bytes_type: &BytesType) {
-    write_varsize(bit_writer, bytes_type.byte_size);
-    write_bytes(bit_writer, &bytes_type.data_blob);
+pub fn write_bytes_type(bit_writer: &mut BitWriter, bytes_type: &BytesType) -> Result<()> {
+    write_varsize(bit_writer, bytes_type.byte_size)?;
+    write_bytes(bit_writer, &bytes_type.data_blob)?;
+    Ok(())
 }
 
 pub fn bitsize_of_bytes(bytes_type: &BytesType) -> u64 {

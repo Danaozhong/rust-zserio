@@ -1,31 +1,32 @@
+use crate::error::Result;
 use crate::ztype::unsigned_bitsize;
 use rust_bitwriter::BitWriter;
 
 const MAX_VARSIZE: u32 = (1 << (2 + 7 + 7 + 7 + 8)) - 1;
 
-pub fn write_varuint16(writer: &mut BitWriter, v: u16) {
+pub fn write_varuint16(writer: &mut BitWriter, v: u16) -> Result<()> {
     write_varuint_type(writer, v as u64, 2)
 }
 
-pub fn write_varuint32(writer: &mut BitWriter, v: u32) {
+pub fn write_varuint32(writer: &mut BitWriter, v: u32) -> Result<()> {
     write_varuint_type(writer, v as u64, 4)
 }
 
-pub fn write_varuint64(writer: &mut BitWriter, v: u64) {
+pub fn write_varuint64(writer: &mut BitWriter, v: u64) -> Result<()> {
     write_varuint_type(writer, v, 8)
 }
 
-pub fn write_varuint(writer: &mut BitWriter, v: u64) {
+pub fn write_varuint(writer: &mut BitWriter, v: u64) -> Result<()> {
     write_varuint_type(writer, v, 9)
 }
 
 // write_varsize writes a zserio varsize value to the bitstream.
-pub fn write_varsize(writer: &mut BitWriter, v: u32) {
+pub fn write_varsize(writer: &mut BitWriter, v: u32) -> Result<()> {
     assert!(v <= MAX_VARSIZE);
     write_varuint_type(writer, v as u64, 5)
 }
 
-pub fn write_varuint_type(writer: &mut BitWriter, v: u64, max_bytes: u8) {
+pub fn write_varuint_type(writer: &mut BitWriter, v: u64, max_bytes: u8) -> Result<()> {
     let needed_bytes = unsigned_bitsize(v, max_bytes).unwrap() / 8;
 
     let needs_complete_bit_range = needed_bytes == max_bytes;
@@ -44,6 +45,7 @@ pub fn write_varuint_type(writer: &mut BitWriter, v: u64, max_bytes: u8) {
             shift_bits += 1;
         }
         b |= (v >> shift_bits as u64) & (0xff >> (8 - remaining_bits));
-        let _ = writer.write_unsigned_bits(b, 8, 8);
+        writer.write_unsigned_bits(b, 8, 8)?;
     }
+    Ok(())
 }

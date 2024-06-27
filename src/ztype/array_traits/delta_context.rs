@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::bits_decode::read_signed_bits;
 use crate::ztype::{self, numbits, read_unsigned_bits};
@@ -47,9 +48,9 @@ impl DeltaContext {
         }
     }
 
-    pub fn init<T>(&mut self, array_trait: &dyn ArrayTrait<T>, element: &T) {
+    pub fn init<T>(&mut self, array_trait: &dyn ArrayTrait<T>, element: &T) -> Result<()> {
         self.num_elements += 1;
-        self.unpacked_size += array_trait.bitsize_of(0, element);
+        self.unpacked_size += array_trait.bitsize_of(0, element)?;
 
         if !self.init_started {
             self.init_started = true;
@@ -67,6 +68,7 @@ impl DeltaContext {
             }
             self.previous_element = array_trait.to_u64(element);
         }
+        Ok(())
     }
 
     pub fn bitsize_of<T>(
@@ -74,20 +76,22 @@ impl DeltaContext {
         array_traits: &dyn ArrayTrait<T>,
         _bit_position: u64,
         element: &T,
-    ) -> u64 {
+    ) -> Result<u64> {
         if !self.processing_started {
             self.processing_started = true;
             self.finish_init();
 
-            return self.bitsize_of_descriptor() + self.bitsize_of_unpacked(array_traits, element);
+            return Ok(
+                self.bitsize_of_descriptor() + self.bitsize_of_unpacked(array_traits, element)?
+            );
         }
         if !self.is_packed {
             return self.bitsize_of_unpacked(array_traits, element);
         }
         if self.max_bit_number > 0 {
-            return self.max_bit_number as u64 + 1;
+            return Ok(self.max_bit_number as u64 + 1);
         }
-        0
+        Ok(0)
     }
 
     pub fn read<T>(
@@ -96,22 +100,21 @@ impl DeltaContext {
         reader: &mut BitReader,
         value: &mut T,
         _index: usize,
-    ) {
+    ) -> Result<()> {
         if !self.processing_started {
             self.processing_started = true;
             self.read_descriptor(reader);
-            self.read_unpacked(array_traits, reader, value);
-            return;
+            return self.read_unpacked(array_traits, reader, value);
         }
         if !self.is_packed {
-            self.read_unpacked(array_traits, reader, value);
-            return;
+            return self.read_unpacked(array_traits, reader, value);
         }
         if self.max_bit_number > 0 {
-            let delta = read_signed_bits(reader, self.max_bit_number + 1).unwrap();
+            let delta = read_signed_bits(reader, self.max_bit_number + 1)?;
             self.previous_element = (self.previous_element as i64 + delta) as u64;
         }
         *value = array_traits.from_u64(self.previous_element);
+        Ok(())
     }
 
     pub fn finish_init(&mut self) {
@@ -139,7 +142,7 @@ impl DeltaContext {
         array_traits: &dyn ArrayTrait<T>,
         writer: &mut BitWriter,
         element: &T,
-    ) {
+    ) -> Result<()> {
         if !self.processing_started {
             self.processing_started = true;
             self.finish_init();
@@ -153,9 +156,10 @@ impl DeltaContext {
         if self.max_bit_number > 0 {
             let element_as_u64 = array_traits.to_u64(element);
             let delta = element_as_u64 as i64 - self.previous_element as i64;
-            ztype::write_signed_bits(writer, delta, self.max_bit_number + 1);
+            ztype::write_signed_bits(writer, delta, self.max_bit_number + 1)?;
             self.previous_element = element_as_u64;
         }
+        Ok(())
     }
 
     // BitSizeOfDescriptor returns the bit size of a delta context array descriptor.
@@ -181,9 +185,10 @@ impl DeltaContext {
         array_traits: &dyn ArrayTrait<T>,
         reader: &mut BitReader,
         value: &mut T,
-    ) {
-        array_traits.read(reader, value, 0); // TODO need to check if the index is needed
+    ) -> Result<()> {
+        array_traits.read(reader, value, 0)?; // TODO need to check if the index is needed
         self.previous_element = array_traits.to_u64(value);
+        Ok(())
     }
 
     fn write_descriptor(&self, writer: &mut BitWriter) {
@@ -191,7 +196,8 @@ impl DeltaContext {
             .write_bool(self.is_packed)
             .expect("failed to write bool");
         if self.is_packed {
-            ztype::write_unsigned_bits(writer, self.max_bit_number as u64, MAX_BIT_NUMBER_BITS);
+            ztype::write_unsigned_bits(writer, self.max_bit_number as u64, MAX_BIT_NUMBER_BITS)
+                .unwrap();
         }
     }
 
@@ -200,13 +206,13 @@ impl DeltaContext {
         array_traits: &dyn ArrayTrait<T>,
         writer: &mut BitWriter,
         element: &T,
-    ) {
+    ) -> Result<()> {
         let element_as_u64 = array_traits.to_u64(element);
         self.previous_element = element_as_u64;
-        array_traits.write(writer, element);
+        array_traits.write(writer, element)
     }
 
-    fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, element: &T) -> u64 {
+    fn bitsize_of_unpacked<T>(&self, array_trait: &dyn ArrayTrait<T>, element: &T) -> Result<u64> {
         array_trait.bitsize_of(0, element)
     }
 }

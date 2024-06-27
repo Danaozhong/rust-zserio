@@ -178,7 +178,7 @@ pub fn decode_field(
         // Array fields need to be serialized using the array class, which takes
         // care of the array delta compression.
         function.line(format!(
-            "let {}_array_length = {}.zserio_read_array_length(reader);",
+            "let {}_array_length = {}.zserio_read_array_length(reader).unwrap();",
             field_name, array_type_name,
         ));
         // initialize the array elements with empty values.
