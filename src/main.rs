@@ -1,9 +1,7 @@
-use crate::internal::generator::model::generate_model;
-use crate::internal::model::Model;
 use clap::Parser;
+use rust_zserio::internal::generator::model::generate_model;
+use rust_zserio::internal::model::Model;
 use std::path::Path;
-pub mod internal;
-pub mod ztype;
 
 /// zserio generator for rust.
 #[derive(Parser, Debug)]
