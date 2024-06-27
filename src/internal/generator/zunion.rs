@@ -304,7 +304,9 @@ fn generate_zserio_bitsize(
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
-    bitsize_fn.line("end_position += ztype::varsize_bitsize(self.union_selector as u32) as u64;");
+    bitsize_fn.line(
+        "end_position += ztype::varsize_bitsize(self.union_selector as u32).unwrap() as u64;",
+    );
     generate_union_match_construct(
         symbol_scope,
         type_generator,

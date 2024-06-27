@@ -26,7 +26,7 @@ pub fn write_varsize(writer: &mut BitWriter, v: u32) {
 }
 
 pub fn write_varuint_type(writer: &mut BitWriter, v: u64, max_bytes: u8) {
-    let needed_bytes = unsigned_bitsize(v, max_bytes) / 8;
+    let needed_bytes = unsigned_bitsize(v, max_bytes).unwrap() / 8;
 
     let needs_complete_bit_range = needed_bytes == max_bytes;
     for i in 0..needed_bytes {

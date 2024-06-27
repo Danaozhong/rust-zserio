@@ -15,6 +15,6 @@ pub fn write_string(writer: &mut BitWriter, s: &str) -> Result<()> {
 }
 
 pub fn bitsize_string(s: &str) -> u64 {
-    let header_size = unsigned_bitsize(s.len() as u64, 5) as u64;
+    let header_size = unsigned_bitsize(s.len() as u64, 5).unwrap() as u64;
     header_size + (s.len() * 8) as u64
 }

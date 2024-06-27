@@ -20,7 +20,7 @@ pub fn write_varint(writer: &mut BitWriter, v: i64) {
 pub fn write_varint_type(writer: &mut BitWriter, v: i64, max_bytes: u8) {
     let abs_value = if v < 0 { -v as u64 } else { v as u64 };
 
-    let needed_bytes = signed_bitsize(v, max_bytes) / 8;
+    let needed_bytes = signed_bitsize(v, max_bytes).unwrap() / 8;
 
     let needs_complete_bit_range = needed_bytes == max_bytes;
     for i in 0..needed_bytes {

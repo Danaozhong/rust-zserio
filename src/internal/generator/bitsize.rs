@@ -73,31 +73,31 @@ pub fn bitsize_type_reference(
                 "float32" => String::from("32"),
                 "float64" => String::from("64"),
                 "varint" => {
-                    format!("ztype::varint_bitsize({}) as u64", field_name)
+                    format!("ztype::varint_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varint16" => {
-                    format!("ztype::varint16_bitsize({}) as u64", field_name)
+                    format!("ztype::varint16_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varint32" => {
-                    format!("ztype::varint32_bitsize({}) as u64", field_name)
+                    format!("ztype::varint32_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varint64" => {
-                    format!("ztype::varint64_bitsize({}) as u64", field_name)
+                    format!("ztype::varint64_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint" => {
-                    format!("ztype::varuint_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint16" => {
-                    format!("ztype::varuint16_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint16_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint32" => {
-                    format!("ztype::varuint32_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint32_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint64" => {
-                    format!("ztype::varuint64_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint64_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varsize" => {
-                    format!("ztype::varsize_bitsize({}) as u64", field_name)
+                    format!("ztype::varsize_bitsize({}).unwrap() as u64", field_name)
                 }
                 "int" | "bit" => {
                     format!("{} as u64", type_reference.bits)

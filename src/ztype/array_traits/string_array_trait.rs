@@ -18,7 +18,7 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
     }
 
     fn bitsize_of(&self, _bit_position: u64, value: &String) -> u64 {
-        value.len() as u64 + varsize_bitsize(value.len() as u32) as u64
+        value.len() as u64 + varsize_bitsize(value.len() as u32).unwrap() as u64
     }
 
     fn initialize_offsets(&self, bit_position: u64, value: &String) -> u64 {

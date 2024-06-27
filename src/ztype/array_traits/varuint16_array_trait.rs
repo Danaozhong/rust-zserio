@@ -16,7 +16,7 @@ impl array_trait::ArrayTrait<u16> for VarUint16ArrayTrait {
     }
 
     fn bitsize_of(&self, _bit_position: u64, value: &u16) -> u64 {
-        ztype::varuint16_bitsize(*value) as u64
+        ztype::varuint16_bitsize(*value).unwrap() as u64
     }
 
     fn initialize_offsets(&self, bit_position: u64, value: &u16) -> u64 {

@@ -18,6 +18,8 @@ pub enum ZserioError {
     InvalidUtf8(#[from] FromUtf8Error),
     #[error("IO error")]
     IoError(#[from] io::Error),
+    #[error("data error: {0}")]
+    DataError(&'static str),
 }
 
 impl From<bitreader::BitReaderError> for ZserioError {

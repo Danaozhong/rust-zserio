@@ -26,5 +26,5 @@ pub fn write_bytes_type(bit_writer: &mut BitWriter, bytes_type: &BytesType) {
 }
 
 pub fn bitsize_of_bytes(bytes_type: &BytesType) -> u64 {
-    varsize_bitsize(bytes_type.byte_size) as u64 + (bytes_type.byte_size as u64) * 8
+    varsize_bitsize(bytes_type.byte_size).unwrap() as u64 + (bytes_type.byte_size as u64) * 8
 }

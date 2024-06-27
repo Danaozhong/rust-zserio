@@ -52,5 +52,5 @@ pub fn write_extern_type(bit_writer: &mut BitWriter, extern_type: &ExternType) {
 }
 
 pub fn bitsize_of_extern(extern_type: &ExternType) -> u64 {
-    varsize_bitsize(extern_type.bit_size) as u64 + (extern_type.bit_size as u64)
+    varsize_bitsize(extern_type.bit_size).unwrap() as u64 + (extern_type.bit_size as u64)
 }

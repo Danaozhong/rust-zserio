@@ -94,7 +94,7 @@ impl<T> Array<T> {
     pub fn zserio_bitsize(&mut self, data: &Vec<T>, bit_position: u64) -> u64 {
         let mut end_position = bit_position;
         if self.fixed_size.is_none() {
-            end_position += varsize_bitsize(data.len() as u32) as u64;
+            end_position += varsize_bitsize(data.len() as u32).unwrap() as u64;
         }
         if !data.is_empty() {
             if self.is_packed {
@@ -150,7 +150,7 @@ impl<T> Array<T> {
     pub fn zserio_bitsize_packed(&mut self, data: &Vec<T>, bit_position: u64) -> u64 {
         let mut end_position = bit_position;
         if self.fixed_size.is_none() {
-            end_position += varsize_bitsize(data.len() as u32) as u64;
+            end_position += varsize_bitsize(data.len() as u32).unwrap() as u64;
         }
         if !data.is_empty() {
             let mut packing_context_node = self.array_trait.create_context();
