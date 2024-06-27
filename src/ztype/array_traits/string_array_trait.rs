@@ -26,11 +26,11 @@ impl array_trait::ArrayTrait<String> for StringArrayTrait {
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut String, _index: usize) {
-        *value = read_string(reader);
+        *value = read_string(reader).unwrap();
     }
 
     fn write(&self, writer: &mut BitWriter, value: &String) {
-        write_string(writer, value);
+        write_string(writer, value).unwrap();
     }
 
     fn to_u64(&self, _value: &String) -> u64 {
