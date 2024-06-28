@@ -30,7 +30,7 @@ pub fn test_alignment_roundtrip() -> Result<()> {
 
     // serialize
     let mut bitwriter = BitWriter::new();
-    test_struct.zserio_write(&mut bitwriter);
+    test_struct.zserio_write(&mut bitwriter)?;
     assert_eq!(test_struct.zserio_bitsize(0)?, bitwriter.bit_count());
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
@@ -38,7 +38,7 @@ pub fn test_alignment_roundtrip() -> Result<()> {
     // deserialize
     let mut other_test_struct = AlignmentStruct::new();
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_test_struct.zserio_read(&mut bitreader);
+    other_test_struct.zserio_read(&mut bitreader)?;
 
     // expect them to be identical.
     assert_eq!(test_struct, other_test_struct);

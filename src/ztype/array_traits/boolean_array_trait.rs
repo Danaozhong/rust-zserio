@@ -29,8 +29,7 @@ impl array_trait::ArrayTrait<bool> for BooleanArrayTrait {
     }
 
     fn write(&self, writer: &mut BitWriter, value: &bool) -> Result<()> {
-        writer.write_bool(*value)?;
-        Ok(())
+        Ok(writer.write_bool(*value)?)
     }
 
     fn to_u64(&self, _: &bool) -> u64 {

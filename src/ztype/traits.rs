@@ -5,10 +5,18 @@ use rust_bitwriter::BitWriter;
 
 pub trait ZserioPackableObject {
     fn new() -> Self;
-    fn zserio_read(&mut self, reader: &mut BitReader);
-    fn zserio_write(&self, writer: &mut BitWriter);
-    fn zserio_read_packed(&mut self, context_node: &mut PackingContextNode, reader: &mut BitReader);
-    fn zserio_write_packed(&self, context_node: &mut PackingContextNode, writer: &mut BitWriter);
+    fn zserio_read(&mut self, reader: &mut BitReader) -> Result<()>;
+    fn zserio_write(&self, writer: &mut BitWriter) -> Result<()>;
+    fn zserio_read_packed(
+        &mut self,
+        context_node: &mut PackingContextNode,
+        reader: &mut BitReader,
+    ) -> Result<()>;
+    fn zserio_write_packed(
+        &self,
+        context_node: &mut PackingContextNode,
+        writer: &mut BitWriter,
+    ) -> Result<()>;
     fn zserio_bitsize(&self, bit_position: u64) -> Result<u64>;
     fn zserio_bitsize_packed(
         &self,

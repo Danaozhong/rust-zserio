@@ -229,9 +229,9 @@ fn generate_zserio_read(
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
-
+    zserio_read_fn.ret("Result<()>");
     zserio_read_fn.line(format!(
-        "self.union_selector = {}Selector::from_u32(ztype::read_varsize(reader).unwrap());",
+        "self.union_selector = {}Selector::from_u32(ztype::read_varsize(reader)?);",
         rust_type_name
     ));
 
@@ -243,11 +243,13 @@ fn generate_zserio_read(
         false,
         &decode_field,
     );
+    zserio_read_fn.line("Ok(())");
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
+    zserio_read_packed_fn.ret("Result<()>");
     generate_union_match_construct(
         symbol_scope,
         type_generator,
@@ -256,6 +258,7 @@ fn generate_zserio_read(
         true,
         &decode_field,
     );
+    zserio_read_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_write(
@@ -267,7 +270,8 @@ fn generate_zserio_write(
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
-    zserio_write_fn.line("ztype::write_varsize(writer, self.union_selector as u32);".to_string());
+    zserio_write_fn.ret("Result<()>");
+    zserio_write_fn.line("ztype::write_varsize(writer, self.union_selector as u32)?;".to_string());
     generate_union_match_construct(
         symbol_scope,
         type_generator,
@@ -276,13 +280,15 @@ fn generate_zserio_write(
         false,
         &encode_field,
     );
+    zserio_write_fn.line("Ok(())");
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
+    zserio_write_packed_fn.ret("Result<()>");
     zserio_write_packed_fn
-        .line("ztype::write_varsize(writer, self.union_selector as u32);".to_string());
+        .line("ztype::write_varsize(writer, self.union_selector as u32)?;".to_string());
     generate_union_match_construct(
         symbol_scope,
         type_generator,
@@ -291,6 +297,7 @@ fn generate_zserio_write(
         true,
         &encode_field,
     );
+    zserio_write_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_bitsize(
@@ -304,9 +311,7 @@ fn generate_zserio_bitsize(
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
-    bitsize_fn.line(
-        "end_position += ztype::varsize_bitsize(self.union_selector as u32).unwrap() as u64;",
-    );
+    bitsize_fn.line("end_position += ztype::varsize_bitsize(self.union_selector as u32)? as u64;");
     generate_union_match_construct(
         symbol_scope,
         type_generator,

@@ -30,41 +30,38 @@ pub fn decode_type(
         if let Some(node_idx) = context_node_index {
             // Use packed reading
             function.line(format!(
-                "{}.zserio_read_packed(&mut context_node.children[{}], reader);",
+                "{}.zserio_read_packed(&mut context_node.children[{}], reader)?;",
                 rvalue_field_name, node_idx,
             ));
         } else {
             // use standard reading
-            function.line(format!("{}.zserio_read(reader);", rvalue_field_name));
+            function.line(format!("{}.zserio_read(reader)?;", rvalue_field_name));
         }
     } else if fund_type.is_builtin {
         // The type should be a native type
         if fund_type.name == "string" {
             // string types
             function.line(format!(
-                "{} = ztype::read_string(reader).unwrap();",
+                "{} = ztype::read_string(reader)?;",
                 lvalue_field_name
             ));
         } else if fund_type.name == "extern" {
             function.line(format!(
-                "{} = ztype::read_extern_type(reader).unwrap();",
+                "{} = ztype::read_extern_type(reader)?;",
                 lvalue_field_name
             ));
         } else if fund_type.name == "bytes" {
             function.line(format!(
-                "{} = ztype::read_bytes_type(reader).unwrap();",
+                "{} = ztype::read_bytes_type(reader)?;",
                 lvalue_field_name
             ));
         } else if fund_type.name == "bool" {
             // boolean
-            function.line(format!(
-                "{} = reader.read_bool().expect(\"failed to read bool\");",
-                lvalue_field_name
-            ));
+            function.line(format!("{} = reader.read_bool()?;", lvalue_field_name));
         } else if let Some(node_idx) = context_node_index {
             // packed decoding
             function.line(format!(
-                "context_node.children[{}].context.as_mut().unwrap().read(&{}, reader, &mut {}, 0);",
+                "context_node.children[{}].context.as_mut().unwrap().read(&{}, reader, &mut {}, 0)?;",
                 node_idx,
                 initialize_array_trait(scope, type_generator, &fund_type),
                 rvalue_field_name,
@@ -92,18 +89,18 @@ pub fn decode_type(
                 };
                 if fund_type.name == "int" {
                     function.line(format!(
-                        "{} = ztype::read_signed_bits(reader, {}).unwrap();",
+                        "{} = ztype::read_signed_bits(reader, {})?;",
                         lvalue_field_name, bit_length_string
                     ));
                 } else {
                     function.line(format!(
-                        "{} = ztype::read_unsigned_bits(reader, {}).unwrap();",
+                        "{} = ztype::read_unsigned_bits(reader, {})?;",
                         lvalue_field_name, bit_length_string
                     ));
                 }
             } else {
                 function.line(format!(
-                    "{} = ztype::read_{}(reader).unwrap();",
+                    "{} = ztype::read_{}(reader)?;",
                     &lvalue_field_name, &fund_type.name
                 ));
             }
@@ -178,7 +175,7 @@ pub fn decode_field(
         // Array fields need to be serialized using the array class, which takes
         // care of the array delta compression.
         function.line(format!(
-            "let {}_array_length = {}.zserio_read_array_length(reader).unwrap();",
+            "let {}_array_length = {}.zserio_read_array_length(reader)?;",
             field_name, array_type_name,
         ));
         // initialize the array elements with empty values.
@@ -269,7 +266,7 @@ pub fn decode_field(
 
     if field.array.is_some() {
         function.line(format!(
-            "{}.zserio_read(reader, &mut {});",
+            "{}.zserio_read(reader, &mut {})?;",
             array_type_name, rvalue_field_name,
         ));
     } else {

@@ -36,11 +36,15 @@ pub fn test_passing_bitmask_parameter() {
 
 fn serialize_and_deserialize(test_obj: &ParameterPassingBitmask) -> ParameterPassingBitmask {
     let mut bitwriter = BitWriter::new();
-    test_obj.zserio_write(&mut bitwriter);
+    test_obj
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     let serialized_bytes = bitwriter.data();
 
     let mut other_test_struct = ParameterPassingBitmask::new();
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_test_struct.zserio_read(&mut bitreader);
+    other_test_struct
+        .zserio_read(&mut bitreader)
+        .expect("can not read zserio data");
     other_test_struct
 }

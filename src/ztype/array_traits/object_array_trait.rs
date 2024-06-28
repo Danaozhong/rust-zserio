@@ -28,13 +28,11 @@ where
     }
 
     fn read(&self, reader: &mut BitReader, value: &mut T, _index: usize) -> Result<()> {
-        value.zserio_read(reader);
-        Ok(())
+        value.zserio_read(reader)
     }
 
     fn write(&self, writer: &mut BitWriter, value: &T) -> Result<()> {
-        value.zserio_write(writer);
-        Ok(())
+        value.zserio_write(writer)
     }
 
     fn to_u64(&self, _value: &T) -> u64 {
@@ -84,8 +82,7 @@ where
         value: &mut T,
         _index: usize,
     ) -> Result<()> {
-        value.zserio_read_packed(context_node, reader);
-        Ok(())
+        value.zserio_read_packed(context_node, reader)
     }
 
     fn write_packed(
@@ -94,7 +91,6 @@ where
         writer: &mut BitWriter,
         element: &T,
     ) -> Result<()> {
-        element.zserio_write_packed(context_node, writer);
-        Ok(())
+        element.zserio_write_packed(context_node, writer)
     }
 }

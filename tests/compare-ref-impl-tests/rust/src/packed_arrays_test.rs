@@ -5,5 +5,6 @@ use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn reference_implementation_test() {
     let mut test_obj = PackedArrayWrapper::new();
-    read_from_python_and_compare("packed_arrays_test", &mut test_obj);
+    read_from_python_and_compare("packed_arrays_test", &mut test_obj)
+        .expect("can not compare with python");
 }

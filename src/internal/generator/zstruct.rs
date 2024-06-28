@@ -154,6 +154,7 @@ fn generate_zserio_read(
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
+    zserio_read_fn.ret("Result<()>");
     for field in fields {
         instantiate_zserio_array(
             scope,
@@ -170,11 +171,13 @@ fn generate_zserio_read(
             None,
         );
     }
+    zserio_read_fn.line("Ok(())");
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
+    zserio_read_packed_fn.ret("Result<()>");
     for field in fields {
         instantiate_zserio_array(
             scope,
@@ -191,6 +194,7 @@ fn generate_zserio_read(
             Option::from(field.field_index as u8),
         );
     }
+    zserio_read_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_write(
@@ -202,17 +206,20 @@ fn generate_zserio_write(
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
+    zserio_write_fn.ret("Result<()>");
 
     for field_rc in fields {
         let field = field_rc.field.borrow();
         instantiate_zserio_array(symbol_scope, type_generator, zserio_write_fn, &field, false);
         encode_field(symbol_scope, type_generator, zserio_write_fn, &field, None);
     }
+    zserio_write_fn.line("Ok(())");
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
+    zserio_write_packed_fn.ret("Result<()>");
     for field in fields {
         instantiate_zserio_array(
             symbol_scope,
@@ -229,6 +236,7 @@ fn generate_zserio_write(
             Option::from(field.field_index as u8),
         );
     }
+    zserio_write_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_bitsize(

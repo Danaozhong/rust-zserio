@@ -21,14 +21,18 @@ pub fn test_parameterized_array_length() -> Result<()> {
     );
     // serialize
     let mut bitwriter = BitWriter::new();
-    test_struct.zserio_write(&mut bitwriter);
+    test_struct
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
     // deserialize
     let mut other_test_struct = ParameterizedArrayLength::new();
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_test_struct.zserio_read(&mut bitreader);
+    other_test_struct
+        .zserio_read(&mut bitreader)
+        .expect("can not read zserio data");
 
     // expect them to be identical.
     assert_eq!(test_struct, other_test_struct);
