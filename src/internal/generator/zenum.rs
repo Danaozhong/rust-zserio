@@ -53,7 +53,7 @@ pub fn generate_enum(
     // Generate a function to create a new instance of the enum from an integer type
     let from_int_fn = enum_impl.new_fn("from_int");
     from_int_fn.arg("v", "i64");
-    from_int_fn.ret("Self");
+    from_int_fn.ret("Result<Self>");
     from_int_fn.line("match v {");
 
     let mut enum_value = 0;
@@ -65,7 +65,7 @@ pub fn generate_enum(
             }
         }
         from_int_fn.line(format!(
-            "{} => return {}::{},",
+            "{} => Ok({}::{}),",
             enum_value,
             rust_type_name,
             convert_to_enum_field_name(&item.name)
@@ -73,7 +73,8 @@ pub fn generate_enum(
         enum_value += 1;
     }
 
-    from_int_fn.line("_ => panic!(\"unexpected value for enum\"),");
+    from_int_fn
+        .line(r#"_ => Err(rust_zserio::ZserioError::DataError("unexpected value for enum")),"#);
 
     from_int_fn.line("}");
 
@@ -141,7 +142,7 @@ fn generate_zserio_read(
         &zenum.enum_type,
         None,
     );
-    zserio_read_fn.line(format!("*self = {rust_type_name}::from_int(v as i64);",));
+    zserio_read_fn.line(format!("*self = {rust_type_name}::from_int(v as i64)?;",));
     zserio_read_fn.line("Ok(())");
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
@@ -162,7 +163,7 @@ fn generate_zserio_read(
         &zenum.enum_type,
         Option::from(0),
     );
-    zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64);",));
+    zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64)?;",));
     zserio_read_packed_fn.line("Ok(())");
 }
 
