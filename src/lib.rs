@@ -49,3 +49,95 @@ pub mod internal;
 pub mod ztype;
 
 pub use self::error::*;
+pub use ztype::ZserioPackableObject;
+
+use bitreader::BitReader;
+use std::fs::File;
+use std::path::Path;
+
+/// Deserialize an instance of `T` from data.
+///
+/// # Example
+///
+/// Read a smart layer tile from a byte slice.
+///
+/// ```ignore
+/// use rust_zserio;
+/// use ndslive::smart::v_2022_03::tile::smart_layer_tile::SmartLayerTile;
+///
+/// fn main() {
+///    let data: &[u8] = b"binarydata";
+///    let tile: SmartLayerTile = rust_zserio::from_bytes(data).expect("can not parse data");
+///    println!("{tile:?}");
+/// }
+/// ```
+///
+/// # Errors
+///
+/// This function will fail of there an error occurred if the data can not be decoded,
+/// or there is not enough data in the slice.
+pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T> {
+    let mut bitreader = BitReader::new(data);
+    let mut v = T::new();
+    v.zserio_read(&mut bitreader)?;
+    Ok(v)
+}
+
+/// Read an instance of `T` from a IO stream.
+///
+/// *The stream will be fully consumed by this function.* Any extra data is
+/// ignored.
+///
+/// # Example
+///
+/// Read a smart layer tile from a file.
+///
+/// ```ignore
+/// use std::fs::File;
+/// use rust_zserio;
+/// use ndslive::smart::v_2022_03::tile::smart_layer_tile::SmartLayerTile;
+///
+/// fn main() {
+///    let file = File::open("12345678.bin").unwrap();
+///    let tile: SmartLayerTile = rust_zserio::from_reader(file).unwrap();
+///    println!("{tile:?}");
+/// }
+/// ```
+///
+/// # Errors
+///
+/// This function will fail of there an error occurred while reading data from
+/// the stream, or if the data can not be decoded.
+pub fn from_reader<R: std::io::Read, T: ZserioPackableObject>(
+    mut reader: R,
+) -> self::error::Result<T> {
+    let mut buffer = Vec::new();
+    reader.read_to_end(&mut buffer)?;
+    from_bytes(&buffer)
+}
+
+/// Read an instance of `T` from a file.
+///
+/// # Example
+///
+/// Read a smart layer tile from a file.
+///
+/// ```ignore
+/// use std::fs::File;
+/// use rust_zserio;
+/// use ndslive::smart::v_2022_03::tile::smart_layer_tile::SmartLayerTile;
+///
+/// fn main() {
+///    let tile: SmartLayerTile = rust_zserio::from_file("12345678.bin").unwrap();
+///    println!("{tile:?}");
+/// }
+/// ```
+///
+/// # Errors
+///
+/// This function will fail of there an error occurred while reading data from
+/// the stream, or if the data can not be decoded.
+pub fn from_file<P: AsRef<Path>, T: ZserioPackableObject>(path: P) -> self::error::Result<T> {
+    let mut file = File::open(path)?;
+    from_reader(&mut file)
+}
