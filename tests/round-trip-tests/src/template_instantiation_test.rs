@@ -17,6 +17,10 @@ pub fn test_ambiguous_types() {
     test_struct2.value_2 = 22;
 
     let mut bitwriter = BitWriter::new();
-    test_struct1.zserio_write(&mut bitwriter);
-    test_struct2.zserio_write(&mut bitwriter);
+    test_struct1
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
+    test_struct2
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
 }

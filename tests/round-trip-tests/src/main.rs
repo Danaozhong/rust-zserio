@@ -30,6 +30,7 @@ use bitreader::BitReader;
 use reference_module_lib::reference_modules::core::instantiations::instantiated_template_struct;
 use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableObject;
+use rust_zserio::Result;
 
 use crate::alignment_test::{test_alignment, test_alignment_roundtrip};
 use crate::ambiguous_types_test::test_ambiguous_types;
@@ -51,7 +52,7 @@ use crate::type_casts_test::test_type_casts;
 use crate::valueof_operator_test::test_valueof_operator;
 
 fn main() {
-    test_structure();
+    test_structure().expect("structure tests failed");
     test_functions();
     test_choice();
     test_template_instantiation();
@@ -73,9 +74,9 @@ fn main() {
     test_bitmask_isset_round_trip();
     test_constants();
     test_integer_types();
-    test_parameterized_array_length();
-    test_alignment();
-    test_alignment_roundtrip();
+    test_parameterized_array_length().unwrap();
+    test_alignment().unwrap();
+    test_alignment_roundtrip().unwrap();
     test_packed_arrays();
     test_subtyped_dot_expression();
     test_expr_numbits();
@@ -83,7 +84,7 @@ fn main() {
     test_debug_trait();
 }
 
-fn test_structure() {
+fn test_structure() -> Result<()> {
     // This test generates a test structure, serializes it, deserializes it, and ensures
     // that the data is still the same.
 
@@ -98,7 +99,7 @@ fn test_structure() {
 
     // serialize
     let mut bitwriter = BitWriter::new();
-    value_wrapper.zserio_write(&mut bitwriter);
+    value_wrapper.zserio_write(&mut bitwriter)?;
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
@@ -110,7 +111,7 @@ fn test_structure() {
 
     // Deserialize.
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_value_wrapper.zserio_read(&mut bitreader);
+    other_value_wrapper.zserio_read(&mut bitreader)?;
 
     assert!(other_value_wrapper.value == value_wrapper.value);
     assert!(other_value_wrapper.enum_value == value_wrapper.enum_value);
@@ -121,10 +122,11 @@ fn test_structure() {
 
     // serialize the new structure again, and ensure it is binary identical
     let mut other_bitwriter = BitWriter::new();
-    other_value_wrapper.zserio_write(&mut other_bitwriter);
+    other_value_wrapper.zserio_write(&mut other_bitwriter)?;
     other_bitwriter.close().expect("failed to close bit stream");
     let other_serialized_bytes = other_bitwriter.data();
     assert!(other_serialized_bytes == serialized_bytes);
+    Ok(())
 }
 
 fn test_functions() {
@@ -149,7 +151,9 @@ fn test_choice() {
 
     // Serialize to binary.
     let mut bitwriter = BitWriter::new();
-    basic_choice.zserio_write(&mut bitwriter);
+    basic_choice
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
@@ -157,13 +161,17 @@ fn test_choice() {
     let mut other_basic_choice = BasicChoice::new();
     other_basic_choice.z_type = choice_param;
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_basic_choice.zserio_read(&mut bitreader);
+    other_basic_choice
+        .zserio_read(&mut bitreader)
+        .expect("can not read zserio data");
 
     assert!(other_basic_choice.field_c == basic_choice.field_c);
 
     // serialize the new structure again, and ensure it is binary identical
     let mut other_bitwriter = BitWriter::new();
-    other_basic_choice.zserio_write(&mut other_bitwriter);
+    other_basic_choice
+        .zserio_write(&mut other_bitwriter)
+        .expect("can not write zserio data");
     other_bitwriter.close().expect("failed to close bit stream");
     let other_serialized_bytes = other_bitwriter.data();
     assert!(other_serialized_bytes == serialized_bytes);
@@ -178,14 +186,18 @@ fn test_template_instantiation() {
 
     // serialize
     let mut bitwriter = BitWriter::new();
-    z_struct.zserio_write(&mut bitwriter);
+    z_struct
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
     // deserialize
     let mut other_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_struct.zserio_read(&mut bitreader);
+    other_struct
+        .zserio_read(&mut bitreader)
+        .expect("can not read zserio data");
 
     assert!(other_struct.field.description == z_struct.field.description);
     assert!(other_struct.field.fixed_array == z_struct.field.fixed_array);
@@ -216,14 +228,18 @@ fn test_extern_type() {
 
     // serialize
     let mut bitwriter = BitWriter::new();
-    extern_test_struct.zserio_write(&mut bitwriter);
+    extern_test_struct
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
     // deserialize
     let mut other_struct = ExternTestCase::new();
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_struct.zserio_read(&mut bitreader);
+    other_struct
+        .zserio_read(&mut bitreader)
+        .expect("can not read zserio data");
 
     assert!(other_struct.byte_buffer == extern_test_struct.byte_buffer);
     assert!(other_struct.extern_buffer == extern_test_struct.extern_buffer);
@@ -237,7 +253,9 @@ fn test_type_lookup() {
 
     // To be extra safe, serialize it to make sure it doesn't crash on serialization.
     let mut bitwriter = BitWriter::new();
-    ztype_struct.zserio_write(&mut bitwriter);
+    ztype_struct
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
 }
 
@@ -252,14 +270,18 @@ fn test_union_type() {
 
     // serialize
     let mut bitwriter = BitWriter::new();
-    union_instance.zserio_write(&mut bitwriter);
+    union_instance
+        .zserio_write(&mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
     // deserialize
     let mut other_union_instance = UnionType::new();
     let mut bitreader = BitReader::new(serialized_bytes);
-    other_union_instance.zserio_read(&mut bitreader);
+    other_union_instance
+        .zserio_read(&mut bitreader)
+        .expect("can not read zserio data");
 
     assert!(other_union_instance.union_selector as u32 == union_instance.union_selector as u32);
     assert!(other_union_instance.u_16_value == union_instance.u_16_value);

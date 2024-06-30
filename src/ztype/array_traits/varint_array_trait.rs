@@ -1,3 +1,4 @@
+use crate::error::Result;
 use crate::ztype;
 use crate::ztype::array_traits::array_trait;
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
@@ -15,20 +16,21 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
         false
     }
 
-    fn bitsize_of(&self, _bit_position: u64, value: &i64) -> u64 {
-        ztype::varint_bitsize(*value) as u64
+    fn bitsize_of(&self, _bit_position: u64, value: &i64) -> Result<u64> {
+        ztype::varint_bitsize(*value).map(|v| v as u64)
     }
 
-    fn initialize_offsets(&self, bit_position: u64, value: &i64) -> u64 {
-        bit_position + self.bitsize_of(bit_position, value)
+    fn initialize_offsets(&self, bit_position: u64, value: &i64) -> Result<u64> {
+        Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut i64, _index: usize) {
-        *value = ztype::read_varint(reader);
+    fn read(&self, reader: &mut BitReader, value: &mut i64, _index: usize) -> Result<()> {
+        *value = ztype::read_varint(reader)?;
+        Ok(())
     }
 
-    fn write(&self, writer: &mut BitWriter, value: &i64) {
-        ztype::write_varint(writer, *value);
+    fn write(&self, writer: &mut BitWriter, value: &i64) -> Result<()> {
+        ztype::write_varint(writer, *value)
     }
 
     fn to_u64(&self, value: &i64) -> u64 {
@@ -38,8 +40,8 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
         value as i64
     }
 
-    fn init_context(&self, context_node: &mut PackingContextNode, element: &i64) {
-        context_node.context.as_mut().unwrap().init(self, element);
+    fn init_context(&self, context_node: &mut PackingContextNode, element: &i64) -> Result<()> {
+        context_node.context.as_mut().unwrap().init(self, element)
     }
 
     fn bitsize_of_packed(
@@ -47,7 +49,7 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
         context_node: &mut PackingContextNode,
         bit_position: u64,
         element: &i64,
-    ) -> u64 {
+    ) -> Result<u64> {
         context_node
             .context
             .as_mut()
@@ -60,13 +62,13 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
         context_node: &mut PackingContextNode,
         bit_position: u64,
         element: &i64,
-    ) -> u64 {
-        bit_position
+    ) -> Result<u64> {
+        Ok(bit_position
             + context_node
                 .context
                 .as_mut()
                 .unwrap()
-                .bitsize_of(self, bit_position, element)
+                .bitsize_of(self, bit_position, element)?)
     }
 
     fn read_packed(
@@ -75,12 +77,12 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
         reader: &mut BitReader,
         value: &mut i64,
         index: usize,
-    ) {
+    ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index);
+            .read(self, reader, value, index)
     }
 
     fn write_packed(
@@ -88,11 +90,11 @@ impl array_trait::ArrayTrait<i64> for VarIntArrayTrait {
         context_node: &mut PackingContextNode,
         writer: &mut BitWriter,
         element: &i64,
-    ) {
+    ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .write(self, writer, element);
+            .write(self, writer, element)
     }
 }

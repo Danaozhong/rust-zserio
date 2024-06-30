@@ -100,6 +100,7 @@ fn generate_zserio_read(
     let zserio_read_fn = impl_codegen.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
+    zserio_read_fn.ret("Result<()>");
     decode_type(
         scope,
         type_generator,
@@ -113,11 +114,13 @@ fn generate_zserio_read(
         None,
     );
     zserio_read_fn.line("self.bits = v;");
+    zserio_read_fn.line("Ok(())");
 
     let zserio_read_packed_fn = impl_codegen.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
+    zserio_read_packed_fn.ret("Result<()>");
     zserio_read_packed_fn.line(format!(
         "let mut v: {} = 0;",
         zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
@@ -131,7 +134,8 @@ fn generate_zserio_read(
         &zbitmask.zserio_type,
         Option::from(0),
     );
-    zserio_read_packed_fn.line("self.bits = v");
+    zserio_read_packed_fn.line("self.bits = v;");
+    zserio_read_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_write(
@@ -145,6 +149,7 @@ fn generate_zserio_write(
     let zserio_write_fn = impl_codegen.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
+    zserio_write_fn.ret("Result<()>");
     encode_type(
         scope,
         type_generator,
@@ -153,11 +158,13 @@ fn generate_zserio_write(
         &zbitmask.zserio_type,
         None,
     );
+    zserio_write_fn.line("Ok(())");
 
     let zserio_write_packed_fn = impl_codegen.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
+    zserio_write_packed_fn.ret("Result<()>");
     encode_type(
         scope,
         type_generator,
@@ -166,6 +173,7 @@ fn generate_zserio_write(
         &zbitmask.zserio_type,
         Option::from(0),
     );
+    zserio_write_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_bitsize(
@@ -180,7 +188,7 @@ fn generate_zserio_bitsize(
     );
 
     let bitsize_fn = impl_codegen.new_fn("zserio_bitsize");
-    bitsize_fn.ret("u64");
+    bitsize_fn.ret("Result<u64>");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
@@ -193,10 +201,10 @@ fn generate_zserio_bitsize(
         &zbitmask.zserio_type,
         None,
     );
-    bitsize_fn.line("end_position - bit_position");
+    bitsize_fn.line("Ok(end_position - bit_position)");
 
     let bitsize_packed_fn = impl_codegen.new_fn("zserio_bitsize_packed");
-    bitsize_packed_fn.ret("u64");
+    bitsize_packed_fn.ret("Result<u64>");
     bitsize_packed_fn.arg_ref_self();
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
@@ -210,5 +218,5 @@ fn generate_zserio_bitsize(
         &zbitmask.zserio_type,
         Option::from(0),
     );
-    bitsize_packed_fn.line("end_position - bit_position");
+    bitsize_packed_fn.line("Ok(end_position - bit_position)");
 }

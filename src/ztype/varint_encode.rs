@@ -1,26 +1,27 @@
+use crate::error::Result;
 use crate::ztype::signed_bitsize;
 use rust_bitwriter::BitWriter;
 
-pub fn write_varint16(writer: &mut BitWriter, v: i16) {
+pub fn write_varint16(writer: &mut BitWriter, v: i16) -> Result<()> {
     write_varint_type(writer, v as i64, 2)
 }
 
-pub fn write_varint32(writer: &mut BitWriter, v: i32) {
+pub fn write_varint32(writer: &mut BitWriter, v: i32) -> Result<()> {
     write_varint_type(writer, v as i64, 4)
 }
 
-pub fn write_varint64(writer: &mut BitWriter, v: i64) {
+pub fn write_varint64(writer: &mut BitWriter, v: i64) -> Result<()> {
     write_varint_type(writer, v, 8)
 }
 
-pub fn write_varint(writer: &mut BitWriter, v: i64) {
+pub fn write_varint(writer: &mut BitWriter, v: i64) -> Result<()> {
     write_varint_type(writer, v, 9)
 }
 
-pub fn write_varint_type(writer: &mut BitWriter, v: i64, max_bytes: u8) {
+pub fn write_varint_type(writer: &mut BitWriter, v: i64, max_bytes: u8) -> Result<()> {
     let abs_value = if v < 0 { -v as u64 } else { v as u64 };
 
-    let needed_bytes = signed_bitsize(v, max_bytes) / 8;
+    let needed_bytes = signed_bitsize(v, max_bytes)? / 8;
 
     let needs_complete_bit_range = needed_bytes == max_bytes;
     for i in 0..needed_bytes {
@@ -45,6 +46,7 @@ pub fn write_varint_type(writer: &mut BitWriter, v: i64, max_bytes: u8) {
             shift_bits += 1;
         }
         b |= (abs_value >> shift_bits) & (0xff >> (8 - remaining_bits));
-        let _ = writer.write_unsigned_bits(b, 8, 8);
+        writer.write_unsigned_bits(b, 8, 8)?;
     }
+    Ok(())
 }

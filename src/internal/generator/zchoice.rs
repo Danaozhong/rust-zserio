@@ -236,6 +236,7 @@ fn generate_zserio_read(
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");
+    zserio_read_fn.ret("Result<()>");
 
     generate_choice_match_construct(
         symbol_scope,
@@ -245,11 +246,13 @@ fn generate_zserio_read(
         false,
         &decode_field,
     );
+    zserio_read_fn.line("Ok(())");
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
     zserio_read_packed_fn.arg_mut_self();
     zserio_read_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_read_packed_fn.arg("reader", "&mut BitReader");
+    zserio_read_packed_fn.ret("Result<()>");
     generate_choice_match_construct(
         symbol_scope,
         type_generator,
@@ -258,6 +261,7 @@ fn generate_zserio_read(
         true,
         &decode_field,
     );
+    zserio_read_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_write(
@@ -269,6 +273,7 @@ fn generate_zserio_write(
     let zserio_write_fn = struct_impl.new_fn("zserio_write");
     zserio_write_fn.arg_ref_self();
     zserio_write_fn.arg("writer", "&mut BitWriter");
+    zserio_write_fn.ret("Result<()>");
     generate_choice_match_construct(
         symbol_scope,
         type_generator,
@@ -277,11 +282,13 @@ fn generate_zserio_write(
         false,
         &encode_field,
     );
+    zserio_write_fn.line("Ok(())");
 
     let zserio_write_packed_fn = struct_impl.new_fn("zserio_write_packed");
     zserio_write_packed_fn.arg_ref_self();
     zserio_write_packed_fn.arg("context_node", "&mut PackingContextNode");
     zserio_write_packed_fn.arg("writer", "&mut BitWriter");
+    zserio_write_packed_fn.ret("Result<()>");
     generate_choice_match_construct(
         symbol_scope,
         type_generator,
@@ -290,6 +297,7 @@ fn generate_zserio_write(
         true,
         &encode_field,
     );
+    zserio_write_packed_fn.line("Ok(())");
 }
 
 fn generate_zserio_bitsize(
@@ -299,7 +307,7 @@ fn generate_zserio_bitsize(
     choice: &ZChoice,
 ) {
     let bitsize_fn = struct_impl.new_fn("zserio_bitsize");
-    bitsize_fn.ret("u64");
+    bitsize_fn.ret("Result<u64>");
     bitsize_fn.arg_ref_self();
     bitsize_fn.arg("bit_position", "u64");
     bitsize_fn.line("let mut end_position = bit_position;");
@@ -311,10 +319,10 @@ fn generate_zserio_bitsize(
         false,
         &bitsize_field,
     );
-    bitsize_fn.line("end_position - bit_position");
+    bitsize_fn.line("Ok(end_position - bit_position)");
 
     let bitsize_packed_fn = struct_impl.new_fn("zserio_bitsize_packed");
-    bitsize_packed_fn.ret("u64");
+    bitsize_packed_fn.ret("Result<u64>");
     bitsize_packed_fn.arg_ref_self();
     bitsize_packed_fn.arg("context_node", "&mut PackingContextNode");
     bitsize_packed_fn.arg("bit_position", "u64");
@@ -327,5 +335,5 @@ fn generate_zserio_bitsize(
         true,
         &bitsize_field,
     );
-    bitsize_packed_fn.line("end_position - bit_position");
+    bitsize_packed_fn.line("Ok(end_position - bit_position)");
 }

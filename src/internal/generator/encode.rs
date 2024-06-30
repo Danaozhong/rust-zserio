@@ -26,34 +26,34 @@ pub fn encode_type(
         if let Some(node_idx) = context_node_index {
             // Use packed reading
             function.line(format!(
-                "{}.zserio_write_packed(&mut context_node.children[{}], writer);",
+                "{}.zserio_write_packed(&mut context_node.children[{}], writer)?;",
                 field_name, node_idx,
             ));
         } else {
-            function.line(format!("{}.zserio_write(writer);", field_name));
+            function.line(format!("{}.zserio_write(writer)?;", field_name));
         }
     } else if fund_type.is_builtin {
         if fund_type.name == "string" {
             // string types
             function.line(format!(
-                "ztype::write_string(writer, {}.as_str());",
+                "ztype::write_string(writer, {}.as_str())?;",
                 field_name
             ));
         } else if fund_type.name == "extern" {
             // Write a bit buffer (extern type)
             function.line(format!(
-                "ztype::write_extern_type(writer, &{});",
+                "ztype::write_extern_type(writer, &{})?;",
                 field_name
             ));
         } else if fund_type.name == "bytes" {
             // Write a byte buffer (bytes type)
-            function.line(format!("ztype::write_bytes_type(writer, &{});", field_name));
-        } else if fund_type.name == "bool" {
-            // Write a single boolean type
             function.line(format!(
-                "let _ = writer.write_bool({}).unwrap();",
+                "ztype::write_bytes_type(writer, &{})?;",
                 field_name
             ));
+        } else if fund_type.name == "bool" {
+            // Write a single boolean type
+            function.line(format!("writer.write_bool({})?;", field_name));
         } else if let Some(node_idx) = context_node_index {
             // packed encoding
             function.line(format!(
@@ -80,19 +80,19 @@ pub fn encode_type(
             };
             if fund_type.name == "int" {
                 function.line(format!(
-                    "ztype::write_signed_bits(writer, {}, {});",
+                    "ztype::write_signed_bits(writer, {}, {})?;",
                     field_name, bit_length_string
                 ));
             } else {
                 function.line(format!(
-                    "ztype::write_unsigned_bits(writer, {}, {});",
+                    "ztype::write_unsigned_bits(writer, {}, {})?;",
                     field_name, bit_length_string
                 ));
             }
         } else {
             // for "standard" fixed-width (unsigned) integer types, e.g. int32, uint64
             function.line(format!(
-                "ztype::write_{}(writer, {});",
+                "ztype::write_{}(writer, {})?;",
                 &fund_type.name, field_name
             ));
         }
@@ -154,7 +154,7 @@ pub fn encode_field(
             "if let Some(x) = {}{} {{",
             borrow_symbol, field_name
         ));
-        function.line("writer.write_bool(true).expect(\"failed to write bool\");");
+        function.line("writer.write_bool(true)?;");
         field_name = "x".into();
     }
 
@@ -247,7 +247,7 @@ pub fn encode_field(
         // Array fields need to be deserialized using the array class, which takes
         // care of the array delta compression.
         function.line(format!(
-            "{}.zserio_write(writer, &{});",
+            "{}.zserio_write(writer, &{})?;",
             array_type_name(&field.name),
             field_name
         ));
@@ -265,7 +265,7 @@ pub fn encode_field(
     if field.is_optional {
         function.line("} else {");
         // write a "0" if the field is not set.
-        function.line("writer.write_bool(false).expect(\"failed to write bool\");");
+        function.line("writer.write_bool(false)?;");
         function.line("}");
     }
 

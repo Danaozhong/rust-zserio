@@ -54,7 +54,9 @@ pub fn test_packed_arrays() {
     let mut packing_context_node = PackingContextNode::new();
     PackedArrayWrapper::zserio_create_packing_context(&mut packing_context_node);
 
-    test_struct.zserio_write_packed(&mut packing_context_node, &mut bitwriter);
+    test_struct
+        .zserio_write_packed(&mut packing_context_node, &mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 
@@ -63,7 +65,9 @@ pub fn test_packed_arrays() {
     let mut bitreader = BitReader::new(serialized_bytes);
     let mut new_context_node = PackingContextNode::new();
     PackedArrayWrapper::zserio_create_packing_context(&mut new_context_node);
-    other_test_struct.zserio_read_packed(&mut new_context_node, &mut bitreader);
+    other_test_struct
+        .zserio_read_packed(&mut new_context_node, &mut bitreader)
+        .expect("can not read zserio data");
 
     assert!(test_struct == other_test_struct);
 }
@@ -76,7 +80,9 @@ pub fn packed_arrays_serialize_to_file() {
     let mut bitwriter = BitWriter::new();
     let mut packing_context_node = PackingContextNode::new();
     PackedArrayWrapper::zserio_create_packing_context(&mut packing_context_node);
-    test_struct.zserio_write_packed(&mut packing_context_node, &mut bitwriter);
+    test_struct
+        .zserio_write_packed(&mut packing_context_node, &mut bitwriter)
+        .expect("can not write zserio data");
     bitwriter.close().expect("failed to close bit stream");
     let serialized_bytes = bitwriter.data();
 

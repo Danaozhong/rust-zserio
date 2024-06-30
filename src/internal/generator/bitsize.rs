@@ -22,13 +22,13 @@ pub fn bitsize_type_reference(
         if let Some(node_idx) = context_node_index {
             // Use packed bitsize
             function.line(format!(
-                "end_position += {}.zserio_bitsize_packed(&mut context_node.children[{}], end_position);",
+                "end_position += {}.zserio_bitsize_packed(&mut context_node.children[{}], end_position).unwrap();",
                 field_name,
                 node_idx,
             ));
         } else {
             function.line(format!(
-                "end_position += {}.zserio_bitsize(end_position);",
+                "end_position += {}.zserio_bitsize(end_position).unwrap();",
                 field_name
             ));
         }
@@ -36,7 +36,7 @@ pub fn bitsize_type_reference(
         if type_reference.name == "string" {
             // string types
             function.line(format!(
-                "end_position += ztype::bitsize_string({}.as_str());",
+                "end_position += ztype::bitsize_string({}.as_str()).unwrap();",
                 field_name
             ));
         } else if type_reference.name == "extern" {
@@ -54,7 +54,7 @@ pub fn bitsize_type_reference(
         } else if let Some(node_idx) = context_node_index {
             // packed bitsize
             function.line(format!(
-                "end_position += context_node.children[{}].context.as_mut().unwrap().bitsize_of(&{}, end_position, &{});",
+                "end_position += context_node.children[{}].context.as_mut().unwrap().bitsize_of(&{}, end_position, &{})?;",
                 node_idx,
                 initialize_array_trait(scope, type_generator, type_reference),
                 field_name,
@@ -73,31 +73,31 @@ pub fn bitsize_type_reference(
                 "float32" => String::from("32"),
                 "float64" => String::from("64"),
                 "varint" => {
-                    format!("ztype::varint_bitsize({}) as u64", field_name)
+                    format!("ztype::varint_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varint16" => {
-                    format!("ztype::varint16_bitsize({}) as u64", field_name)
+                    format!("ztype::varint16_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varint32" => {
-                    format!("ztype::varint32_bitsize({}) as u64", field_name)
+                    format!("ztype::varint32_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varint64" => {
-                    format!("ztype::varint64_bitsize({}) as u64", field_name)
+                    format!("ztype::varint64_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint" => {
-                    format!("ztype::varuint_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint16" => {
-                    format!("ztype::varuint16_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint16_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint32" => {
-                    format!("ztype::varuint32_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint32_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varuint64" => {
-                    format!("ztype::varuint64_bitsize({}) as u64", field_name)
+                    format!("ztype::varuint64_bitsize({}).unwrap() as u64", field_name)
                 }
                 "varsize" => {
-                    format!("ztype::varsize_bitsize({}) as u64", field_name)
+                    format!("ztype::varsize_bitsize({}).unwrap() as u64", field_name)
                 }
                 "int" | "bit" => {
                     format!("{} as u64", type_reference.bits)
@@ -153,7 +153,7 @@ pub fn bitsize_field(
     if field.array.is_some() {
         let array_type_name = array_type_name(&field.name);
         function.line(format!(
-            "end_position += {}.zserio_bitsize(&{}, end_position);",
+            "end_position += {}.zserio_bitsize(&{}, end_position)?;",
             array_type_name, field_name,
         ));
     } else {
