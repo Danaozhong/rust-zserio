@@ -1,4 +1,3 @@
-//!
 //! [zserio](http://zserio.org/) serialization bindings for rust.
 //! `zserio` is a binary serialization language, similar to Protobuf. The key features are:
 //! - It features a rich schema.
@@ -44,6 +43,7 @@
 //! This will generate the interface files in rust, that allow reading/writing zserio-encoded
 //! data.
 //! [Optional] The `root` CLI flag is optional, ane enforces an overall crate prefix to the generated code.
+pub mod doctest;
 mod error;
 pub mod internal;
 pub mod ztype;
@@ -61,15 +61,12 @@ use std::path::Path;
 ///
 /// Read a smart layer tile from a byte slice.
 ///
-/// ```ignore
-/// use rust_zserio;
-/// use ndslive::smart::v_2022_03::tile::smart_layer_tile::SmartLayerTile;
+/// ```
+/// # use rust_zserio::doctest::DrinkOrder;
 ///
-/// fn main() {
-///    let data: &[u8] = b"binarydata";
-///    let tile: SmartLayerTile = rust_zserio::from_bytes(data).expect("can not parse data");
-///    println!("{tile:?}");
-/// }
+/// let data: &[u8] = b"binarydata";
+/// let tile: DrinkOrder = rust_zserio::from_bytes(data).expect("can not parse data");
+/// println!("{tile:?}");
 /// ```
 ///
 /// # Errors
@@ -92,16 +89,13 @@ pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T
 ///
 /// Read a smart layer tile from a file.
 ///
-/// ```ignore
+/// ```
+/// # use rust_zserio::doctest::DrinkOrder;
 /// use std::fs::File;
-/// use rust_zserio;
-/// use ndslive::smart::v_2022_03::tile::smart_layer_tile::SmartLayerTile;
 ///
-/// fn main() {
-///    let file = File::open("12345678.bin").unwrap();
-///    let tile: SmartLayerTile = rust_zserio::from_reader(file).unwrap();
-///    println!("{tile:?}");
-/// }
+/// let file = File::open("tests/12345678.bin").unwrap();
+/// let tile: DrinkOrder = rust_zserio::from_reader(file).unwrap();
+/// println!("{tile:?}");
 /// ```
 ///
 /// # Errors
@@ -122,15 +116,10 @@ pub fn from_reader<R: std::io::Read, T: ZserioPackableObject>(
 ///
 /// Read a smart layer tile from a file.
 ///
-/// ```ignore
-/// use std::fs::File;
-/// use rust_zserio;
-/// use ndslive::smart::v_2022_03::tile::smart_layer_tile::SmartLayerTile;
-///
-/// fn main() {
-///    let tile: SmartLayerTile = rust_zserio::from_file("12345678.bin").unwrap();
-///    println!("{tile:?}");
-/// }
+/// ```
+/// # use rust_zserio::doctest::DrinkOrder;
+/// let order: DrinkOrder = rust_zserio::from_file("tests/12345678.bin").unwrap();
+/// println!("{order:?}");
 /// ```
 ///
 /// # Errors
