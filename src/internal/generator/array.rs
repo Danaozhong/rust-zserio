@@ -125,7 +125,7 @@ pub fn instantiate_zserio_array(
         ),
         None => "None".to_owned(),
     };
-    function.line(format!("fixed_size: {},", array_length_str));
-    function.line(format!("is_packed: {},", is_packed));
+    function.line(format!("fixed_size: {array_length_str},"));
+    function.line(format!("is_packed: {is_packed},"));
     function.line("};");
 }

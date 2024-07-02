@@ -1,8 +1,8 @@
 use crate::error::Result;
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::read_varsize;
-use crate::ztype::varuint_encode::write_varsize;
 use crate::ztype::varsize_bitsize;
+use crate::ztype::varuint_encode::write_varsize;
 use bitreader::BitReader;
 use num::traits::Unsigned;
 use rust_bitwriter::BitWriter;
