@@ -6,6 +6,7 @@ pub mod constants_test;
 pub mod debug_trait_test;
 pub mod expr_numbits_test;
 pub mod integer_types_test;
+pub mod offsets_test;
 pub mod optional_values_test;
 pub mod packed_arrays_test;
 pub mod parameter_passing_bitmask_test;
@@ -40,6 +41,7 @@ use crate::constants_test::test_constants;
 use crate::debug_trait_test::test_debug_trait;
 use crate::expr_numbits_test::test_expr_numbits;
 use crate::integer_types_test::test_integer_types;
+use crate::offsets_test::test_offsets;
 use crate::optional_values_test::{
     test_optional_arrays, test_optional_members, test_optional_values,
 };
@@ -82,6 +84,7 @@ fn main() {
     test_expr_numbits();
     test_valueof_operator();
     test_debug_trait();
+    test_offsets();
 }
 
 fn test_structure() -> Result<()> {
