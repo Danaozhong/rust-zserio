@@ -1,37 +1,38 @@
+use crate::internal::compiler::fundamental_type::FundamentalZserioTypeReference;
+use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::casts::expression_requires_cast;
 use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
+use crate::internal::generator::index_offsets::extract_indexed_offset_expression;
+use crate::internal::generator::new::get_default_initializer;
+use crate::internal::generator::packed_contexts::FieldDetails;
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
-use codegen::Function;
-
-use crate::internal::ast::{field::Field, type_reference::TypeReference};
-use crate::internal::compiler::fundamental_type::get_fundamental_type;
-use crate::internal::compiler::symbol_scope::ModelScope;
-use crate::internal::generator::new::get_default_initializer;
 use crate::internal::generator::types::TypeGenerator;
+use codegen::Function;
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
+#[allow(clippy::too_many_arguments)]
 pub fn decode_type(
     scope: &ModelScope,
     type_generator: &mut TypeGenerator,
     function: &mut Function,
     lvalue_field_name: &String,
     rvalue_field_name: &String,
-    field_type: &TypeReference,
-    context_node_index: Option<u8>,
+    native_type: &FundamentalZserioTypeReference,
+    field_index: usize,
+    packed: bool,
 ) {
-    let native_type = get_fundamental_type(field_type, scope);
-    let fund_type = native_type.fundamental_type;
+    let fund_type = &native_type.fundamental_type;
 
     if native_type.is_marshaler {
         // the field is a marshable type (struct, choice, enum)
-        if let Some(node_idx) = context_node_index {
+        if packed {
             // Use packed reading
             function.line(format!(
                 "{}.zserio_read_packed(&mut context_node.children[{}], reader)?;",
-                rvalue_field_name, node_idx,
+                rvalue_field_name, field_index,
             ));
         } else {
             // use standard reading
@@ -58,12 +59,12 @@ pub fn decode_type(
         } else if fund_type.name == "bool" {
             // boolean
             function.line(format!("{} = reader.read_bool()?;", lvalue_field_name));
-        } else if let Some(node_idx) = context_node_index {
+        } else if packed {
             // packed decoding
             function.line(format!(
                 "context_node.children[{}].context.as_mut().unwrap().read(&{}, reader, &mut {}, 0)?;",
-                node_idx,
-                initialize_array_trait(scope, type_generator, &fund_type),
+                field_index,
+                initialize_array_trait(scope, type_generator, fund_type),
                 rvalue_field_name,
             ));
         } else {
@@ -114,14 +115,14 @@ pub fn decode_field(
     scope: &ModelScope,
     type_generator: &mut TypeGenerator,
     function: &mut Function,
-    field: &Field,
-    context_node_index: Option<u8>,
+    field_details: &FieldDetails,
+    packed: bool,
 ) {
-    let native_type = get_fundamental_type(&field.field_type, scope);
-    let field_name = type_generator.convert_field_name(&field.name);
-    let mut rvalue_field_name = format!("self.{}", field_name);
+    let field = field_details.field.borrow();
+
+    let mut rvalue_field_name = format!("self.{}", field_details.field_name);
     let mut lvalue_field_name = rvalue_field_name.clone();
-    let raw_field_type = type_generator.ztype_to_rust_type(&field.field_type);
+    let raw_field_type = &field_details.rust_type;
     let mut field_type = raw_field_type.clone();
 
     // Check if the field uses an optional clause
@@ -137,6 +138,23 @@ pub fn decode_field(
         function.line(format!("ztype::align_reader(reader, {});", field.alignment));
     }
 
+    // Check if there is an offset set for this field.
+    let mut gen_offset_expression = String::new();
+    let mut use_indexed_offset = false;
+    if let Some(offset) = &field.offset {
+        let offset_expr = &offset.borrow();
+        use_indexed_offset = does_expression_contains_index_operator(offset_expr);
+        gen_offset_expression = generate_expression(
+            &extract_indexed_offset_expression(offset_expr),
+            type_generator,
+            scope,
+        );
+
+        if !use_indexed_offset {
+            function.line("ztype::align_reader(reader, 8);");
+        }
+    }
+
     if field.is_optional {
         function.line("let present = reader.read_bool().unwrap();");
         function.line("if present {");
@@ -147,7 +165,7 @@ pub fn decode_field(
             field_type = format!("Vec<{}>", field_type.as_str());
         }
 
-        if native_type.is_marshaler {
+        if field_details.native_type.is_marshaler {
             if field.array.is_some() {
                 function.line("let mut optional_value = vec![];");
             } else {
@@ -157,8 +175,8 @@ pub fn decode_field(
             let default_value = get_default_initializer(
                 false, // We have already checked if the field is optional.
                 field.array.is_some(),
-                native_type.is_marshaler,
-                &native_type.fundamental_type.name,
+                field_details.native_type.is_marshaler,
+                &field_details.native_type.fundamental_type.name,
                 &field_type,
             );
             function.line(format!(
@@ -176,25 +194,31 @@ pub fn decode_field(
         // care of the array delta compression.
         function.line(format!(
             "let {}_array_length = {}.zserio_read_array_length(reader)?;",
-            field_name, array_type_name,
+            field_details.field_name, array_type_name,
         ));
         // initialize the array elements with empty values.
         let default_value = get_default_initializer(
             false, // The underlying type will never be optional (already checked).
             false, // The underlying type will never be an array (no 2D array support in zserio).
-            native_type.is_marshaler,
-            &native_type.fundamental_type.name,
-            &raw_field_type,
+            field_details.native_type.is_marshaler,
+            &field_details.native_type.fundamental_type.name,
+            raw_field_type,
         );
         function.line(format!(
             "{} = vec![{}; {}_array_length];",
-            rvalue_field_name, default_value, field_name,
+            rvalue_field_name, default_value, field_details.field_name,
         ));
     }
 
     // Pass the parameters.
-    if !native_type.fundamental_type.type_arguments.is_empty() {
-        let type_parameters = get_type_parameter(scope, &native_type.fundamental_type);
+    if !field_details
+        .native_type
+        .fundamental_type
+        .type_arguments
+        .is_empty()
+    {
+        let type_parameters =
+            get_type_parameter(scope, &field_details.native_type.fundamental_type);
 
         // Check if parameters are passed to an array. If yes, a for loop is required.
         let mut element_name = rvalue_field_name.clone();
@@ -202,7 +226,7 @@ pub fn decode_field(
         if field.array.is_some() {
             element_name = String::from("element");
             let mut parameter_passing_uses_index_operator = false;
-            for type_param in &native_type.fundamental_type.type_arguments {
+            for type_param in &field_details.native_type.fundamental_type.type_arguments {
                 if does_expression_contains_index_operator(&type_param.borrow()) {
                     parameter_passing_uses_index_operator = true;
                     break;
@@ -220,7 +244,8 @@ pub fn decode_field(
             }
         }
 
-        for (param_index, type_argument_rc) in native_type
+        for (param_index, type_argument_rc) in field_details
+            .native_type
             .fundamental_type
             .type_arguments
             .iter()
@@ -265,9 +290,13 @@ pub fn decode_field(
     }
 
     if field.array.is_some() {
+        let mut index_offset = String::from("None::<&Vec<u32>>");
+        if use_indexed_offset {
+            index_offset = format!("Some(&{gen_offset_expression})");
+        }
         function.line(format!(
-            "{}.zserio_read(reader, &mut {})?;",
-            array_type_name, rvalue_field_name,
+            "{}.zserio_read(reader, &mut {}, {})?;",
+            array_type_name, rvalue_field_name, index_offset,
         ));
     } else {
         decode_type(
@@ -276,8 +305,9 @@ pub fn decode_field(
             function,
             &lvalue_field_name,
             &rvalue_field_name,
-            &field.field_type,
-            context_node_index,
+            &field_details.native_type,
+            field_details.field_index,
+            packed && field_details.is_packable,
         );
     }
 

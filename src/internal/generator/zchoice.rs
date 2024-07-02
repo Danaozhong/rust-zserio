@@ -4,7 +4,6 @@ use codegen::{Function, Scope};
 
 use crate::internal::ast::zchoice::ZChoice;
 
-use crate::internal::ast::field::Field;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::instantiate_zserio_array, bitsize::bitsize_field, decode::decode_field,
@@ -114,7 +113,7 @@ pub fn generate_choice(
     let create_packing_context_fn = choice_impl.new_fn("zserio_create_packing_context");
     create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
     for field in &field_details {
-        generate_packed_context_for_field(symbol_scope, create_packing_context_fn, field);
+        generate_packed_context_for_field(create_packing_context_fn, field);
     }
 
     let init_packing_context_fn = choice_impl.new_fn("zserio_init_packing_context");
@@ -156,13 +155,14 @@ pub fn generate_choice_match_construct(
     code_gen_fn: &mut Function,
     zchoice: &ZChoice,
     packed: bool,
-    f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut Function, &Field, Option<u8>),
+    f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut Function, &FieldDetails, bool),
 ) {
     let selector_name =
         type_generator.convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
     let mut context_node_index = 0;
 
     code_gen_fn.line(format!("match self.{} {{", selector_name));
+
     for case in &zchoice.cases {
         let mut case_expressions = vec![];
         for case_expr in &case.conditions {
@@ -176,24 +176,23 @@ pub fn generate_choice_match_construct(
 
         code_gen_fn.line(format!("{} => {{", selector_expression_evaluation));
         if let Some(field) = &case.field {
+            let field_details =
+                FieldDetails::from_field(field, context_node_index, symbol_scope, type_generator);
             instantiate_zserio_array(
                 symbol_scope,
                 type_generator,
                 code_gen_fn,
                 &field.borrow(),
-                false,
+                packed,
+                field_details.is_packable,
             );
-            let mut packing_node_index = None;
-            if packed {
-                packing_node_index = Option::from(context_node_index);
-                context_node_index += 1
-            }
+            context_node_index += 1;
             f(
                 symbol_scope,
                 type_generator,
                 code_gen_fn,
-                &field.borrow(),
-                packing_node_index,
+                &field_details,
+                packed,
             );
         }
         code_gen_fn.line("},");
@@ -201,23 +200,22 @@ pub fn generate_choice_match_construct(
     if let Some(default_case) = &zchoice.default_case {
         code_gen_fn.line("_ => (");
         if let Some(field) = &default_case.field {
+            let default_field =
+                FieldDetails::from_field(field, context_node_index, symbol_scope, type_generator);
             instantiate_zserio_array(
                 symbol_scope,
                 type_generator,
                 code_gen_fn,
                 &field.borrow(),
                 false,
+                default_field.is_packable,
             );
-            let mut packing_node_index = None;
-            if packed {
-                packing_node_index = Option::from(context_node_index);
-            }
             f(
                 symbol_scope,
                 type_generator,
                 code_gen_fn,
-                &field.borrow(),
-                packing_node_index,
+                &default_field,
+                packed,
             );
         }
         code_gen_fn.line("),");

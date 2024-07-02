@@ -97,6 +97,7 @@ pub fn instantiate_zserio_array(
     function: &mut Function,
     field: &Field,
     force_packed: bool,
+    is_packable: bool,
 ) {
     if field.array.is_none() {
         return;
@@ -104,7 +105,8 @@ pub fn instantiate_zserio_array(
     let native_type = get_fundamental_type(&field.field_type, scope);
     let fund_type = native_type.fundamental_type;
     let rust_type = type_generator.ztype_to_rust_type(field.field_type.as_ref());
-    let is_packed = field.array.as_ref().unwrap().is_packed || force_packed;
+    let field_array = field.array.as_ref().unwrap();
+    let is_packed = (field_array.is_packed || force_packed) && is_packable;
 
     // also initialize the array part
     function.line(format!(
@@ -116,17 +118,14 @@ pub fn instantiate_zserio_array(
         "array_trait: Box::new({}),",
         initialize_array_trait(scope, type_generator, fund_type.as_ref())
     ));
-    let array_length_str = match &field.array.as_ref().unwrap().array_length_expression {
+    let array_length_str = match &field_array.array_length_expression {
         Some(array_length_expression) => format!(
             "Some(({}) as usize)",
             generate_expression(&array_length_expression.borrow(), type_generator, scope)
         ),
         None => "None".to_owned(),
     };
-    function.line(format!("fixed_size: {},", array_length_str));
-
-    function.line(format!("is_aligned: {},", field.alignment != 0));
-
-    function.line(format!("is_packed: {},", is_packed));
+    function.line(format!("fixed_size: {array_length_str},"));
+    function.line(format!("is_packed: {is_packed},"));
     function.line("};");
 }

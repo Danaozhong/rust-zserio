@@ -61,6 +61,25 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug integration tests 'compare-ref-impl-tests'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=compare-ref-impl-tests",
+                    "--package=compare-ref-impl-tests",
+                ],
+                "filter": {
+                    "name": "compare-ref-impl-tests",
+                    "kind": "bin",
+                },
+            },
+            "args": [
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'rust-zserio'",
             "cargo": {
                 "args": [
@@ -74,6 +93,14 @@
             },
             "args": [],
             "cwd": "${workspaceFolder}"
-        }
+        },
+        {
+            "name": "Launch Python 'compare-ref-impl-tests'",
+            "type": "python",
+            "request": "launch",
+            "program": "tests/compare-ref-impl-tests/python/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+          },
     ]
 }
