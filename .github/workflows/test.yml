@@ -13,25 +13,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Run Build test
       run: cargo build --release --verbose --all --all-targets
+
   test-unit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Run Unit tests
       run: cargo test --all --verbose
+
   test-e2e:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Run E2E tests
       run: cargo run -p round-trip-tests
+
   test-compare-to-ref-implementation:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install Poetry
       uses: snok/install-poetry@v1
     - name: Install dependencies
@@ -47,25 +50,26 @@ jobs:
           poetry run python main.py
     - name: Run the rust test cases to read the python artifacts
       run: cargo run -p compare-ref-impl-tests
+
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: nightly
-        override: true
         components: rustfmt, clippy
     - name: Run lint check
       run: cargo clippy --all --all-targets -- -D warnings
+
   format:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
+        # We need nightly for rustfmt's ignore option. Without this rustfmt will
+        # complain about our generated code.
         toolchain: nightly
-        override: true
         components: rustfmt, clippy
     - name: Run fmt check
       run: |
