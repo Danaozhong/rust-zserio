@@ -4,7 +4,8 @@ use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::{
     get_fundamental_type, FundamentalZserioTypeReference,
 };
-use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
+use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::array::array_type_name;
 use crate::internal::generator::encode::requires_borrowing;
 use crate::internal::generator::{expression::generate_boolean_expression, types::TypeGenerator};
 use codegen::Function;
@@ -19,7 +20,9 @@ pub struct FieldDetails {
     pub field_name: String,
     pub native_type: FundamentalZserioTypeReference,
     pub rust_type: String,
+    pub rust_array_type_name: String,
     pub field_context_node_name: String,
+    pub is_packable: bool,
 }
 
 impl FieldDetails {
@@ -33,22 +36,46 @@ impl FieldDetails {
         let field_name = type_generator.convert_field_name(&field.name);
         let field_context_node_name = format!("field_{}_node", &field_name);
 
+        // confirm if the field can be packed. even in packed mode, some fields
+        // may not use packing, for example if they are offset fields.
+        // arrays can always be packed.
+        let is_packable = is_delta_packable(
+            symbol_scope,
+            field.field_type.as_ref(),
+            field.is_offset_field,
+            field.array.is_some(),
+        );
         FieldDetails {
             field: field_rc.clone(),
             field_index,
             field_name,
             native_type: *get_fundamental_type(&field.field_type, symbol_scope),
             rust_type: type_generator.ztype_to_rust_type(field.field_type.as_ref()),
+            rust_array_type_name: array_type_name(&field.name),
             field_context_node_name,
+            is_packable,
         }
     }
 }
 
 /// is_delta_packable identifies if a type is delta-packable or not.
-pub fn is_delta_packable(model_scope: &ModelScope, zserio_type: &TypeReference) -> bool {
-    if zserio_type.is_builtin {
+pub fn is_delta_packable(
+    model_scope: &ModelScope,
+    zserio_type: &TypeReference,
+    is_offset_field: bool,
+    is_array: bool,
+) -> bool {
+    if is_offset_field {
+        return false;
+    }
+    if is_array {
+        // arrays can always be packed, unless overridden by being used as offsets.
+        return true;
+    }
+    let fundamental_type = get_fundamental_type(zserio_type, model_scope);
+    if fundamental_type.fundamental_type.is_builtin {
         return matches!(
-            zserio_type.name.as_str(),
+            fundamental_type.fundamental_type.name.as_str(),
             "int8"
                 | "int16"
                 | "int32"
@@ -71,20 +98,13 @@ pub fn is_delta_packable(model_scope: &ModelScope, zserio_type: &TypeReference) 
                 | "varuint64"
         );
     }
-
-    let symbol = model_scope.get_symbol(zserio_type);
-    match symbol.symbol {
-        Symbol::Const(zconst) => is_delta_packable(model_scope, &zconst.borrow().zserio_type),
-        Symbol::Enum(zenum) => is_delta_packable(model_scope, &zenum.borrow().enum_type),
-        _ => panic!("unexpected symbol reference {:?}", symbol),
+    if fundamental_type.is_marshaler {
+        return true;
     }
+    false
 }
 
-pub fn generate_packed_context_for_field(
-    model_scope: &ModelScope,
-    fn_gen: &mut Function,
-    field_details: &FieldDetails,
-) {
+pub fn generate_packed_context_for_field(fn_gen: &mut Function, field_details: &FieldDetails) {
     fn_gen.line(format!(
         "let mut {} = PackingContextNode::new();",
         &field_details.field_context_node_name
@@ -96,7 +116,7 @@ pub fn generate_packed_context_for_field(
                 "{}::zserio_create_packing_context(&mut {});",
                 &field_details.rust_type, &field_details.field_context_node_name
             ));
-        } else if is_delta_packable(model_scope, &field_details.native_type.fundamental_type) {
+        } else if field_details.is_packable {
             // The field can be delta-packed. Generate a delta context.
             fn_gen.line(format!(
                 "{}.context = Some(DeltaContext::new());",
@@ -148,7 +168,7 @@ pub fn generate_init_packed_context_for_field(
             "{}.zserio_init_packing_context(&mut context_node.children[{}]);",
             &field_name, field_details.field_index
         ));
-    } else if is_delta_packable(model_scope, &field_details.native_type.fundamental_type) {
+    } else if field_details.is_packable {
         // Initialize the delta context with the array traits
         fn_gen.line(format!(
             "let mut {}_delta_context = context_node.children[{}].context.as_mut().unwrap();",

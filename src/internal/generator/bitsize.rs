@@ -1,30 +1,31 @@
-use crate::internal::ast::field::Field;
-use crate::internal::ast::type_reference::TypeReference;
-use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::FundamentalZserioTypeReference;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::encode::requires_borrowing;
-use crate::internal::generator::expression::generate_boolean_expression;
+use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
+use crate::internal::generator::index_offsets::extract_indexed_offset_expression;
+use crate::internal::generator::packed_contexts::FieldDetails;
+use crate::internal::generator::pass_parameters::does_expression_contains_index_operator;
 use crate::internal::generator::types::TypeGenerator;
-use codegen::Function;
-
 use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
+use codegen::Function;
 
 pub fn bitsize_type_reference(
     scope: &ModelScope,
     type_generator: &mut TypeGenerator,
     function: &mut Function,
     field_name: &str,
-    is_marshaler: bool,
-    type_reference: &TypeReference,
-    context_node_index: Option<u8>,
+    native_type: &FundamentalZserioTypeReference,
+    field_index: usize,
+    packed: bool,
 ) {
-    if is_marshaler {
-        if let Some(node_idx) = context_node_index {
+    let type_reference = native_type.fundamental_type.as_ref();
+    if native_type.is_marshaler {
+        if packed {
             // Use packed bitsize
             function.line(format!(
                 "end_position += {}.zserio_bitsize_packed(&mut context_node.children[{}], end_position).unwrap();",
                 field_name,
-                node_idx,
+                field_index,
             ));
         } else {
             function.line(format!(
@@ -51,11 +52,11 @@ pub fn bitsize_type_reference(
             function.line("end_position += 1;");
         } else if type_reference.bits != 0 {
             function.line(format!("end_position += {};", type_reference.bits));
-        } else if let Some(node_idx) = context_node_index {
+        } else if packed {
             // packed bitsize
             function.line(format!(
                 "end_position += context_node.children[{}].context.as_mut().unwrap().bitsize_of(&{}, end_position, &{})?;",
-                node_idx,
+                field_index,
                 initialize_array_trait(scope, type_generator, type_reference),
                 field_name,
             ));
@@ -113,11 +114,11 @@ pub fn bitsize_field(
     scope: &ModelScope,
     type_generator: &mut TypeGenerator,
     function: &mut Function,
-    field: &Field,
-    context_node_index: Option<u8>,
+    field_details: &FieldDetails,
+    packed: bool,
 ) {
-    let native_type = get_fundamental_type(&field.field_type, scope);
-    let mut field_name = format!("self.{}", type_generator.convert_field_name(&field.name));
+    let field = field_details.field.borrow();
+    let mut field_name = format!("self.{}", field_details.field_name);
 
     // Check if the field uses an optional clause
     if let Some(optional_clause) = &field.optional_clause {
@@ -135,11 +136,28 @@ pub fn bitsize_field(
         ));
     }
 
+    // Check if there is an offset set for this field.
+    let mut gen_offset_expression = String::new();
+    let mut use_indexed_offset = false;
+    if let Some(offset) = &field.offset {
+        let offset_expr = &offset.borrow();
+        use_indexed_offset = does_expression_contains_index_operator(offset_expr);
+        gen_offset_expression = generate_expression(
+            &extract_indexed_offset_expression(offset_expr),
+            type_generator,
+            scope,
+        );
+
+        if !use_indexed_offset {
+            function.line("end_position += ztype::align_bitsize(end_position, 8);".to_string());
+        }
+    }
+
     if field.is_optional {
         function.line("end_position += 1;");
         // If the type is a marshaller, take it by reference.
         let mut borrow_symbol = String::from("");
-        if requires_borrowing(field, &native_type) {
+        if requires_borrowing(&field, &field_details.native_type) {
             borrow_symbol = "&".into();
         }
 
@@ -152,9 +170,13 @@ pub fn bitsize_field(
 
     if field.array.is_some() {
         let array_type_name = array_type_name(&field.name);
+        let mut index_offset = String::from("None::<&Vec<u32>>");
+        if use_indexed_offset {
+            index_offset = format!("Some(&{gen_offset_expression})");
+        }
         function.line(format!(
-            "end_position += {}.zserio_bitsize(&{}, end_position)?;",
-            array_type_name, field_name,
+            "end_position += {}.zserio_bitsize(&{}, {}, end_position)?;",
+            array_type_name, field_name, index_offset
         ));
     } else {
         bitsize_type_reference(
@@ -162,9 +184,9 @@ pub fn bitsize_field(
             type_generator,
             function,
             &field_name,
-            native_type.is_marshaler,
-            &native_type.fundamental_type,
-            context_node_index,
+            &field_details.native_type,
+            field_details.field_index,
+            packed && field_details.is_packable,
         );
     }
     if field.is_optional {

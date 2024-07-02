@@ -32,6 +32,9 @@ pub mod reference_modules {
     pub mod integer_types {
         pub mod integer_types;
     }
+    pub mod offsets {
+        pub mod offsets;
+    }
     pub mod optional_array {
         pub mod optional_array;
     }

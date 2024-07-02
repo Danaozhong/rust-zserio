@@ -163,10 +163,9 @@ impl Expression {
         match &self.operand1 {
             Some(op1) => {
                 match &op1.result_type {
-                    ExpressionType::Compound => {
-                        // TODO
-                    }
-                    _ => panic!("todo"),
+                    ExpressionType::Compound => {}
+                    ExpressionType::Integer(_) => {} // for @index expressions in offset
+                    _ => panic!("unexpected array expression index type"),
                 }
             }
             _ => panic!("array element requires an operand to be set"),

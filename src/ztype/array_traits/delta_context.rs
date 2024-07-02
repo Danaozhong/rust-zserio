@@ -125,14 +125,14 @@ impl DeltaContext {
         if delta_bit_size > 0 {
             delta_bit_size += 1;
         }
-        let packed_bit_size_with_decriptor = 1
+        let packed_bit_size_with_descriptor = 1
             + MAX_BIT_NUMBER_BITS as u64
             + self.first_element_size
             + (self.num_elements - 1) * delta_bit_size;
 
         let unpacked_bit_size_with_descriptor = 1 + self.unpacked_size;
 
-        if packed_bit_size_with_decriptor >= unpacked_bit_size_with_descriptor {
+        if packed_bit_size_with_descriptor >= unpacked_bit_size_with_descriptor {
             self.is_packed = false;
         }
     }

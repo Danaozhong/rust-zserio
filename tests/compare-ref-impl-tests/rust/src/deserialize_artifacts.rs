@@ -13,7 +13,7 @@ pub fn get_test_directory() -> PathBuf {
     path.join("..").join("artifacts")
 }
 
-/// Reads a zserio-enocoded object a binary file generated with Python, and ensures
+/// Reads a zserio-encoded object a binary file generated with Python, and ensures
 /// 1) That the file encoded with the python lib can be read,
 /// 2) That the object is binary identical to the Python code after serializing it again in rust,
 /// 3) Ensures the bit positions and bit counts are identical.
@@ -36,7 +36,7 @@ pub fn read_from_python_and_compare(
     assert_eq!(
         bitwriter.data(),
         &*data_bytes,
-        "binary data is diffferent to the Python reference implementation"
+        "binary data is different to the Python reference implementation"
     );
 
     compare_bitlength_calculations_with_python_reference(name, zserio_object);
@@ -76,6 +76,7 @@ pub fn compare_bitlength_calculations_with_python_reference<T: ZserioPackableObj
     // Calculate the packed bitsize
     let mut packing_context = PackingContextNode::new();
     T::zserio_create_packing_context(&mut packing_context);
+    zserio_object.zserio_init_packing_context(&mut packing_context);
     let actual_packed_bitsize = zserio_object
         .zserio_bitsize_packed(&mut packing_context, 0)
         .unwrap();

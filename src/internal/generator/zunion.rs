@@ -6,10 +6,10 @@ use crate::internal::generator::array::instantiate_zserio_array;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
     file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
-    preamble::add_standard_imports, types::convert_to_union_selector_name, types::TypeGenerator,
+    packed_contexts::FieldDetails, preamble::add_standard_imports,
+    types::convert_to_union_selector_name, types::TypeGenerator,
 };
-use codegen::Scope;
-use codegen::Struct;
+use codegen::{Function, Scope, Struct};
 
 use std::path::Path;
 
@@ -182,37 +182,34 @@ pub fn generate_union_match_construct(
     code_gen_fn: &mut codegen::Function,
     zunion: &ZUnion,
     packed: bool,
-    f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut codegen::Function, &Field, Option<u8>),
+    f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut Function, &FieldDetails, bool),
 ) {
-    let mut context_node_index = 0;
     let rust_type_name = type_generator.to_rust_type_name(&zunion.name);
     let selector_type_name = format!("{}Selector", &rust_type_name);
 
     code_gen_fn.line("match &self.union_selector {");
-    for field in &zunion.fields {
+    for (context_node_index, field) in zunion.fields.iter().enumerate() {
         code_gen_fn.line(format!(
             "{}::{} => {{",
             selector_type_name,
             convert_to_union_selector_name(&field.borrow().name)
         ));
+        let field_details =
+            FieldDetails::from_field(field, context_node_index, symbol_scope, type_generator);
         instantiate_zserio_array(
             symbol_scope,
             type_generator,
             code_gen_fn,
             &field.borrow(),
-            false,
+            packed,
+            field_details.is_packable,
         );
-        let mut packing_node_index = None;
-        if packed {
-            packing_node_index = Option::from(context_node_index);
-            context_node_index += 1
-        }
         f(
             symbol_scope,
             type_generator,
             code_gen_fn,
-            &field.borrow(),
-            packing_node_index,
+            &field_details,
+            packed,
         );
         code_gen_fn.line("},");
     }

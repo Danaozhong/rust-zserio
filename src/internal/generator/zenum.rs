@@ -1,7 +1,9 @@
 use codegen::Scope;
 
 use crate::internal::ast::{expression::ExpressionType, zenum::ZEnum};
-use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::{
+    get_fundamental_type, FundamentalZserioTypeReference,
+};
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
@@ -91,9 +93,9 @@ pub fn generate_enum(
     ));
 
     // generate the functions to serialize/deserialize
-    generate_zserio_read(scope, type_generator, z_impl, zenum);
-    generate_zserio_write(scope, type_generator, z_impl, zenum);
-    generate_zserio_bitsize(scope, type_generator, z_impl, zenum);
+    generate_zserio_read(scope, type_generator, z_impl, zenum, &fundamental_type);
+    generate_zserio_write(scope, type_generator, z_impl, zenum, &fundamental_type);
+    generate_zserio_bitsize(scope, type_generator, z_impl, zenum, &fundamental_type);
 
     // Generate the packed contexts.
     let create_packing_context_fn = z_impl.new_fn("zserio_create_packing_context");
@@ -124,6 +126,7 @@ fn generate_zserio_read(
     type_generator: &mut TypeGenerator,
     struct_impl: &mut codegen::Impl,
     zenum: &ZEnum,
+    fundamental_type: &FundamentalZserioTypeReference,
 ) {
     let rust_type_name = type_generator.to_rust_type_name(&zenum.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
@@ -139,8 +142,9 @@ fn generate_zserio_read(
             zserio_to_rust_type(&zenum.enum_type.name).unwrap()
         ),
         &String::from(""),
-        &zenum.enum_type,
-        None,
+        fundamental_type,
+        0,
+        false,
     );
     zserio_read_fn.line(format!("*self = {rust_type_name}::from_int(v as i64)?;",));
     zserio_read_fn.line("Ok(())");
@@ -160,8 +164,9 @@ fn generate_zserio_read(
         zserio_read_packed_fn,
         &String::from(""),
         &String::from("v"),
-        &zenum.enum_type,
-        Option::from(0),
+        fundamental_type,
+        0,
+        true,
     );
     zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64)?;",));
     zserio_read_packed_fn.line("Ok(())");
@@ -172,6 +177,7 @@ fn generate_zserio_write(
     type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zenum: &ZEnum,
+    fundamental_type: &FundamentalZserioTypeReference,
 ) {
     let rust_type_name = format!(
         "(*self as {})",
@@ -187,8 +193,9 @@ fn generate_zserio_write(
         type_generator,
         zserio_write_fn,
         &rust_type_name,
-        &zenum.enum_type,
-        None,
+        fundamental_type,
+        0,
+        false,
     );
     zserio_write_fn.line("Ok(())");
 
@@ -202,8 +209,9 @@ fn generate_zserio_write(
         type_generator,
         zserio_write_packed_fn,
         &rust_type_name,
-        &zenum.enum_type,
-        Option::from(0),
+        fundamental_type,
+        0,
+        true,
     );
     zserio_write_packed_fn.line("Ok(())");
 }
@@ -213,6 +221,7 @@ fn generate_zserio_bitsize(
     type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zenum: &ZEnum,
+    fundamental_type: &FundamentalZserioTypeReference,
 ) {
     let rust_type_name = format!(
         "(*self as {})",
@@ -229,9 +238,9 @@ fn generate_zserio_bitsize(
         type_generator,
         bitsize_fn,
         &rust_type_name,
+        fundamental_type,
+        0,
         false,
-        &zenum.enum_type,
-        None,
     );
     bitsize_fn.line("Ok(end_position - bit_position)");
 
@@ -246,9 +255,9 @@ fn generate_zserio_bitsize(
         type_generator,
         bitsize_packed_fn,
         &rust_type_name,
-        false,
-        &zenum.enum_type,
-        Option::from(0),
+        fundamental_type,
+        0,
+        true,
     );
     bitsize_packed_fn.line("Ok(end_position - bit_position)");
 }

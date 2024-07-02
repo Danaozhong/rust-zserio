@@ -37,6 +37,7 @@ pub fn generate_struct(
     let rust_module_name = type_generator.to_rust_module_name(&zstruct.name);
     let rust_type_name = type_generator.to_rust_type_name(&zstruct.name);
 
+    // For each field, convert the names and types to the rust equivalents
     let mut field_details = vec![];
     for (field_index, field_rc) in zstruct.fields.iter().enumerate() {
         field_details.push(FieldDetails::from_field(
@@ -109,7 +110,7 @@ pub fn generate_struct(
     let create_packing_context_fn = struct_impl.new_fn("zserio_create_packing_context");
     create_packing_context_fn.arg("context_node", "&mut PackingContextNode");
     for field in &field_details {
-        generate_packed_context_for_field(symbol_scope, create_packing_context_fn, field);
+        generate_packed_context_for_field(create_packing_context_fn, field);
     }
 
     let init_packing_context_fn = struct_impl.new_fn("zserio_init_packing_context");
@@ -162,14 +163,9 @@ fn generate_zserio_read(
             zserio_read_fn,
             &field.field.borrow(),
             false,
+            field.is_packable,
         );
-        decode_field(
-            scope,
-            type_generator,
-            zserio_read_fn,
-            &field.field.borrow(),
-            None,
-        );
+        decode_field(scope, type_generator, zserio_read_fn, field, false);
     }
     zserio_read_fn.line("Ok(())");
 
@@ -185,14 +181,9 @@ fn generate_zserio_read(
             zserio_read_packed_fn,
             &field.field.borrow(),
             true,
+            field.is_packable,
         );
-        decode_field(
-            scope,
-            type_generator,
-            zserio_read_packed_fn,
-            &field.field.borrow(),
-            Option::from(field.field_index as u8),
-        );
+        decode_field(scope, type_generator, zserio_read_packed_fn, field, true);
     }
     zserio_read_packed_fn.line("Ok(())");
 }
@@ -209,9 +200,21 @@ fn generate_zserio_write(
     zserio_write_fn.ret("Result<()>");
 
     for field_rc in fields {
-        let field = field_rc.field.borrow();
-        instantiate_zserio_array(symbol_scope, type_generator, zserio_write_fn, &field, false);
-        encode_field(symbol_scope, type_generator, zserio_write_fn, &field, None);
+        instantiate_zserio_array(
+            symbol_scope,
+            type_generator,
+            zserio_write_fn,
+            &field_rc.field.borrow(),
+            false,
+            field_rc.is_packable,
+        );
+        encode_field(
+            symbol_scope,
+            type_generator,
+            zserio_write_fn,
+            field_rc,
+            false,
+        );
     }
     zserio_write_fn.line("Ok(())");
 
@@ -227,13 +230,14 @@ fn generate_zserio_write(
             zserio_write_packed_fn,
             &field.field.borrow(),
             true,
+            field.is_packable,
         );
         encode_field(
             symbol_scope,
             type_generator,
             zserio_write_packed_fn,
-            &field.field.borrow(),
-            Option::from(field.field_index as u8),
+            field,
+            true,
         );
     }
     zserio_write_packed_fn.line("Ok(())");
@@ -257,14 +261,9 @@ fn generate_zserio_bitsize(
             bitsize_fn,
             &field.field.borrow(),
             false,
+            field.is_packable,
         );
-        bitsize_field(
-            symbol_scope,
-            type_generator,
-            bitsize_fn,
-            &field.field.borrow(),
-            None,
-        );
+        bitsize_field(symbol_scope, type_generator, bitsize_fn, field, false);
     }
     bitsize_fn.line("Ok(end_position - bit_position)");
 
@@ -281,14 +280,9 @@ fn generate_zserio_bitsize(
             bitsize_packed_fn,
             &field.field.borrow(),
             true,
+            field.is_packable,
         );
-        bitsize_field(
-            symbol_scope,
-            type_generator,
-            bitsize_packed_fn,
-            &field.field.borrow(),
-            Option::from(field.field_index as u8),
-        );
+        bitsize_field(symbol_scope, type_generator, bitsize_packed_fn, field, true);
     }
     bitsize_packed_fn.line("Ok(end_position - bit_position)");
 }

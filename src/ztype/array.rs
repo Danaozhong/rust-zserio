@@ -1,20 +1,34 @@
 use crate::error::Result;
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::read_varsize;
+use crate::ztype::varsize_bitsize;
 use crate::ztype::varuint_encode::write_varsize;
-use crate::ztype::{align_to, varsize_bitsize};
 use bitreader::BitReader;
+use num::traits::Unsigned;
 use rust_bitwriter::BitWriter;
+
+use crate::ztype::alignment::{align_bitsize, align_reader, align_writer};
 
 pub struct Array<T> {
     pub array_trait: Box<dyn ArrayTrait<T>>,
     pub is_packed: bool,
     pub fixed_size: Option<usize>,
-    pub is_aligned: bool,
 }
 
+pub trait OffsetTrait: Unsigned + Copy + std::convert::Into<u64> {}
+
+impl OffsetTrait for u8 {}
+impl OffsetTrait for u16 {}
+impl OffsetTrait for u32 {}
+impl OffsetTrait for u64 {}
+
 impl<T> Array<T> {
-    pub fn zserio_write(&mut self, writer: &mut BitWriter, data: &Vec<T>) -> Result<()> {
+    pub fn zserio_write<U: OffsetTrait>(
+        &mut self,
+        writer: &mut BitWriter,
+        data: &Vec<T>,
+        index_offsets: Option<&Vec<U>>,
+    ) -> Result<()> {
         if let Some(expected_array_len) = self.fixed_size {
             // for fixed-size arrays, the provided length must match
             assert_eq!(expected_array_len, data.len());
@@ -37,18 +51,14 @@ impl<T> Array<T> {
             }
 
             // Actually write the data.
-            for element in data.iter() {
-                if self.is_aligned {
-                    let _ = writer.align(1);
-                }
+            for (index, element) in data.iter().enumerate() {
+                align_array_element_writer(writer, index, index_offsets);
                 self.array_trait
                     .write_packed(&mut packing_context_node, writer, element)?;
             }
         } else {
-            for element in data.iter() {
-                if self.is_aligned {
-                    let _ = writer.align(1);
-                }
+            for (index, element) in data.iter().enumerate() {
+                align_array_element_writer(writer, index, index_offsets);
                 self.array_trait.write(writer, element)?;
             }
         }
@@ -62,15 +72,18 @@ impl<T> Array<T> {
         }
     }
 
-    pub fn zserio_read(&mut self, reader: &mut BitReader, data: &mut [T]) -> Result<()> {
+    pub fn zserio_read<U: OffsetTrait>(
+        &mut self,
+        reader: &mut BitReader,
+        data: &mut [T],
+        index_offsets: Option<&Vec<U>>,
+    ) -> Result<()> {
         if !data.is_empty() {
             if self.is_packed {
                 // Create the packing context, and all child-contexts
                 let mut packing_context_node = self.array_trait.create_context();
                 for (index, data_item) in data.iter_mut().enumerate() {
-                    if self.is_aligned {
-                        reader.align(1)?;
-                    }
+                    align_array_element_reader(reader, index, index_offsets);
                     self.array_trait.read_packed(
                         &mut packing_context_node,
                         reader,
@@ -80,9 +93,7 @@ impl<T> Array<T> {
                 }
             } else {
                 for (index, data_item) in data.iter_mut().enumerate() {
-                    if self.is_aligned {
-                        reader.align(1)?;
-                    }
+                    align_array_element_reader(reader, index, index_offsets);
                     self.array_trait.read(reader, data_item, index)?;
                 }
             }
@@ -90,7 +101,12 @@ impl<T> Array<T> {
         Ok(())
     }
 
-    pub fn zserio_bitsize(&mut self, data: &Vec<T>, bit_position: u64) -> Result<u64> {
+    pub fn zserio_bitsize<U: OffsetTrait>(
+        &mut self,
+        data: &Vec<T>,
+        index_offsets: Option<&Vec<U>>,
+        bit_position: u64,
+    ) -> Result<u64> {
         let mut end_position = bit_position;
         if self.fixed_size.is_none() {
             end_position += varsize_bitsize(data.len() as u32)? as u64;
@@ -106,38 +122,28 @@ impl<T> Array<T> {
                         .init_context(&mut packing_context_node, element)?;
                 }
 
-                for data_item in data {
-                    if self.is_aligned {
-                        end_position = align_to(8, end_position);
-                    }
+                for (index, element) in data.iter().enumerate() {
+                    end_position = align_array_element_bitsize(end_position, index, index_offsets);
                     end_position += self.array_trait.bitsize_of_packed(
                         &mut packing_context_node,
                         end_position,
-                        data_item,
+                        element,
                     )?;
                 }
             } else {
                 // Array is not packed
-                if self.array_trait.is_bitsizeof_constant() {
+                if self.array_trait.is_bitsizeof_constant() && index_offsets.is_none() {
                     // Since the bitsize is anyway constant, just pass the first element
                     let element_size = self.array_trait.bitsize_of(end_position, &data[0])?;
-                    if self.is_aligned {
-                        // make sure the first element is aligned
-                        end_position = align_to(8, end_position);
-
-                        // count all array elements alignment positions
-                        end_position += (data.len() - 1) as u64 * align_to(8, element_size);
-                    }
 
                     // count the actual payload
                     end_position += data.len() as u64 * element_size;
                 } else {
                     // the bitsize of each array element may differ, as such, each element need to be
                     // added individually.
-                    for element in data {
-                        if self.is_aligned {
-                            end_position = align_to(8, end_position);
-                        }
+                    for (index, element) in data.iter().enumerate() {
+                        end_position =
+                            align_array_element_bitsize(end_position, index, index_offsets);
                         end_position += self.array_trait.bitsize_of(end_position, element)?;
                     }
                 }
@@ -146,7 +152,12 @@ impl<T> Array<T> {
         Ok(end_position - bit_position)
     }
 
-    pub fn zserio_bitsize_packed(&mut self, data: &Vec<T>, bit_position: u64) -> Result<u64> {
+    pub fn zserio_bitsize_packed<U: OffsetTrait>(
+        &mut self,
+        data: &Vec<T>,
+        index_offsets: Option<&Vec<U>>,
+        bit_position: u64,
+    ) -> Result<u64> {
         let mut end_position = bit_position;
         if self.fixed_size.is_none() {
             end_position += varsize_bitsize(data.len() as u32)? as u64;
@@ -159,10 +170,8 @@ impl<T> Array<T> {
                     .init_context(&mut packing_context_node, element)?;
             }
 
-            for element in data {
-                if self.is_aligned {
-                    end_position = align_to(8, end_position);
-                }
+            for (index, element) in data.iter().enumerate() {
+                end_position = align_array_element_bitsize(end_position, index, index_offsets);
                 end_position += self.array_trait.bitsize_of_packed(
                     &mut packing_context_node,
                     end_position,
@@ -172,4 +181,38 @@ impl<T> Array<T> {
         }
         Ok(end_position - bit_position)
     }
+}
+
+fn align_array_element_writer<T: OffsetTrait>(
+    writer: &mut BitWriter,
+    _index: usize,
+    index_offsets: Option<&Vec<T>>,
+) {
+    // A small helper function to byte-align each array element, if desired, during writing.
+    if index_offsets.is_some() {
+        align_writer(writer, 8);
+    }
+}
+fn align_array_element_reader<T: OffsetTrait>(
+    reader: &mut BitReader,
+    _index: usize,
+    index_offsets: Option<&Vec<T>>,
+) {
+    // A small helper function to byte-align each array element, if desired, during reading.
+    if index_offsets.is_some() {
+        align_reader(reader, 8);
+    }
+}
+
+fn align_array_element_bitsize<T: OffsetTrait>(
+    bit_position: u64,
+    _index: usize,
+    index_offsets: Option<&Vec<T>>,
+) -> u64 {
+    // A small helper function to byte-align each array element, if desired, during bitsize calculation.
+    let mut end_position = bit_position;
+    if index_offsets.is_some() {
+        end_position += align_bitsize(end_position, 8);
+    }
+    end_position
 }
