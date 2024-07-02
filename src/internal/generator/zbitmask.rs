@@ -1,7 +1,9 @@
 use codegen::Scope;
 
 use crate::internal::ast::zbitmask::ZBitmaskType;
-use crate::internal::compiler::fundamental_type::get_fundamental_type;
+use crate::internal::compiler::fundamental_type::{
+    get_fundamental_type, FundamentalZserioTypeReference,
+};
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::initialize_array_trait, bitsize::bitsize_type_reference, decode::decode_type,
@@ -61,9 +63,9 @@ pub fn generate_bitmask(
     ));
 
     // generate the functions to serialize/deserialize
-    generate_zserio_read(scope, type_generator, z_impl, zbitmask);
-    generate_zserio_write(scope, type_generator, z_impl, zbitmask);
-    generate_zserio_bitsize(scope, type_generator, z_impl, zbitmask);
+    generate_zserio_read(scope, type_generator, z_impl, zbitmask, &fundamental_type);
+    generate_zserio_write(scope, type_generator, z_impl, &fundamental_type);
+    generate_zserio_bitsize(scope, type_generator, z_impl, zbitmask, &fundamental_type);
 
     // Generate the packed contexts.
     let create_packing_context_fn = z_impl.new_fn("zserio_create_packing_context");
@@ -96,6 +98,7 @@ fn generate_zserio_read(
     type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zbitmask: &ZBitmaskType,
+    fundamental_type: &FundamentalZserioTypeReference,
 ) {
     let zserio_read_fn = impl_codegen.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
@@ -110,8 +113,9 @@ fn generate_zserio_read(
             zserio_to_rust_type(zbitmask.zserio_type.name.as_str()).unwrap()
         ),
         &String::from(""),
-        &zbitmask.zserio_type,
-        None,
+        fundamental_type,
+        0,
+        false,
     );
     zserio_read_fn.line("self.bits = v;");
     zserio_read_fn.line("Ok(())");
@@ -131,8 +135,9 @@ fn generate_zserio_read(
         zserio_read_packed_fn,
         &String::from(""),
         &String::from("v"),
-        &zbitmask.zserio_type,
-        Option::from(0),
+        fundamental_type,
+        0,
+        true,
     );
     zserio_read_packed_fn.line("self.bits = v;");
     zserio_read_packed_fn.line("Ok(())");
@@ -142,7 +147,7 @@ fn generate_zserio_write(
     scope: &ModelScope,
     type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
-    zbitmask: &ZBitmaskType,
+    fundamental_type: &FundamentalZserioTypeReference,
 ) {
     let rust_type_name = "self.bits".into();
 
@@ -155,8 +160,9 @@ fn generate_zserio_write(
         type_generator,
         zserio_write_fn,
         &rust_type_name,
-        &zbitmask.zserio_type,
-        None,
+        fundamental_type,
+        0,
+        false,
     );
     zserio_write_fn.line("Ok(())");
 
@@ -170,8 +176,9 @@ fn generate_zserio_write(
         type_generator,
         zserio_write_packed_fn,
         &rust_type_name,
-        &zbitmask.zserio_type,
-        Option::from(0),
+        fundamental_type,
+        0,
+        true,
     );
     zserio_write_packed_fn.line("Ok(())");
 }
@@ -181,6 +188,7 @@ fn generate_zserio_bitsize(
     type_generator: &mut TypeGenerator,
     impl_codegen: &mut codegen::Impl,
     zbitmask: &ZBitmaskType,
+    fundamental_type: &FundamentalZserioTypeReference,
 ) {
     let rust_type_name = format!(
         "(self.bits as {})",
@@ -197,9 +205,9 @@ fn generate_zserio_bitsize(
         type_generator,
         bitsize_fn,
         &rust_type_name,
+        fundamental_type,
+        0,
         false,
-        &zbitmask.zserio_type,
-        None,
     );
     bitsize_fn.line("Ok(end_position - bit_position)");
 
@@ -214,9 +222,9 @@ fn generate_zserio_bitsize(
         type_generator,
         bitsize_packed_fn,
         &rust_type_name,
-        false,
-        &zbitmask.zserio_type,
-        Option::from(0),
+        fundamental_type,
+        0,
+        true,
     );
     bitsize_packed_fn.line("Ok(end_position - bit_position)");
 }

@@ -1,5 +1,7 @@
 use crate::internal::ast::{expression::Expression, type_reference::TypeReference};
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::compiler::symbol_scope::Symbol;
+use crate::internal::generator::index_offsets::extract_indexed_offset_expression;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
@@ -43,7 +45,7 @@ pub struct Field {
     /// (Optional) An expression, providing a default value for the field.
     pub initializer: Option<Rc<RefCell<Expression>>>,
 
-    /// (Optional) an expression
+    /// (Optional) an expression, specifying the offset of a field.
     pub offset: Option<Rc<RefCell<Expression>>>,
 
     /// (Optional) A constraint which restricts the possible values that can be assigned.
@@ -53,8 +55,11 @@ pub struct Field {
     /// The field will only be written to the byte stream if this condition evaluates to true.
     pub optional_clause: Option<Rc<RefCell<Expression>>>,
 
-    // (Optional) If this field is an array, this struct contains all properties of the array.
+    /// (Optional) If this field is an array, this struct contains all properties of the array.
     pub array: Option<Array>,
+
+    /// Specifies if this field is an offset for another field.
+    pub is_offset_field: bool,
 }
 
 impl Field {
@@ -68,6 +73,19 @@ impl Field {
         }
         if let Some(optional_clause) = &self.optional_clause {
             optional_clause.borrow_mut().evaluate(scope);
+        }
+        if let Some(offset_expression) = &self.offset {
+            offset_expression.borrow_mut().evaluate(scope);
+
+            // Search for the field that belong to the offset.
+            let offset_expression = extract_indexed_offset_expression(&offset_expression.borrow());
+
+            match &offset_expression.symbol.as_ref().unwrap().symbol {
+                Symbol::Field(offset_field) => {
+                    offset_field.borrow_mut().is_offset_field = true;
+                }
+                _ => panic!("offset does not point to a field"),
+            };
         }
         if let Some(initializer) = &mut self.initializer {
             initializer.borrow_mut().evaluate(scope);

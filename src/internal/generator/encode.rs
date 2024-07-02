@@ -1,15 +1,16 @@
-use crate::internal::ast::{field::Field, type_reference::TypeReference};
-use crate::internal::compiler::fundamental_type::{
-    get_fundamental_type, FundamentalZserioTypeReference,
-};
+use crate::internal::ast::field::Field;
+use crate::internal::compiler::fundamental_type::FundamentalZserioTypeReference;
 use crate::internal::compiler::symbol_scope::ModelScope;
+use crate::internal::generator::array::initialize_array_trait;
 use crate::internal::generator::casts::expression_requires_cast;
 use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
+use crate::internal::generator::index_offsets::extract_indexed_offset_expression;
+use crate::internal::generator::packed_contexts::FieldDetails;
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
 };
 use crate::internal::generator::types::TypeGenerator;
-use crate::internal::generator::{array::array_type_name, array::initialize_array_trait};
+
 use codegen::Function;
 
 pub fn encode_type(
@@ -17,17 +18,17 @@ pub fn encode_type(
     type_generator: &mut TypeGenerator,
     function: &mut Function,
     field_name: &String,
-    field_type: &TypeReference,
-    context_node_index: Option<u8>,
+    native_type: &FundamentalZserioTypeReference,
+    field_index: usize,
+    packed: bool,
 ) {
-    let native_type = get_fundamental_type(field_type, scope);
-    let fund_type = native_type.fundamental_type;
+    let fund_type = &native_type.fundamental_type;
     if native_type.is_marshaler {
-        if let Some(node_idx) = context_node_index {
+        if packed {
             // Use packed reading
             function.line(format!(
                 "{}.zserio_write_packed(&mut context_node.children[{}], writer)?;",
-                field_name, node_idx,
+                field_name, field_index,
             ));
         } else {
             function.line(format!("{}.zserio_write(writer)?;", field_name));
@@ -54,12 +55,12 @@ pub fn encode_type(
         } else if fund_type.name == "bool" {
             // Write a single boolean type
             function.line(format!("writer.write_bool({})?;", field_name));
-        } else if let Some(node_idx) = context_node_index {
+        } else if packed {
             // packed encoding
             function.line(format!(
                 "context_node.children[{}].context.as_mut().unwrap().write(&{}, writer, &{});",
-                node_idx,
-                initialize_array_trait(scope, type_generator, &fund_type),
+                field_index,
+                initialize_array_trait(scope, type_generator, fund_type),
                 field_name,
             ));
         } else if fund_type.bits != 0 || fund_type.length_expression.is_some() {
@@ -101,6 +102,8 @@ pub fn encode_type(
     }
 }
 
+/// Decides if a type needs to be passed as a reference, or by copy.
+/// Returns true if the type should be passed by reference, otherwise false.
 pub fn requires_borrowing(field: &Field, native_type: &FundamentalZserioTypeReference) -> bool {
     if field.array.is_some() {
         return true;
@@ -108,9 +111,11 @@ pub fn requires_borrowing(field: &Field, native_type: &FundamentalZserioTypeRefe
     if native_type.is_marshaler {
         return true;
     }
+    // all non-built-in types should be passed by reference.
     if !native_type.fundamental_type.is_builtin {
         return true;
     }
+    // for the native core types, strings make sense to pass by reference.
     if native_type.fundamental_type.name == "string" {
         return true;
     }
@@ -121,14 +126,14 @@ pub fn encode_field(
     scope: &ModelScope,
     type_generator: &mut TypeGenerator,
     function: &mut Function,
-    field: &Field,
-    context_node_index: Option<u8>,
+    field_details: &FieldDetails,
+    packed: bool,
 ) {
-    let native_type = get_fundamental_type(&field.field_type, scope);
-    let mut field_name = format!("self.{}", type_generator.convert_field_name(&field.name));
+    let mut field_name = format!("self.{}", field_details.field_name);
+    let field = field_details.field.borrow();
 
-    // Check if the field uses an optional clause
-    if let Some(optional_clause) = &field.optional_clause {
+    // Check if the field uses an optional clause. If yes, open a condition.
+    if let Some(optional_clause) = &field_details.field.borrow().optional_clause {
         function.line(format!(
             "if {} {{",
             generate_boolean_expression(&optional_clause.borrow(), type_generator, scope)
@@ -140,10 +145,27 @@ pub fn encode_field(
         function.line(format!("ztype::align_writer(writer, {});", field.alignment));
     }
 
+    // Check if there is an offset set for this field.
+    let mut gen_offset_expression = String::new();
+    let mut use_indexed_offset = false;
+    if let Some(offset) = &field.offset {
+        let offset_expr = &offset.borrow();
+        use_indexed_offset = does_expression_contains_index_operator(offset_expr);
+        gen_offset_expression = generate_expression(
+            &extract_indexed_offset_expression(offset_expr),
+            type_generator,
+            scope,
+        );
+
+        if !use_indexed_offset {
+            function.line("ztype::align_writer(writer, 8);".to_string());
+        }
+    }
+
     let mut field_is_borrowed = false;
     if field.is_optional {
         // If the type is a marshaller, take it by reference.
-        field_is_borrowed = requires_borrowing(field, &native_type);
+        field_is_borrowed = requires_borrowing(&field, &field_details.native_type);
 
         let mut borrow_symbol = String::from("");
         if field_is_borrowed {
@@ -162,8 +184,14 @@ pub fn encode_field(
     // part are not mutable. As such, we cannot pass the parameters here ourselves.
     // We can, however, ensure, that the parameters were correctly set, and trigger
     // an error if they were not set correctly.
-    if !native_type.fundamental_type.type_arguments.is_empty() {
-        let type_parameters = get_type_parameter(scope, &native_type.fundamental_type);
+    if !field_details
+        .native_type
+        .fundamental_type
+        .type_arguments
+        .is_empty()
+    {
+        let type_parameters =
+            get_type_parameter(scope, &field_details.native_type.fundamental_type);
 
         // Check if parameters are passed to an array. If yes, a for loop is required.
         let mut element_name = field_name.clone();
@@ -171,7 +199,7 @@ pub fn encode_field(
         if field.array.is_some() {
             element_name = String::from("element");
             let mut parameter_passing_uses_index_operator = false;
-            for type_param in &native_type.fundamental_type.type_arguments {
+            for type_param in &field_details.native_type.fundamental_type.type_arguments {
                 if does_expression_contains_index_operator(&type_param.borrow()) {
                     parameter_passing_uses_index_operator = true;
                     break;
@@ -193,7 +221,8 @@ pub fn encode_field(
             }
         }
 
-        for (param_index, type_argument_rc) in native_type
+        for (param_index, type_argument_rc) in field_details
+            .native_type
             .fundamental_type
             .type_arguments
             .iter()
@@ -228,7 +257,7 @@ pub fn encode_field(
             ));
         }
 
-        if field.array.is_some() {
+        if field_details.field.borrow().array.is_some() {
             // Close the for-loop used to pass the parameters to the array elements.
             function.line("}");
         }
@@ -246,10 +275,13 @@ pub fn encode_field(
 
         // Array fields need to be deserialized using the array class, which takes
         // care of the array delta compression.
+        let mut index_offset = String::from("None::<&Vec<u32>>");
+        if use_indexed_offset {
+            index_offset = format!("Some(&{gen_offset_expression})");
+        }
         function.line(format!(
-            "{}.zserio_write(writer, &{})?;",
-            array_type_name(&field.name),
-            field_name
+            "{}.zserio_write(writer, &{}, {})?;",
+            field_details.rust_array_type_name, field_name, index_offset
         ));
     } else {
         encode_type(
@@ -257,8 +289,9 @@ pub fn encode_field(
             type_generator,
             function,
             &field_name,
-            &field.field_type,
-            context_node_index,
+            &field_details.native_type,
+            field_details.field_index,
+            packed && field_details.is_packable,
         );
     }
 

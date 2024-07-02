@@ -6,6 +6,7 @@ pub mod encode;
 pub mod expression;
 pub mod file_generator;
 pub mod function;
+pub mod index_offsets;
 pub mod mod_file;
 pub mod model;
 pub mod new;

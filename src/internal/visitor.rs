@@ -32,10 +32,11 @@ use crate::internal::parser::gen::zserioparser::{
     EnumDeclarationContextAttrs, EnumItemContext, EnumItemContextAttrs, EqualityExpressionContext,
     EqualityExpressionContextAttrs, FieldAlignmentContext, FieldAlignmentContextAttrs,
     FieldArrayRangeContextAttrs, FieldConstraintContext, FieldConstraintContextAttrs,
-    FieldInitializerContext, FieldInitializerContextAttrs, FieldOptionalClauseContext,
-    FieldOptionalClauseContextAttrs, FieldTypeIdContext, FieldTypeIdContextAttrs,
-    FunctionBodyContextAttrs, FunctionCallExpressionContext, FunctionCallExpressionContextAttrs,
-    FunctionDefinitionContext, FunctionDefinitionContextAttrs, FunctionTypeContextAttrs, IdContext,
+    FieldInitializerContext, FieldInitializerContextAttrs, FieldOffsetContext,
+    FieldOffsetContextAttrs, FieldOptionalClauseContext, FieldOptionalClauseContextAttrs,
+    FieldTypeIdContext, FieldTypeIdContextAttrs, FunctionBodyContextAttrs,
+    FunctionCallExpressionContext, FunctionCallExpressionContextAttrs, FunctionDefinitionContext,
+    FunctionDefinitionContextAttrs, FunctionTypeContextAttrs, IdContext,
     IdentifierExpressionContext, IdentifierExpressionContextAttrs, ImportDeclarationContext,
     ImportDeclarationContextAttrs, IndexExpressionContext, IndexExpressionContextAttrs,
     InstantiateDeclarationContext, InstantiateDeclarationContextAttrs, IsSetExpressionContext,
@@ -416,13 +417,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                 _ => panic!("unexpected field alignment type"),
             }
         }
-    
+
         if let Some(offset_ctx) = ctx.fieldOffset() {
             match ZserioParserVisitorCompat::visit_fieldOffset(self, &offset_ctx) {
                 ZserioTreeReturnType::Expression(expr) => {
                     field.offset = Option::from(Rc::from(RefCell::from(*expr)));
                 }
-                _ => panic!("unexpected field alignment type"),
+                _ => panic!("unexpected field offset type"),
             }
         }
 
@@ -622,8 +623,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             field_type: type_reference,
             constraint: None,
             initializer: None,
+            offset: None,
             optional_clause: None,
             array,
+            is_offset_field: false,
         }))
     }
 
@@ -764,6 +767,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
     fn visit_qualifiedName(&mut self, ctx: &QualifiedNameContext<'_>) -> Self::Return {
         ZserioTreeReturnType::Str(ctx.get_text())
+    }
+
+    fn visit_fieldOffset(&mut self, ctx: &FieldOffsetContext<'_>) -> Self::Return {
+        self.visit(&*ctx.expression().unwrap())
     }
 
     fn visit_fieldInitializer(&mut self, ctx: &FieldInitializerContext<'_>) -> Self::Return {
