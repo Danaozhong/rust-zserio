@@ -1,5 +1,4 @@
 use crate::internal::generator::types::TypeGenerator;
-use rust_format::{Formatter, RustFmt};
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -11,7 +10,7 @@ pub fn write_to_file(
     zserio_pkg_name: &str,
     file_name: &str,
 ) {
-    let format_result = RustFmt::default().format_str(content);
+    let format_result = rustfmt_wrapper::rustfmt(content);
     if format_result.is_err() {
         panic!(
             "code formatting failed: error {:?}, content {:?}",
@@ -19,7 +18,8 @@ pub fn write_to_file(
             content
         );
     }
-    let formatted_code = format_result.unwrap();
+    // We need to run rustfmt twice to stabilize the formatting of vec! macros
+    let formatted_code = rustfmt_wrapper::rustfmt(format_result.unwrap()).unwrap();
     let file_bytes = formatted_code.as_bytes();
 
     let mut file_path = root_path.to_owned();
@@ -27,7 +27,9 @@ pub fn write_to_file(
         file_path = file_path.join(type_generator.to_rust_module_name(dir));
     }
     fs::create_dir_all(file_path.as_path()).expect("mkdir failed");
-    let filename = file_path.join(String::from(file_name) + ".rs");
-    let mut file_ref = std::fs::File::create(filename).expect("create failed");
+    let full_path = file_path.join(String::from(file_name) + ".rs");
+    println!("Writing file  {}", full_path.to_str().unwrap());
+    let mut file_ref = std::fs::File::create(full_path).expect("create failed");
     file_ref.write_all(file_bytes).expect("write failed");
+    file_ref.flush().expect("can not flush data to disk");
 }
