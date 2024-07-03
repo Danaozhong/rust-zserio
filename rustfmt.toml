@@ -1,6 +1,0 @@
-ignore = [
-    "src/internal/parser/gen",
-    "tests/reference-module-lib"
-]
-
-unstable_features = true
