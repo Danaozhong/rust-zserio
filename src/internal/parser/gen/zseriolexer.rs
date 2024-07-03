@@ -4,265 +4,535 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 use antlr_rust::atn::ATN;
+use antlr_rust::atn_deserializer::ATNDeserializer;
 use antlr_rust::char_stream::CharStream;
+use antlr_rust::dfa::DFA;
+use antlr_rust::error_listener::ErrorListener;
 use antlr_rust::int_stream::IntStream;
 use antlr_rust::lexer::{BaseLexer, Lexer, LexerRecog};
-use antlr_rust::atn_deserializer::ATNDeserializer;
-use antlr_rust::dfa::DFA;
-use antlr_rust::lexer_atn_simulator::{LexerATNSimulator, ILexerATNSimulator};
-use antlr_rust::PredictionContextCache;
-use antlr_rust::recognizer::{Recognizer,Actions};
-use antlr_rust::error_listener::ErrorListener;
-use antlr_rust::TokenSource;
-use antlr_rust::token_factory::{TokenFactory,CommonTokenFactory,TokenAware};
+use antlr_rust::lexer_atn_simulator::{ILexerATNSimulator, LexerATNSimulator};
+use antlr_rust::parser_rule_context::{cast, BaseParserRuleContext, ParserRuleContext};
+use antlr_rust::recognizer::{Actions, Recognizer};
+use antlr_rust::rule_context::{BaseRuleContext, EmptyContext, EmptyCustomRuleContext};
 use antlr_rust::token::*;
-use antlr_rust::rule_context::{BaseRuleContext,EmptyCustomRuleContext,EmptyContext};
-use antlr_rust::parser_rule_context::{ParserRuleContext,BaseParserRuleContext,cast};
-use antlr_rust::vocabulary::{Vocabulary,VocabularyImpl};
+use antlr_rust::token_factory::{CommonTokenFactory, TokenAware, TokenFactory};
+use antlr_rust::vocabulary::{Vocabulary, VocabularyImpl};
+use antlr_rust::PredictionContextCache;
+use antlr_rust::TokenSource;
 
-use antlr_rust::{lazy_static,Tid,TidAble,TidExt};
+use antlr_rust::{lazy_static, Tid, TidAble, TidExt};
 
-use std::sync::Arc;
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
+use std::sync::Arc;
 
+pub const AND: isize = 1;
+pub const ASSIGN: isize = 2;
+pub const BANG: isize = 3;
+pub const COLON: isize = 4;
+pub const COMMA: isize = 5;
+pub const DIVIDE: isize = 6;
+pub const DOT: isize = 7;
+pub const EQ: isize = 8;
+pub const GE: isize = 9;
+pub const GT: isize = 10;
+pub const LBRACE: isize = 11;
+pub const LBRACKET: isize = 12;
+pub const LE: isize = 13;
+pub const LOGICAL_AND: isize = 14;
+pub const LOGICAL_OR: isize = 15;
+pub const LPAREN: isize = 16;
+pub const LSHIFT: isize = 17;
+pub const LT: isize = 18;
+pub const MINUS: isize = 19;
+pub const MODULO: isize = 20;
+pub const MULTIPLY: isize = 21;
+pub const NE: isize = 22;
+pub const OR: isize = 23;
+pub const PLUS: isize = 24;
+pub const QUESTIONMARK: isize = 25;
+pub const RBRACE: isize = 26;
+pub const RBRACKET: isize = 27;
+pub const RPAREN: isize = 28;
+pub const SEMICOLON: isize = 29;
+pub const TILDE: isize = 30;
+pub const XOR: isize = 31;
+pub const ALIGN: isize = 32;
+pub const BIT_FIELD: isize = 33;
+pub const BOOL: isize = 34;
+pub const BITMASK: isize = 35;
+pub const BYTES: isize = 36;
+pub const CASE: isize = 37;
+pub const CHOICE: isize = 38;
+pub const CONST: isize = 39;
+pub const DEFAULT: isize = 40;
+pub const DEPRECATED: isize = 41;
+pub const ENUM: isize = 42;
+pub const EXPLICIT: isize = 43;
+pub const EXTEND: isize = 44;
+pub const EXTERN: isize = 45;
+pub const FLOAT16: isize = 46;
+pub const FLOAT32: isize = 47;
+pub const FLOAT64: isize = 48;
+pub const FUNCTION: isize = 49;
+pub const IF: isize = 50;
+pub const IMPLICIT: isize = 51;
+pub const IMPORT: isize = 52;
+pub const INDEX: isize = 53;
+pub const INSTANTIATE: isize = 54;
+pub const INT_FIELD: isize = 55;
+pub const INT16: isize = 56;
+pub const INT32: isize = 57;
+pub const INT64: isize = 58;
+pub const INT8: isize = 59;
+pub const ISSET: isize = 60;
+pub const LENGTHOF: isize = 61;
+pub const NUMBITS: isize = 62;
+pub const ON: isize = 63;
+pub const OPTIONAL: isize = 64;
+pub const PACKAGE: isize = 65;
+pub const PACKED: isize = 66;
+pub const PUBSUB: isize = 67;
+pub const PUBLISH: isize = 68;
+pub const REMOVED: isize = 69;
+pub const RETURN: isize = 70;
+pub const RULE: isize = 71;
+pub const RULE_GROUP: isize = 72;
+pub const SERVICE: isize = 73;
+pub const SQL: isize = 74;
+pub const SQL_DATABASE: isize = 75;
+pub const SQL_TABLE: isize = 76;
+pub const SQL_VIRTUAL: isize = 77;
+pub const SQL_WITHOUT_ROWID: isize = 78;
+pub const STRING: isize = 79;
+pub const STRUCTURE: isize = 80;
+pub const SUBSCRIBE: isize = 81;
+pub const SUBTYPE: isize = 82;
+pub const TOPIC: isize = 83;
+pub const UINT16: isize = 84;
+pub const UINT32: isize = 85;
+pub const UINT64: isize = 86;
+pub const UINT8: isize = 87;
+pub const UNION: isize = 88;
+pub const USING: isize = 89;
+pub const VALUEOF: isize = 90;
+pub const VARINT: isize = 91;
+pub const VARINT16: isize = 92;
+pub const VARINT32: isize = 93;
+pub const VARINT64: isize = 94;
+pub const VARSIZE: isize = 95;
+pub const VARUINT: isize = 96;
+pub const VARUINT16: isize = 97;
+pub const VARUINT32: isize = 98;
+pub const VARUINT64: isize = 99;
+pub const COMPAT_VERSION: isize = 100;
+pub const WS: isize = 101;
+pub const DOC_COMMENT: isize = 102;
+pub const MARKDOWN_COMMENT: isize = 103;
+pub const BLOCK_COMMENT: isize = 104;
+pub const LINE_COMMENT: isize = 105;
+pub const BOOL_LITERAL: isize = 106;
+pub const STRING_LITERAL: isize = 107;
+pub const BINARY_LITERAL: isize = 108;
+pub const OCTAL_LITERAL: isize = 109;
+pub const HEXADECIMAL_LITERAL: isize = 110;
+pub const DOUBLE_LITERAL: isize = 111;
+pub const FLOAT_LITERAL: isize = 112;
+pub const DECIMAL_LITERAL: isize = 113;
+pub const ID: isize = 114;
+pub const INVALID_STRING_LITERAL: isize = 115;
+pub const INVALID_TOKEN: isize = 116;
+pub const DOC: usize = 2;
+pub const channelNames: [&'static str; 1 + 2] = ["DEFAULT_TOKEN_CHANNEL", "HIDDEN", "DOC"];
 
-	pub const AND:isize=1; 
-	pub const ASSIGN:isize=2; 
-	pub const BANG:isize=3; 
-	pub const COLON:isize=4; 
-	pub const COMMA:isize=5; 
-	pub const DIVIDE:isize=6; 
-	pub const DOT:isize=7; 
-	pub const EQ:isize=8; 
-	pub const GE:isize=9; 
-	pub const GT:isize=10; 
-	pub const LBRACE:isize=11; 
-	pub const LBRACKET:isize=12; 
-	pub const LE:isize=13; 
-	pub const LOGICAL_AND:isize=14; 
-	pub const LOGICAL_OR:isize=15; 
-	pub const LPAREN:isize=16; 
-	pub const LSHIFT:isize=17; 
-	pub const LT:isize=18; 
-	pub const MINUS:isize=19; 
-	pub const MODULO:isize=20; 
-	pub const MULTIPLY:isize=21; 
-	pub const NE:isize=22; 
-	pub const OR:isize=23; 
-	pub const PLUS:isize=24; 
-	pub const QUESTIONMARK:isize=25; 
-	pub const RBRACE:isize=26; 
-	pub const RBRACKET:isize=27; 
-	pub const RPAREN:isize=28; 
-	pub const SEMICOLON:isize=29; 
-	pub const TILDE:isize=30; 
-	pub const XOR:isize=31; 
-	pub const ALIGN:isize=32; 
-	pub const BIT_FIELD:isize=33; 
-	pub const BOOL:isize=34; 
-	pub const BITMASK:isize=35; 
-	pub const BYTES:isize=36; 
-	pub const CASE:isize=37; 
-	pub const CHOICE:isize=38; 
-	pub const CONST:isize=39; 
-	pub const DEFAULT:isize=40; 
-	pub const DEPRECATED:isize=41; 
-	pub const ENUM:isize=42; 
-	pub const EXPLICIT:isize=43; 
-	pub const EXTEND:isize=44; 
-	pub const EXTERN:isize=45; 
-	pub const FLOAT16:isize=46; 
-	pub const FLOAT32:isize=47; 
-	pub const FLOAT64:isize=48; 
-	pub const FUNCTION:isize=49; 
-	pub const IF:isize=50; 
-	pub const IMPLICIT:isize=51; 
-	pub const IMPORT:isize=52; 
-	pub const INDEX:isize=53; 
-	pub const INSTANTIATE:isize=54; 
-	pub const INT_FIELD:isize=55; 
-	pub const INT16:isize=56; 
-	pub const INT32:isize=57; 
-	pub const INT64:isize=58; 
-	pub const INT8:isize=59; 
-	pub const ISSET:isize=60; 
-	pub const LENGTHOF:isize=61; 
-	pub const NUMBITS:isize=62; 
-	pub const ON:isize=63; 
-	pub const OPTIONAL:isize=64; 
-	pub const PACKAGE:isize=65; 
-	pub const PACKED:isize=66; 
-	pub const PUBSUB:isize=67; 
-	pub const PUBLISH:isize=68; 
-	pub const REMOVED:isize=69; 
-	pub const RETURN:isize=70; 
-	pub const RULE:isize=71; 
-	pub const RULE_GROUP:isize=72; 
-	pub const SERVICE:isize=73; 
-	pub const SQL:isize=74; 
-	pub const SQL_DATABASE:isize=75; 
-	pub const SQL_TABLE:isize=76; 
-	pub const SQL_VIRTUAL:isize=77; 
-	pub const SQL_WITHOUT_ROWID:isize=78; 
-	pub const STRING:isize=79; 
-	pub const STRUCTURE:isize=80; 
-	pub const SUBSCRIBE:isize=81; 
-	pub const SUBTYPE:isize=82; 
-	pub const TOPIC:isize=83; 
-	pub const UINT16:isize=84; 
-	pub const UINT32:isize=85; 
-	pub const UINT64:isize=86; 
-	pub const UINT8:isize=87; 
-	pub const UNION:isize=88; 
-	pub const USING:isize=89; 
-	pub const VALUEOF:isize=90; 
-	pub const VARINT:isize=91; 
-	pub const VARINT16:isize=92; 
-	pub const VARINT32:isize=93; 
-	pub const VARINT64:isize=94; 
-	pub const VARSIZE:isize=95; 
-	pub const VARUINT:isize=96; 
-	pub const VARUINT16:isize=97; 
-	pub const VARUINT32:isize=98; 
-	pub const VARUINT64:isize=99; 
-	pub const COMPAT_VERSION:isize=100; 
-	pub const WS:isize=101; 
-	pub const DOC_COMMENT:isize=102; 
-	pub const MARKDOWN_COMMENT:isize=103; 
-	pub const BLOCK_COMMENT:isize=104; 
-	pub const LINE_COMMENT:isize=105; 
-	pub const BOOL_LITERAL:isize=106; 
-	pub const STRING_LITERAL:isize=107; 
-	pub const BINARY_LITERAL:isize=108; 
-	pub const OCTAL_LITERAL:isize=109; 
-	pub const HEXADECIMAL_LITERAL:isize=110; 
-	pub const DOUBLE_LITERAL:isize=111; 
-	pub const FLOAT_LITERAL:isize=112; 
-	pub const DECIMAL_LITERAL:isize=113; 
-	pub const ID:isize=114; 
-	pub const INVALID_STRING_LITERAL:isize=115; 
-	pub const INVALID_TOKEN:isize=116;
-	pub const DOC: usize=2;
-	pub const channelNames: [&'static str;1+2] = [
-		"DEFAULT_TOKEN_CHANNEL", "HIDDEN", "DOC"
-	];
+pub const modeNames: [&'static str; 1] = ["DEFAULT_MODE"];
 
-	pub const modeNames: [&'static str;1] = [
-		"DEFAULT_MODE"
-	];
+pub const ruleNames: [&'static str; 122] = [
+    "AND",
+    "ASSIGN",
+    "BANG",
+    "COLON",
+    "COMMA",
+    "DIVIDE",
+    "DOT",
+    "EQ",
+    "GE",
+    "GT",
+    "LBRACE",
+    "LBRACKET",
+    "LE",
+    "LOGICAL_AND",
+    "LOGICAL_OR",
+    "LPAREN",
+    "LSHIFT",
+    "LT",
+    "MINUS",
+    "MODULO",
+    "MULTIPLY",
+    "NE",
+    "OR",
+    "PLUS",
+    "QUESTIONMARK",
+    "RBRACE",
+    "RBRACKET",
+    "RPAREN",
+    "SEMICOLON",
+    "TILDE",
+    "XOR",
+    "ALIGN",
+    "BIT_FIELD",
+    "BOOL",
+    "BITMASK",
+    "BYTES",
+    "CASE",
+    "CHOICE",
+    "CONST",
+    "DEFAULT",
+    "DEPRECATED",
+    "ENUM",
+    "EXPLICIT",
+    "EXTEND",
+    "EXTERN",
+    "FLOAT16",
+    "FLOAT32",
+    "FLOAT64",
+    "FUNCTION",
+    "IF",
+    "IMPLICIT",
+    "IMPORT",
+    "INDEX",
+    "INSTANTIATE",
+    "INT_FIELD",
+    "INT16",
+    "INT32",
+    "INT64",
+    "INT8",
+    "ISSET",
+    "LENGTHOF",
+    "NUMBITS",
+    "ON",
+    "OPTIONAL",
+    "PACKAGE",
+    "PACKED",
+    "PUBSUB",
+    "PUBLISH",
+    "REMOVED",
+    "RETURN",
+    "RULE",
+    "RULE_GROUP",
+    "SERVICE",
+    "SQL",
+    "SQL_DATABASE",
+    "SQL_TABLE",
+    "SQL_VIRTUAL",
+    "SQL_WITHOUT_ROWID",
+    "STRING",
+    "STRUCTURE",
+    "SUBSCRIBE",
+    "SUBTYPE",
+    "TOPIC",
+    "UINT16",
+    "UINT32",
+    "UINT64",
+    "UINT8",
+    "UNION",
+    "USING",
+    "VALUEOF",
+    "VARINT",
+    "VARINT16",
+    "VARINT32",
+    "VARINT64",
+    "VARSIZE",
+    "VARUINT",
+    "VARUINT16",
+    "VARUINT32",
+    "VARUINT64",
+    "COMPAT_VERSION",
+    "WS",
+    "DOC_COMMENT",
+    "MARKDOWN_COMMENT",
+    "BLOCK_COMMENT",
+    "LINE_COMMENT",
+    "BOOL_LITERAL",
+    "STRING_CHARACTER",
+    "STRING_LITERAL",
+    "BINARY_LITERAL",
+    "OCTAL_DIGIT",
+    "OCTAL_LITERAL",
+    "HEX_PREFIX",
+    "HEX_DIGIT",
+    "HEXADECIMAL_LITERAL",
+    "FLOAT_EXPONENT",
+    "FLOAT_SUFFIX",
+    "DOUBLE_LITERAL",
+    "FLOAT_LITERAL",
+    "DECIMAL_LITERAL",
+    "ID",
+    "INVALID_STRING_LITERAL",
+    "INVALID_TOKEN",
+];
 
-	pub const ruleNames: [&'static str;122] = [
-		"AND", "ASSIGN", "BANG", "COLON", "COMMA", "DIVIDE", "DOT", "EQ", "GE", 
-		"GT", "LBRACE", "LBRACKET", "LE", "LOGICAL_AND", "LOGICAL_OR", "LPAREN", 
-		"LSHIFT", "LT", "MINUS", "MODULO", "MULTIPLY", "NE", "OR", "PLUS", "QUESTIONMARK", 
-		"RBRACE", "RBRACKET", "RPAREN", "SEMICOLON", "TILDE", "XOR", "ALIGN", 
-		"BIT_FIELD", "BOOL", "BITMASK", "BYTES", "CASE", "CHOICE", "CONST", "DEFAULT", 
-		"DEPRECATED", "ENUM", "EXPLICIT", "EXTEND", "EXTERN", "FLOAT16", "FLOAT32", 
-		"FLOAT64", "FUNCTION", "IF", "IMPLICIT", "IMPORT", "INDEX", "INSTANTIATE", 
-		"INT_FIELD", "INT16", "INT32", "INT64", "INT8", "ISSET", "LENGTHOF", "NUMBITS", 
-		"ON", "OPTIONAL", "PACKAGE", "PACKED", "PUBSUB", "PUBLISH", "REMOVED", 
-		"RETURN", "RULE", "RULE_GROUP", "SERVICE", "SQL", "SQL_DATABASE", "SQL_TABLE", 
-		"SQL_VIRTUAL", "SQL_WITHOUT_ROWID", "STRING", "STRUCTURE", "SUBSCRIBE", 
-		"SUBTYPE", "TOPIC", "UINT16", "UINT32", "UINT64", "UINT8", "UNION", "USING", 
-		"VALUEOF", "VARINT", "VARINT16", "VARINT32", "VARINT64", "VARSIZE", "VARUINT", 
-		"VARUINT16", "VARUINT32", "VARUINT64", "COMPAT_VERSION", "WS", "DOC_COMMENT", 
-		"MARKDOWN_COMMENT", "BLOCK_COMMENT", "LINE_COMMENT", "BOOL_LITERAL", "STRING_CHARACTER", 
-		"STRING_LITERAL", "BINARY_LITERAL", "OCTAL_DIGIT", "OCTAL_LITERAL", "HEX_PREFIX", 
-		"HEX_DIGIT", "HEXADECIMAL_LITERAL", "FLOAT_EXPONENT", "FLOAT_SUFFIX", 
-		"DOUBLE_LITERAL", "FLOAT_LITERAL", "DECIMAL_LITERAL", "ID", "INVALID_STRING_LITERAL", 
-		"INVALID_TOKEN"
-	];
+pub const _LITERAL_NAMES: [Option<&'static str>; 101] = [
+    None,
+    Some("'&'"),
+    Some("'='"),
+    Some("'!'"),
+    Some("':'"),
+    Some("','"),
+    Some("'/'"),
+    Some("'.'"),
+    Some("'=='"),
+    Some("'>='"),
+    Some("'>'"),
+    Some("'{'"),
+    Some("'['"),
+    Some("'<='"),
+    Some("'&&'"),
+    Some("'||'"),
+    Some("'('"),
+    Some("'<<'"),
+    Some("'<'"),
+    Some("'-'"),
+    Some("'%'"),
+    Some("'*'"),
+    Some("'!='"),
+    Some("'|'"),
+    Some("'+'"),
+    Some("'?'"),
+    Some("'}'"),
+    Some("']'"),
+    Some("')'"),
+    Some("';'"),
+    Some("'~'"),
+    Some("'^'"),
+    Some("'align'"),
+    Some("'bit'"),
+    Some("'bool'"),
+    Some("'bitmask'"),
+    Some("'bytes'"),
+    Some("'case'"),
+    Some("'choice'"),
+    Some("'const'"),
+    Some("'default'"),
+    Some("'@deprecated'"),
+    Some("'enum'"),
+    Some("'explicit'"),
+    Some("'extend'"),
+    Some("'extern'"),
+    Some("'float16'"),
+    Some("'float32'"),
+    Some("'float64'"),
+    Some("'function'"),
+    Some("'if'"),
+    Some("'implicit'"),
+    Some("'import'"),
+    Some("'@index'"),
+    Some("'instantiate'"),
+    Some("'int'"),
+    Some("'int16'"),
+    Some("'int32'"),
+    Some("'int64'"),
+    Some("'int8'"),
+    Some("'isset'"),
+    Some("'lengthof'"),
+    Some("'numbits'"),
+    Some("'on'"),
+    Some("'optional'"),
+    Some("'package'"),
+    Some("'packed'"),
+    Some("'pubsub'"),
+    Some("'publish'"),
+    Some("'@removed'"),
+    Some("'return'"),
+    Some("'rule'"),
+    Some("'rule_group'"),
+    Some("'service'"),
+    Some("'sql'"),
+    Some("'sql_database'"),
+    Some("'sql_table'"),
+    Some("'sql_virtual'"),
+    Some("'sql_without_rowid'"),
+    Some("'string'"),
+    Some("'struct'"),
+    Some("'subscribe'"),
+    Some("'subtype'"),
+    Some("'topic'"),
+    Some("'uint16'"),
+    Some("'uint32'"),
+    Some("'uint64'"),
+    Some("'uint8'"),
+    Some("'union'"),
+    Some("'using'"),
+    Some("'valueof'"),
+    Some("'varint'"),
+    Some("'varint16'"),
+    Some("'varint32'"),
+    Some("'varint64'"),
+    Some("'varsize'"),
+    Some("'varuint'"),
+    Some("'varuint16'"),
+    Some("'varuint32'"),
+    Some("'varuint64'"),
+    Some("'zserio_compatibility_version'"),
+];
+pub const _SYMBOLIC_NAMES: [Option<&'static str>; 117] = [
+    None,
+    Some("AND"),
+    Some("ASSIGN"),
+    Some("BANG"),
+    Some("COLON"),
+    Some("COMMA"),
+    Some("DIVIDE"),
+    Some("DOT"),
+    Some("EQ"),
+    Some("GE"),
+    Some("GT"),
+    Some("LBRACE"),
+    Some("LBRACKET"),
+    Some("LE"),
+    Some("LOGICAL_AND"),
+    Some("LOGICAL_OR"),
+    Some("LPAREN"),
+    Some("LSHIFT"),
+    Some("LT"),
+    Some("MINUS"),
+    Some("MODULO"),
+    Some("MULTIPLY"),
+    Some("NE"),
+    Some("OR"),
+    Some("PLUS"),
+    Some("QUESTIONMARK"),
+    Some("RBRACE"),
+    Some("RBRACKET"),
+    Some("RPAREN"),
+    Some("SEMICOLON"),
+    Some("TILDE"),
+    Some("XOR"),
+    Some("ALIGN"),
+    Some("BIT_FIELD"),
+    Some("BOOL"),
+    Some("BITMASK"),
+    Some("BYTES"),
+    Some("CASE"),
+    Some("CHOICE"),
+    Some("CONST"),
+    Some("DEFAULT"),
+    Some("DEPRECATED"),
+    Some("ENUM"),
+    Some("EXPLICIT"),
+    Some("EXTEND"),
+    Some("EXTERN"),
+    Some("FLOAT16"),
+    Some("FLOAT32"),
+    Some("FLOAT64"),
+    Some("FUNCTION"),
+    Some("IF"),
+    Some("IMPLICIT"),
+    Some("IMPORT"),
+    Some("INDEX"),
+    Some("INSTANTIATE"),
+    Some("INT_FIELD"),
+    Some("INT16"),
+    Some("INT32"),
+    Some("INT64"),
+    Some("INT8"),
+    Some("ISSET"),
+    Some("LENGTHOF"),
+    Some("NUMBITS"),
+    Some("ON"),
+    Some("OPTIONAL"),
+    Some("PACKAGE"),
+    Some("PACKED"),
+    Some("PUBSUB"),
+    Some("PUBLISH"),
+    Some("REMOVED"),
+    Some("RETURN"),
+    Some("RULE"),
+    Some("RULE_GROUP"),
+    Some("SERVICE"),
+    Some("SQL"),
+    Some("SQL_DATABASE"),
+    Some("SQL_TABLE"),
+    Some("SQL_VIRTUAL"),
+    Some("SQL_WITHOUT_ROWID"),
+    Some("STRING"),
+    Some("STRUCTURE"),
+    Some("SUBSCRIBE"),
+    Some("SUBTYPE"),
+    Some("TOPIC"),
+    Some("UINT16"),
+    Some("UINT32"),
+    Some("UINT64"),
+    Some("UINT8"),
+    Some("UNION"),
+    Some("USING"),
+    Some("VALUEOF"),
+    Some("VARINT"),
+    Some("VARINT16"),
+    Some("VARINT32"),
+    Some("VARINT64"),
+    Some("VARSIZE"),
+    Some("VARUINT"),
+    Some("VARUINT16"),
+    Some("VARUINT32"),
+    Some("VARUINT64"),
+    Some("COMPAT_VERSION"),
+    Some("WS"),
+    Some("DOC_COMMENT"),
+    Some("MARKDOWN_COMMENT"),
+    Some("BLOCK_COMMENT"),
+    Some("LINE_COMMENT"),
+    Some("BOOL_LITERAL"),
+    Some("STRING_LITERAL"),
+    Some("BINARY_LITERAL"),
+    Some("OCTAL_LITERAL"),
+    Some("HEXADECIMAL_LITERAL"),
+    Some("DOUBLE_LITERAL"),
+    Some("FLOAT_LITERAL"),
+    Some("DECIMAL_LITERAL"),
+    Some("ID"),
+    Some("INVALID_STRING_LITERAL"),
+    Some("INVALID_TOKEN"),
+];
+lazy_static! {
+    static ref _shared_context_cache: Arc<PredictionContextCache> =
+        Arc::new(PredictionContextCache::new());
+    static ref VOCABULARY: Box<dyn Vocabulary> = Box::new(VocabularyImpl::new(
+        _LITERAL_NAMES.iter(),
+        _SYMBOLIC_NAMES.iter(),
+        None
+    ));
+}
 
-
-	pub const _LITERAL_NAMES: [Option<&'static str>;101] = [
-		None, Some("'&'"), Some("'='"), Some("'!'"), Some("':'"), Some("','"), 
-		Some("'/'"), Some("'.'"), Some("'=='"), Some("'>='"), Some("'>'"), Some("'{'"), 
-		Some("'['"), Some("'<='"), Some("'&&'"), Some("'||'"), Some("'('"), Some("'<<'"), 
-		Some("'<'"), Some("'-'"), Some("'%'"), Some("'*'"), Some("'!='"), Some("'|'"), 
-		Some("'+'"), Some("'?'"), Some("'}'"), Some("']'"), Some("')'"), Some("';'"), 
-		Some("'~'"), Some("'^'"), Some("'align'"), Some("'bit'"), Some("'bool'"), 
-		Some("'bitmask'"), Some("'bytes'"), Some("'case'"), Some("'choice'"), 
-		Some("'const'"), Some("'default'"), Some("'@deprecated'"), Some("'enum'"), 
-		Some("'explicit'"), Some("'extend'"), Some("'extern'"), Some("'float16'"), 
-		Some("'float32'"), Some("'float64'"), Some("'function'"), Some("'if'"), 
-		Some("'implicit'"), Some("'import'"), Some("'@index'"), Some("'instantiate'"), 
-		Some("'int'"), Some("'int16'"), Some("'int32'"), Some("'int64'"), Some("'int8'"), 
-		Some("'isset'"), Some("'lengthof'"), Some("'numbits'"), Some("'on'"), 
-		Some("'optional'"), Some("'package'"), Some("'packed'"), Some("'pubsub'"), 
-		Some("'publish'"), Some("'@removed'"), Some("'return'"), Some("'rule'"), 
-		Some("'rule_group'"), Some("'service'"), Some("'sql'"), Some("'sql_database'"), 
-		Some("'sql_table'"), Some("'sql_virtual'"), Some("'sql_without_rowid'"), 
-		Some("'string'"), Some("'struct'"), Some("'subscribe'"), Some("'subtype'"), 
-		Some("'topic'"), Some("'uint16'"), Some("'uint32'"), Some("'uint64'"), 
-		Some("'uint8'"), Some("'union'"), Some("'using'"), Some("'valueof'"), 
-		Some("'varint'"), Some("'varint16'"), Some("'varint32'"), Some("'varint64'"), 
-		Some("'varsize'"), Some("'varuint'"), Some("'varuint16'"), Some("'varuint32'"), 
-		Some("'varuint64'"), Some("'zserio_compatibility_version'")
-	];
-	pub const _SYMBOLIC_NAMES: [Option<&'static str>;117]  = [
-		None, Some("AND"), Some("ASSIGN"), Some("BANG"), Some("COLON"), Some("COMMA"), 
-		Some("DIVIDE"), Some("DOT"), Some("EQ"), Some("GE"), Some("GT"), Some("LBRACE"), 
-		Some("LBRACKET"), Some("LE"), Some("LOGICAL_AND"), Some("LOGICAL_OR"), 
-		Some("LPAREN"), Some("LSHIFT"), Some("LT"), Some("MINUS"), Some("MODULO"), 
-		Some("MULTIPLY"), Some("NE"), Some("OR"), Some("PLUS"), Some("QUESTIONMARK"), 
-		Some("RBRACE"), Some("RBRACKET"), Some("RPAREN"), Some("SEMICOLON"), Some("TILDE"), 
-		Some("XOR"), Some("ALIGN"), Some("BIT_FIELD"), Some("BOOL"), Some("BITMASK"), 
-		Some("BYTES"), Some("CASE"), Some("CHOICE"), Some("CONST"), Some("DEFAULT"), 
-		Some("DEPRECATED"), Some("ENUM"), Some("EXPLICIT"), Some("EXTEND"), Some("EXTERN"), 
-		Some("FLOAT16"), Some("FLOAT32"), Some("FLOAT64"), Some("FUNCTION"), Some("IF"), 
-		Some("IMPLICIT"), Some("IMPORT"), Some("INDEX"), Some("INSTANTIATE"), 
-		Some("INT_FIELD"), Some("INT16"), Some("INT32"), Some("INT64"), Some("INT8"), 
-		Some("ISSET"), Some("LENGTHOF"), Some("NUMBITS"), Some("ON"), Some("OPTIONAL"), 
-		Some("PACKAGE"), Some("PACKED"), Some("PUBSUB"), Some("PUBLISH"), Some("REMOVED"), 
-		Some("RETURN"), Some("RULE"), Some("RULE_GROUP"), Some("SERVICE"), Some("SQL"), 
-		Some("SQL_DATABASE"), Some("SQL_TABLE"), Some("SQL_VIRTUAL"), Some("SQL_WITHOUT_ROWID"), 
-		Some("STRING"), Some("STRUCTURE"), Some("SUBSCRIBE"), Some("SUBTYPE"), 
-		Some("TOPIC"), Some("UINT16"), Some("UINT32"), Some("UINT64"), Some("UINT8"), 
-		Some("UNION"), Some("USING"), Some("VALUEOF"), Some("VARINT"), Some("VARINT16"), 
-		Some("VARINT32"), Some("VARINT64"), Some("VARSIZE"), Some("VARUINT"), 
-		Some("VARUINT16"), Some("VARUINT32"), Some("VARUINT64"), Some("COMPAT_VERSION"), 
-		Some("WS"), Some("DOC_COMMENT"), Some("MARKDOWN_COMMENT"), Some("BLOCK_COMMENT"), 
-		Some("LINE_COMMENT"), Some("BOOL_LITERAL"), Some("STRING_LITERAL"), Some("BINARY_LITERAL"), 
-		Some("OCTAL_LITERAL"), Some("HEXADECIMAL_LITERAL"), Some("DOUBLE_LITERAL"), 
-		Some("FLOAT_LITERAL"), Some("DECIMAL_LITERAL"), Some("ID"), Some("INVALID_STRING_LITERAL"), 
-		Some("INVALID_TOKEN")
-	];
-	lazy_static!{
-	    static ref _shared_context_cache: Arc<PredictionContextCache> = Arc::new(PredictionContextCache::new());
-		static ref VOCABULARY: Box<dyn Vocabulary> = Box::new(VocabularyImpl::new(_LITERAL_NAMES.iter(), _SYMBOLIC_NAMES.iter(), None));
-	}
-
-
-pub type LexerContext<'input> = BaseRuleContext<'input,EmptyCustomRuleContext<'input,LocalTokenFactory<'input> >>;
+pub type LexerContext<'input> =
+    BaseRuleContext<'input, EmptyCustomRuleContext<'input, LocalTokenFactory<'input>>>;
 pub type LocalTokenFactory<'input> = CommonTokenFactory;
 
-type From<'a> = <LocalTokenFactory<'a> as TokenFactory<'a> >::From;
+type From<'a> = <LocalTokenFactory<'a> as TokenFactory<'a>>::From;
 
-pub struct ZserioLexer<'input, Input:CharStream<From<'input> >> {
-	base: BaseLexer<'input,ZserioLexerActions,Input,LocalTokenFactory<'input>>,
+pub struct ZserioLexer<'input, Input: CharStream<From<'input>>> {
+    base: BaseLexer<'input, ZserioLexerActions, Input, LocalTokenFactory<'input>>,
 }
 
 antlr_rust::tid! { impl<'input,Input> TidAble<'input> for ZserioLexer<'input,Input> where Input:CharStream<From<'input> > }
 
-impl<'input, Input:CharStream<From<'input> >> Deref for ZserioLexer<'input,Input>{
-	type Target = BaseLexer<'input,ZserioLexerActions,Input,LocalTokenFactory<'input>>;
+impl<'input, Input: CharStream<From<'input>>> Deref for ZserioLexer<'input, Input> {
+    type Target = BaseLexer<'input, ZserioLexerActions, Input, LocalTokenFactory<'input>>;
 
-	fn deref(&self) -> &Self::Target {
-		&self.base
-	}
+    fn deref(&self) -> &Self::Target {
+        &self.base
+    }
 }
 
-impl<'input, Input:CharStream<From<'input> >> DerefMut for ZserioLexer<'input,Input>{
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.base
-	}
+impl<'input, Input: CharStream<From<'input>>> DerefMut for ZserioLexer<'input, Input> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.base
+    }
 }
 
-
-impl<'input, Input:CharStream<From<'input> >> ZserioLexer<'input,Input>{
+impl<'input, Input: CharStream<From<'input>>> ZserioLexer<'input, Input> {
     fn get_rule_names(&self) -> &'static [&'static str] {
         &ruleNames
     }
@@ -278,50 +548,58 @@ impl<'input, Input:CharStream<From<'input> >> ZserioLexer<'input,Input>{
         "ZserioLexer.g4"
     }
 
-	pub fn new_with_token_factory(input: Input, tf: &'input LocalTokenFactory<'input>) -> Self {
-		antlr_rust::recognizer::check_version("0","3");
-    	Self {
-			base: BaseLexer::new_base_lexer(
-				input,
-				LexerATNSimulator::new_lexer_atnsimulator(
-					_ATN.clone(),
-					_decision_to_DFA.clone(),
-					_shared_context_cache.clone(),
-				),
-				ZserioLexerActions{},
-				tf
-			)
-	    }
-	}
+    pub fn new_with_token_factory(input: Input, tf: &'input LocalTokenFactory<'input>) -> Self {
+        antlr_rust::recognizer::check_version("0", "3");
+        Self {
+            base: BaseLexer::new_base_lexer(
+                input,
+                LexerATNSimulator::new_lexer_atnsimulator(
+                    _ATN.clone(),
+                    _decision_to_DFA.clone(),
+                    _shared_context_cache.clone(),
+                ),
+                ZserioLexerActions {},
+                tf,
+            ),
+        }
+    }
 }
 
-impl<'input, Input:CharStream<From<'input> >> ZserioLexer<'input,Input> where &'input LocalTokenFactory<'input>:Default{
-	pub fn new(input: Input) -> Self{
-		ZserioLexer::new_with_token_factory(input, <&LocalTokenFactory<'input> as Default>::default())
-	}
+impl<'input, Input: CharStream<From<'input>>> ZserioLexer<'input, Input>
+where
+    &'input LocalTokenFactory<'input>: Default,
+{
+    pub fn new(input: Input) -> Self {
+        ZserioLexer::new_with_token_factory(
+            input,
+            <&LocalTokenFactory<'input> as Default>::default(),
+        )
+    }
 }
 
-pub struct ZserioLexerActions {
+pub struct ZserioLexerActions {}
+
+impl ZserioLexerActions {}
+
+impl<'input, Input: CharStream<From<'input>>>
+    Actions<'input, BaseLexer<'input, ZserioLexerActions, Input, LocalTokenFactory<'input>>>
+    for ZserioLexerActions
+{
 }
 
-impl ZserioLexerActions{
+impl<'input, Input: CharStream<From<'input>>> ZserioLexer<'input, Input> {}
+
+impl<'input, Input: CharStream<From<'input>>>
+    LexerRecog<'input, BaseLexer<'input, ZserioLexerActions, Input, LocalTokenFactory<'input>>>
+    for ZserioLexerActions
+{
+}
+impl<'input> TokenAware<'input> for ZserioLexerActions {
+    type TF = LocalTokenFactory<'input>;
 }
 
-impl<'input, Input:CharStream<From<'input> >> Actions<'input,BaseLexer<'input,ZserioLexerActions,Input,LocalTokenFactory<'input>>> for ZserioLexerActions{
-	}
-
-	impl<'input, Input:CharStream<From<'input> >> ZserioLexer<'input,Input>{
-
-}
-
-impl<'input, Input:CharStream<From<'input> >> LexerRecog<'input,BaseLexer<'input,ZserioLexerActions,Input,LocalTokenFactory<'input>>> for ZserioLexerActions{
-}
-impl<'input> TokenAware<'input> for ZserioLexerActions{
-	type TF = LocalTokenFactory<'input>;
-}
-
-impl<'input, Input:CharStream<From<'input> >> TokenSource<'input> for ZserioLexer<'input,Input>{
-	type TF = LocalTokenFactory<'input>;
+impl<'input, Input: CharStream<From<'input>>> TokenSource<'input> for ZserioLexer<'input, Input> {
+    type TF = LocalTokenFactory<'input>;
 
     fn next_token(&mut self) -> <Self::TF as TokenFactory<'input>>::Tok {
         self.base.next_token()
@@ -339,38 +617,30 @@ impl<'input, Input:CharStream<From<'input> >> TokenSource<'input> for ZserioLexe
         self.base.get_input_stream()
     }
 
-	fn get_source_name(&self) -> String {
-		self.base.get_source_name()
-	}
+    fn get_source_name(&self) -> String {
+        self.base.get_source_name()
+    }
 
     fn get_token_factory(&self) -> &'input Self::TF {
         self.base.get_token_factory()
     }
 }
 
+lazy_static! {
+    static ref _ATN: Arc<ATN> =
+        Arc::new(ATNDeserializer::new(None).deserialize(_serializedATN.chars()));
+    static ref _decision_to_DFA: Arc<Vec<antlr_rust::RwLock<DFA>>> = {
+        let mut dfa = Vec::new();
+        let size = _ATN.decision_to_state.len();
+        for i in 0..size {
+            dfa.push(DFA::new(_ATN.clone(), _ATN.get_decision_state(i), i as isize).into())
+        }
+        Arc::new(dfa)
+    };
+}
 
-
-	lazy_static! {
-	    static ref _ATN: Arc<ATN> =
-	        Arc::new(ATNDeserializer::new(None).deserialize(_serializedATN.chars()));
-	    static ref _decision_to_DFA: Arc<Vec<antlr_rust::RwLock<DFA>>> = {
-	        let mut dfa = Vec::new();
-	        let size = _ATN.decision_to_state.len();
-	        for i in 0..size {
-	            dfa.push(DFA::new(
-	                _ATN.clone(),
-	                _ATN.get_decision_state(i),
-	                i as isize,
-	            ).into())
-	        }
-	        Arc::new(dfa)
-	    };
-	}
-
-
-
-	const _serializedATN:&'static str =
-		"\x03\u{608b}\u{a72a}\u{8133}\u{b9ed}\u{417c}\u{3be7}\u{7786}\u{5964}\x02\
+const _serializedATN: &'static str =
+    "\x03\u{608b}\u{a72a}\u{8133}\u{b9ed}\u{417c}\u{3be7}\u{7786}\u{5964}\x02\
 		\x76\u{438}\x08\x01\x04\x02\x09\x02\x04\x03\x09\x03\x04\x04\x09\x04\x04\
 		\x05\x09\x05\x04\x06\x09\x06\x04\x07\x09\x07\x04\x08\x09\x08\x04\x09\x09\
 		\x09\x04\x0a\x09\x0a\x04\x0b\x09\x0b\x04\x0c\x09\x0c\x04\x0d\x09\x0d\x04\
