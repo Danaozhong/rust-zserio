@@ -9,11 +9,16 @@ use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
 #[derive(Debug)]
-pub struct DrinkOrder {}
+pub struct DrinkOrder {
+    #[allow(dead_code)]
+    pub customer_name: String,
+}
 
 impl ZserioPackableObject for DrinkOrder {
     fn new() -> Self {
-        Self {}
+        Self {
+            customer_name: String::new(),
+        }
     }
 
     fn zserio_read(&mut self, _: &mut BitReader) -> Result<()> {

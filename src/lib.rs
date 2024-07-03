@@ -52,8 +52,56 @@ pub use self::error::*;
 pub use ztype::ZserioPackableObject;
 
 use bitreader::BitReader;
+use rust_bitwriter::BitWriter;
 use std::fs::File;
 use std::path::Path;
+
+/// Serialize an instance of `T` to a a byte vector
+///
+/// # Example
+///
+/// ```
+/// # use rust_zserio::doctest::DrinkOrder;
+/// let order = DrinkOrder{ customer_name: "Jane Doe".into() };
+/// let data: Vec<u8> = rust_zserio::to_bytes(&order).expect("can not write data");
+/// ```
+///
+/// # Errors
+///
+/// This function will fail if the data can not be encoded.
+pub fn to_bytes<T: ZserioPackableObject>(v: &T) -> self::error::Result<Vec<u8>> {
+    let mut writer = BitWriter::new();
+    v.zserio_write(&mut writer)?;
+    writer.close()?;
+    Ok(writer.data().clone())
+}
+
+/// Serialize an instance of `T` to a writer instance
+///
+/// # Example
+///
+/// ```
+/// # use rust_zserio::doctest::DrinkOrder;
+/// use std::fs::File;
+///
+/// let order = DrinkOrder{ customer_name: "Jane Doe".into() };
+/// let mut out = File::create("tests/12345678.bin").expect("can not create file");
+/// rust_zserio::to_writer(&mut out, &order).expect("can not write data");
+/// ```
+///
+/// # Errors
+///
+/// This function will fail if an IO error occurs or if the data can not be
+/// encoded.
+pub fn to_writer<W: std::io::Write, T: ZserioPackableObject>(
+    mut out: W,
+    v: &T,
+) -> self::error::Result<()> {
+    let mut writer = BitWriter::new();
+    v.zserio_write(&mut writer)?;
+    writer.close()?;
+    Ok(out.write_all(writer.data())?)
+}
 
 /// Deserialize an instance of `T` from data.
 ///
@@ -63,7 +111,6 @@ use std::path::Path;
 ///
 /// ```
 /// # use rust_zserio::doctest::DrinkOrder;
-///
 /// let data: &[u8] = b"binarydata";
 /// let tile: DrinkOrder = rust_zserio::from_bytes(data).expect("can not parse data");
 /// println!("{tile:?}");
@@ -71,8 +118,8 @@ use std::path::Path;
 ///
 /// # Errors
 ///
-/// This function will fail of there an error occurred if the data can not be decoded,
-/// or there is not enough data in the slice.
+/// This function will fail if the data can not be decoded, or there is not
+/// enough data in the slice.
 pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T> {
     let mut bitreader = BitReader::new(data);
     let mut v = T::new();
@@ -100,8 +147,8 @@ pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T
 ///
 /// # Errors
 ///
-/// This function will fail of there an error occurred while reading data from
-/// the stream, or if the data can not be decoded.
+/// This function will fail if there an IO error occurrs, if the data can not be
+/// decoded, or there is not enough data in the slice.
 pub fn from_reader<R: std::io::Read, T: ZserioPackableObject>(
     mut reader: R,
 ) -> self::error::Result<T> {
@@ -124,8 +171,8 @@ pub fn from_reader<R: std::io::Read, T: ZserioPackableObject>(
 ///
 /// # Errors
 ///
-/// This function will fail of there an error occurred while reading data from
-/// the stream, or if the data can not be decoded.
+/// This function will fail if there an IO error occurred,if the data can not be
+/// decoded, or there is not enough data in the slice.
 pub fn from_file<P: AsRef<Path>, T: ZserioPackableObject>(path: P) -> self::error::Result<T> {
     let mut file = File::open(path)?;
     from_reader(&mut file)
