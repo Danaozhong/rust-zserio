@@ -19,7 +19,7 @@ pub enum ZserioError {
     #[error("IO error")]
     IoError(#[from] io::Error),
     #[error("data error: {0}")]
-    DataError(&'static str),
+    DataError(String),
 }
 
 impl From<bitreader::BitReaderError> for ZserioError {

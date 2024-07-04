@@ -43,10 +43,9 @@ pub fn write_extern_type(bit_writer: &mut BitWriter, extern_type: &ExternType) -
         &extern_type.data_blob[0..num_of_full_bytes].to_vec(),
     )?;
     if remaining_bits != 0 {
-        let mut last_byte = *extern_type
-            .data_blob
-            .last()
-            .ok_or(ZserioError::DataError("last byte for extern is missing"))?;
+        let mut last_byte = *extern_type.data_blob.last().ok_or(ZserioError::DataError(
+            "last byte for extern is missing".into(),
+        ))?;
         let bit_shift = 8 - remaining_bits;
         last_byte >>= bit_shift;
 

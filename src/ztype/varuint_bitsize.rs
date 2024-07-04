@@ -31,7 +31,7 @@ pub fn unsigned_bitsize(v: u64, max_bytes: u8) -> Result<u8> {
         bytes += 1;
         if bytes > max_bytes {
             return Err(ZserioError::DataError(
-                "too many bytes in unsigned bitsize value",
+                "too many bytes in unsigned bitsize value".into(),
             ));
         }
 

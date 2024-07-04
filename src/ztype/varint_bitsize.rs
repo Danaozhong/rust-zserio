@@ -31,7 +31,7 @@ pub fn signed_bitsize(mut v: i64, max_bytes: u8) -> Result<u8> {
         bytes += 1;
         if bytes > max_bytes {
             return Err(ZserioError::DataError(
-                "too many bytes in signed bitsize value",
+                "too many bytes in signed bitsize value".into(),
             ));
         }
 
