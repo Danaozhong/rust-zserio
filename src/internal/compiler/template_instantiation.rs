@@ -1,3 +1,4 @@
+use crate::internal::ast::expression::Expression;
 use crate::internal::ast::field::Field;
 use crate::internal::ast::package::ZPackage;
 use crate::internal::ast::parameter::Parameter;
@@ -41,6 +42,7 @@ pub fn instantiate_type(
                 scope,
                 &s.as_ref().borrow(),
                 &zserio_type.template_arguments,
+                &zserio_type.type_arguments,
                 &new_type_name,
             );
         }
@@ -50,6 +52,7 @@ pub fn instantiate_type(
                 scope,
                 &c.as_ref().borrow(),
                 &zserio_type.template_arguments,
+                &zserio_type.type_arguments,
                 &new_type_name,
             );
         }
@@ -70,6 +73,7 @@ fn instantiate_struct(
     scope: &mut ModelScope,
     z_struct: &ZStruct,
     template_arguments: &[TypeReference],
+    type_arguments: &[Rc<RefCell<Expression>>],
     instantiated_name: &String,
 ) -> TypeReference {
     assert!(!z_struct.template_parameters.is_empty());
@@ -81,7 +85,7 @@ fn instantiate_struct(
         name: instantiated_name.clone(),
         bits: 0,
         template_arguments: vec![],
-        type_arguments: vec![],
+        type_arguments: type_arguments.to_owned(),
         length_expression: None,
     };
 
@@ -181,6 +185,7 @@ fn instantiate_choice(
     scope: &mut ModelScope,
     z_choice: &ZChoice,
     template_arguments: &[TypeReference],
+    type_arguments: &[Rc<RefCell<Expression>>],
     instantiated_name: &String,
 ) -> TypeReference {
     assert!(!z_choice.template_parameters.is_empty());
@@ -192,7 +197,7 @@ fn instantiate_choice(
         name: instantiated_name.clone(),
         bits: 0,
         template_arguments: vec![],
-        type_arguments: vec![],
+        type_arguments: type_arguments.to_owned(),
         length_expression: None,
     };
 
