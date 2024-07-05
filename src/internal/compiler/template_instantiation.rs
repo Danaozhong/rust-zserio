@@ -351,6 +351,8 @@ pub fn instantiate_field(
     // TEMPLATE_TYPE field;
     if instantiated_types.contains_key(&field.field_type.name) {
         new_field.field_type = Box::from(instantiated_types[&field.field_type.name].clone());
+        // copy the parameters, if set
+        new_field.field_type.type_arguments = field.field_type.type_arguments.clone();
     }
     new_field
 }
