@@ -42,7 +42,8 @@
 //! ```
 //! This will generate the interface files in rust, that allow reading/writing zserio-encoded
 //! data.
-//! [Optional] The `root` CLI flag is optional, ane enforces an overall crate prefix to the generated code.
+//!
+//! The `--root` CLI flag is optional, and enforces an overall crate prefix to the generated code.
 pub mod doctest;
 mod error;
 pub mod internal;
