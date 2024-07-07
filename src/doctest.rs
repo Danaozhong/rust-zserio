@@ -1,8 +1,9 @@
-//! This module contains dumy code that is for doctests. It should
-//! never be used.
+//! This module contains dumy code that is for doctests. It should never be
+//! used.
 //!
-//! This is a workaround until https://github.com/rust-lang/rust/issues/67295
-//! is fixed.
+//! This is a workaround until
+//! [rust-lang/rust#67295](https://github.com/rust-lang/rust/issues/67295) is
+//! fixed.
 use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 use crate::{Result, ZserioPackableObject};
 use bitreader::BitReader;
