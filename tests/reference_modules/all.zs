@@ -9,6 +9,7 @@ import reference_modules.type_lookup_test.ztype.*;
 import reference_modules.type_lookup_test.other_ztype.*;
 import reference_modules.parameter_passing.index_operator.*;
 import reference_modules.parameter_passing.parameter_passing.*;
+import reference_modules.parameter_passing_templates.parameter_passing_templates.*;
 import reference_modules.parameter_passing_bitmask.parameter_passing_bitmask.*;
 import reference_modules.ambiguous_types.main.*;
 import reference_modules.ambiguous_types.other.*;
