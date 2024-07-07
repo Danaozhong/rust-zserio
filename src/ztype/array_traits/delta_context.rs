@@ -1,7 +1,7 @@
 use crate::error::Result;
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::bits_decode::read_signed_bits;
-use crate::ztype::{self, numbits, read_unsigned_bits};
+use crate::ztype::{self, bit_length, read_unsigned_bits};
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -59,7 +59,7 @@ impl DeltaContext {
         } else if self.max_bit_number <= MAX_BIT_NUMBER_LIMIT {
             self.is_packed = true;
             let delta = abs_difference(array_trait.to_u64(element), self.previous_element);
-            let max_bit_number = numbits(delta);
+            let max_bit_number = bit_length(delta);
             if max_bit_number > self.max_bit_number {
                 self.max_bit_number = max_bit_number;
                 if self.max_bit_number > MAX_BIT_NUMBER_LIMIT {
