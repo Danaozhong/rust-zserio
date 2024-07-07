@@ -11,6 +11,7 @@ use crate::internal::parser::gen::zserioparser::{
     LOGICAL_OR, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK,
     RPAREN, RSHIFT, TILDE, VALUEOF, XOR,
 };
+use crate::ztype::numbits;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
@@ -328,8 +329,7 @@ impl Expression {
         match &self.operand1 {
             Some(op1) => match op1.result_type {
                 ExpressionType::Integer(value) => {
-                    self.result_type =
-                        ExpressionType::Integer(32 - i32::leading_zeros(value) as i32);
+                    self.result_type = ExpressionType::Integer(numbits(value) as i32);
                     self.fully_resolved = op1.fully_resolved;
                     self.native_type = Some(TypeReference::new_native_type("varsize"));
                 }
@@ -337,7 +337,7 @@ impl Expression {
                     panic!("numbits operator can only be applied to integer expressions")
                 }
             },
-            _ => panic!("numbits operator expression requries one operator"),
+            _ => panic!("numbits operator expression requires one operator"),
         }
     }
 
