@@ -27,7 +27,7 @@ pub fn numbits<T: num::PrimInt>(value: T) -> u8 {
 // of bits needed to represent this number.
 /// For example:
 /// ```rust
-/// use rust_zserio::ztype::numbits;
+/// use rust_zserio::ztype::bit_length;
 /// assert!(bit_length(0) == 0);
 /// assert!(bit_length(1) == 1);
 /// assert!(bit_length(7) == 3);
