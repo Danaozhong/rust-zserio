@@ -82,6 +82,30 @@ pub fn generate_choice(
         generate_struct_member_for_field(gen_choice, field);
     }
 
+    let default_impl = codegen_scope.new_impl(&rust_type_name);
+    default_impl.impl_trait("Default");
+    let default_fn = default_impl.new_fn("default");
+    default_fn.ret("Self");
+    default_fn.line("Self {");
+    for param in &zchoice.type_parameters {
+        new_param(
+            symbol_scope,
+            type_generator,
+            default_fn,
+            &param.as_ref().borrow(),
+        );
+    }
+
+    for field in &field_details {
+        new_field(
+            symbol_scope,
+            type_generator,
+            default_fn,
+            &field.field.borrow(),
+        );
+    }
+    default_fn.line("}");
+
     // generate the functions to serialize/deserialize
     let choice_impl = codegen_scope.new_impl(&rust_type_name);
     choice_impl.impl_trait("ztype::ZserioPackableObject");

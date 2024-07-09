@@ -80,6 +80,15 @@ pub fn generate_enum(
 
     from_int_fn.line("}");
 
+    let default_impl = gen_scope.new_impl(&rust_type_name);
+    default_impl.impl_trait("Default");
+    let default_fn = default_impl.new_fn("default");
+    default_fn.ret("Self");
+    default_fn.line(format!(
+        "Self::{}",
+        convert_to_enum_field_name(&zenum.items[0].name)
+    ));
+
     let z_impl = gen_scope.new_impl(&rust_type_name);
     z_impl.impl_trait("ztype::ZserioPackableObject");
 

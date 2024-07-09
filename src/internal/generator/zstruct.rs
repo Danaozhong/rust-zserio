@@ -78,6 +78,26 @@ pub fn generate_struct(
         generate_struct_member_for_field(gen_struct, field);
     }
 
+    let default_impl = codegen_scope.new_impl(&rust_type_name);
+    default_impl.impl_trait("Default");
+    let default_fn = default_impl.new_fn("default");
+    default_fn.ret("Self");
+    default_fn.line("Self {");
+
+    for param in &zstruct.type_parameters {
+        new_param(
+            symbol_scope,
+            type_generator,
+            default_fn,
+            &param.as_ref().borrow(),
+        );
+    }
+
+    for field in &zstruct.fields {
+        new_field(symbol_scope, type_generator, default_fn, &field.borrow());
+    }
+    default_fn.line("}");
+
     // generate the functions to serialize/deserialize
     let struct_impl = codegen_scope.new_impl(&rust_type_name);
     struct_impl.impl_trait("ztype::ZserioPackableObject");

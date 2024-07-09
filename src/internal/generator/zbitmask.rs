@@ -50,11 +50,20 @@ pub fn generate_bitmask(
         ));
     }
 
+    let default_impl = bitmask_scope.new_impl(&rust_type_name);
+    default_impl.impl_trait("Default");
+    let default_fn: &mut codegen::Function = default_impl.new_fn("default");
+    default_fn.ret("Self");
+    default_fn.line(format!(
+        "Self::{}",
+        convert_to_enum_field_name(&zbitmask.values[0].name)
+    ));
+
     let z_impl = bitmask_scope.new_impl(&rust_type_name);
     z_impl.impl_trait("ztype::ZserioPackableObject");
 
     // Generate a function to create a new instance of the enum
-    let new_fn = z_impl.new_fn("new");
+    let new_fn: &mut codegen::Function = z_impl.new_fn("new");
     new_fn.ret("Self");
     new_fn.line(format!(
         "{}::{}",
