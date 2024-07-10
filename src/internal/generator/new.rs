@@ -1,45 +1,11 @@
 use codegen::Function;
 
-use crate::internal::ast::{field::Array, field::Field, parameter::Parameter};
+use crate::internal::ast::field::Array;
 
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::types::TypeGenerator;
-
-pub fn new_field(
-    scope: &ModelScope,
-    type_generator: &mut TypeGenerator,
-    function: &mut Function,
-    field: &Field,
-) {
-    new_type(
-        scope,
-        type_generator,
-        function,
-        &field.name,
-        &field.field_type,
-        field.is_optional,
-        &field.array,
-    );
-}
-
-pub fn new_param(
-    scope: &ModelScope,
-    type_generator: &mut TypeGenerator,
-    function: &mut Function,
-    param: &Parameter,
-) {
-    new_type(
-        scope,
-        type_generator,
-        function,
-        &param.name,
-        &param.zserio_type,
-        false,
-        &None,
-    );
-}
 
 pub fn get_default_initializer(
     is_optional: bool,

@@ -65,11 +65,7 @@ pub fn generate_bitmask(
     // Generate a function to create a new instance of the enum
     let new_fn: &mut codegen::Function = z_impl.new_fn("new");
     new_fn.ret("Self");
-    new_fn.line(format!(
-        "{}::{}",
-        &rust_type_name,
-        convert_to_enum_field_name(&zbitmask.values[0].name)
-    ));
+    new_fn.line("Self::default()");
 
     // generate the functions to serialize/deserialize
     generate_zserio_read(scope, type_generator, z_impl, zbitmask, &fundamental_type);

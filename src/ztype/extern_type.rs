@@ -6,7 +6,7 @@ use crate::ZserioError;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct ExternType {
     pub bit_size: u32,
     pub data_blob: Vec<u8>,

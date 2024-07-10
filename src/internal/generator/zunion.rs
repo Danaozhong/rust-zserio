@@ -5,9 +5,8 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::array::instantiate_zserio_array;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
-    file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
-    packed_contexts::FieldDetails, preamble::add_standard_imports,
-    types::convert_to_union_selector_name, types::TypeGenerator,
+    file_generator::write_to_file, function::generate_function, packed_contexts::FieldDetails,
+    preamble::add_standard_imports, types::convert_to_union_selector_name, types::TypeGenerator,
 };
 use codegen::{Function, Scope, Struct};
 
@@ -50,6 +49,7 @@ pub fn generate_union(
     let selector_type_name = format!("{}Selector", &rust_type_name);
     let union_selector_gen_scope = codegen_scope.new_enum(&selector_type_name);
     union_selector_gen_scope.derive("Debug");
+    union_selector_gen_scope.derive("Default");
     union_selector_gen_scope.derive("Copy");
     union_selector_gen_scope.derive("Clone");
     union_selector_gen_scope.derive("PartialEq");
@@ -57,7 +57,11 @@ pub fn generate_union(
     union_selector_gen_scope.vis("pub");
     for (field_index, field) in zunion.fields.iter().enumerate() {
         let selector_union_name = convert_to_union_selector_name(&field.borrow().name);
-        union_selector_gen_scope.new_variant(format!("{} = {}", selector_union_name, field_index));
+        let v = union_selector_gen_scope
+            .new_variant(format!("{} = {}", selector_union_name, field_index));
+        if field_index == 0 {
+            v.annotation("#[default]");
+        }
     }
 
     // We also need to generate a function to generate the selector
@@ -84,6 +88,7 @@ pub fn generate_union(
     let gen_union = codegen_scope.new_struct(&rust_type_name);
     gen_union.vis("pub");
     gen_union.derive("Debug");
+    gen_union.derive("Default");
     gen_union.derive("Clone");
     gen_union.derive("PartialEq");
 
@@ -117,30 +122,7 @@ pub fn generate_union(
     // Generate a function to create a new instance of the struct
     let new_fn = union_impl.new_fn("new");
     new_fn.ret("Self");
-    new_fn.line(format!("{} {{", &rust_type_name));
-
-    // Set the default value for the selector
-    new_fn.line(format!(
-        "union_selector: {}::{},",
-        &selector_type_name,
-        &convert_to_union_selector_name(&zunion.fields[0].borrow().name)
-    ));
-
-    // Set the default value for the parameters
-    for param in &zunion.type_parameters {
-        new_param(
-            symbol_scope,
-            type_generator,
-            new_fn,
-            &param.as_ref().borrow(),
-        );
-    }
-
-    // Set the default values for the fields
-    for field in &zunion.fields {
-        new_field(symbol_scope, type_generator, new_fn, &field.borrow());
-    }
-    new_fn.line("}");
+    new_fn.line("Self::default()");
 
     // Generate the functions to read, write and bitcount the data to/from zserio format.
     generate_zserio_read(symbol_scope, type_generator, union_impl, zunion);
