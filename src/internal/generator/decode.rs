@@ -3,7 +3,6 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::casts::expression_requires_cast;
 use crate::internal::generator::expression::{generate_boolean_expression, generate_expression};
 use crate::internal::generator::index_offsets::extract_indexed_offset_expression;
-use crate::internal::generator::new::get_default_initializer;
 use crate::internal::generator::packed_contexts::FieldDetails;
 use crate::internal::generator::pass_parameters::{
     does_expression_contains_index_operator, get_type_parameter,
@@ -165,25 +164,10 @@ pub fn decode_field(
             field_type = format!("Vec<{}>", field_type.as_str());
         }
 
-        if field_details.native_type.is_marshaler {
-            if field.array.is_some() {
-                function.line("let mut optional_value = vec![];");
-            } else {
-                function.line(format!("let mut optional_value = {}::new();", field_type));
-            }
-        } else {
-            let default_value = get_default_initializer(
-                false, // We have already checked if the field is optional.
-                field.array.is_some(),
-                field_details.native_type.is_marshaler,
-                &field_details.native_type.fundamental_type.name,
-                &field_type,
-            );
-            function.line(format!(
-                "let mut optional_value: {} = {};",
-                &field_type, &default_value
-            ));
-        }
+        function.line(format!(
+            "let mut optional_value: {} = Default::default();",
+            &field_type
+        ));
         lvalue_field_name = "optional_value".into();
         rvalue_field_name = "optional_value".into();
     }
@@ -196,17 +180,10 @@ pub fn decode_field(
             "let {}_array_length = {}.zserio_read_array_length(reader)?;",
             field_details.field_name, array_type_name,
         ));
-        // initialize the array elements with empty values.
-        let default_value = get_default_initializer(
-            false, // The underlying type will never be optional (already checked).
-            false, // The underlying type will never be an array (no 2D array support in zserio).
-            field_details.native_type.is_marshaler,
-            &field_details.native_type.fundamental_type.name,
-            raw_field_type,
-        );
+        // initialize the array elements with the default value.
         function.line(format!(
-            "{} = vec![{}; {}_array_length];",
-            rvalue_field_name, default_value, field_details.field_name,
+            "{} = vec![Default::default(); {}_array_length];",
+            rvalue_field_name, field_details.field_name,
         ));
     }
 
