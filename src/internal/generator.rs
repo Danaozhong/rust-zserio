@@ -9,7 +9,6 @@ pub mod function;
 pub mod index_offsets;
 pub mod mod_file;
 pub mod model;
-pub mod new;
 pub mod package;
 pub mod packed_contexts;
 pub mod pass_parameters;

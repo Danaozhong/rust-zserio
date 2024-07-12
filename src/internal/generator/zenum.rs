@@ -31,6 +31,7 @@ pub fn generate_enum(
     let gen_enum = gen_scope.new_enum(&rust_type_name);
     gen_enum.vis("pub");
     gen_enum.derive("Debug");
+    gen_enum.derive("Default");
     gen_enum.derive("Clone");
     gen_enum.derive("Copy");
     gen_enum.derive("PartialEq");
@@ -43,11 +44,14 @@ pub fn generate_enum(
                 _ => panic!("only integer value expressions are supported"),
             }
         }
-        gen_enum.new_variant(format!(
+        let v = gen_enum.new_variant(format!(
             "{} = {}",
             convert_to_enum_field_name(&item.name),
             enum_value
         ));
+        if enum_value == 0 {
+            v.annotation("#[default]");
+        }
         enum_value += 1;
     }
 
@@ -86,11 +90,7 @@ pub fn generate_enum(
     // Generate a function to create a new instance of the enum
     let new_fn = z_impl.new_fn("new");
     new_fn.ret("Self");
-    new_fn.line(format!(
-        "{}::{}",
-        &rust_type_name,
-        convert_to_enum_field_name(&zenum.items[0].name)
-    ));
+    new_fn.line("Self::default()");
 
     // generate the functions to serialize/deserialize
     generate_zserio_read(scope, type_generator, z_impl, zenum, &fundamental_type);

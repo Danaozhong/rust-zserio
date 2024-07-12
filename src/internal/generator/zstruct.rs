@@ -3,7 +3,7 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::array::instantiate_zserio_array;
 use crate::internal::generator::{
     bitsize::bitsize_field, decode::decode_field, encode::encode_field,
-    file_generator::write_to_file, function::generate_function, new::new_field, new::new_param,
+    file_generator::write_to_file, function::generate_function,
     packed_contexts::generate_init_packed_context_for_field,
     packed_contexts::generate_packed_context_for_field, packed_contexts::FieldDetails,
     preamble::add_standard_imports, types::TypeGenerator,
@@ -55,6 +55,7 @@ pub fn generate_struct(
     let gen_struct = codegen_scope.new_struct(&rust_type_name);
     gen_struct.vis("pub");
     gen_struct.derive("Debug");
+    gen_struct.derive("Default");
     gen_struct.derive("Clone");
     gen_struct.derive("PartialEq");
 
@@ -85,21 +86,7 @@ pub fn generate_struct(
     // Generate a function to create a new instance of the struct
     let new_fn = struct_impl.new_fn("new");
     new_fn.ret("Self");
-    new_fn.line(format!("{} {{", &rust_type_name));
-
-    for param in &zstruct.type_parameters {
-        new_param(
-            symbol_scope,
-            type_generator,
-            new_fn,
-            &param.as_ref().borrow(),
-        );
-    }
-
-    for field in &zstruct.fields {
-        new_field(symbol_scope, type_generator, new_fn, &field.borrow());
-    }
-    new_fn.line("}");
+    new_fn.line("Self::default()");
 
     // Generate the functions to read, write and bitcount the data to/from zserio format.
     generate_zserio_read(symbol_scope, type_generator, struct_impl, &field_details);

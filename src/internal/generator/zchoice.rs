@@ -8,8 +8,7 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::{
     array::instantiate_zserio_array, bitsize::bitsize_field, decode::decode_field,
     encode::encode_field, expression::generate_expression, file_generator::write_to_file,
-    function::generate_function, new::new_field, new::new_param,
-    packed_contexts::generate_init_packed_context_for_field,
+    function::generate_function, packed_contexts::generate_init_packed_context_for_field,
     packed_contexts::generate_packed_context_for_field, packed_contexts::FieldDetails,
     preamble::add_standard_imports, types::TypeGenerator,
     zstruct::generate_struct_member_for_field,
@@ -59,6 +58,7 @@ pub fn generate_choice(
     let gen_choice = codegen_scope.new_struct(&rust_type_name);
     gen_choice.vis("pub");
     gen_choice.derive("Debug");
+    gen_choice.derive("Default");
     gen_choice.derive("Clone");
     gen_choice.derive("PartialEq");
 
@@ -89,21 +89,7 @@ pub fn generate_choice(
     // Generate a function to create a new instance of the struct
     let new_fn = choice_impl.new_fn("new");
     new_fn.ret("Self");
-    new_fn.line(format!("{} {{", &rust_type_name));
-
-    for param in &zchoice.type_parameters {
-        new_param(
-            symbol_scope,
-            type_generator,
-            new_fn,
-            &param.as_ref().borrow(),
-        );
-    }
-
-    for field in &field_details {
-        new_field(symbol_scope, type_generator, new_fn, &field.field.borrow());
-    }
-    new_fn.line("}");
+    new_fn.line("Self::default()");
 
     generate_zserio_read(symbol_scope, type_generator, choice_impl, zchoice);
     generate_zserio_write(symbol_scope, type_generator, choice_impl, zchoice);

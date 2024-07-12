@@ -9,7 +9,7 @@ use crate::{Result, ZserioPackableObject};
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DrinkOrder {
     #[allow(dead_code)]
     pub customer_name: String,
@@ -17,11 +17,8 @@ pub struct DrinkOrder {
 
 impl ZserioPackableObject for DrinkOrder {
     fn new() -> Self {
-        Self {
-            customer_name: String::new(),
-        }
+        Self::default()
     }
-
     fn zserio_read(&mut self, _: &mut BitReader) -> Result<()> {
         Ok(())
     }
