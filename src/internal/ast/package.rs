@@ -23,7 +23,7 @@ pub struct ZPackage {
     pub imports: Vec<ZImport>,
     pub structs: HashMap<String, Rc<RefCell<ZStruct>>>,
     pub zchoices: HashMap<String, Rc<RefCell<ZChoice>>>,
-    pub zunions: Vec<Rc<RefCell<ZUnion>>>,
+    pub zunions: HashMap<String, Rc<RefCell<ZUnion>>>,
     pub enums: Vec<Rc<RefCell<ZEnum>>>,
     pub consts: Vec<Rc<RefCell<ZConst>>>,
     pub subtypes: Vec<Rc<RefCell<Subtype>>>,

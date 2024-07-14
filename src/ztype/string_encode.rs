@@ -6,10 +6,12 @@ use crate::ztype::unsigned_bitsize;
 use super::varuint_encode::write_varsize;
 
 pub fn write_string(writer: &mut BitWriter, s: &str) -> Result<()> {
-    write_varsize(writer, s.len() as u32)?;
+    let string_bytes = s.as_bytes();
 
-    for c in s.chars() {
-        writer.write_u8(c as u8, 8)?;
+    write_varsize(writer, string_bytes.len() as u32)?;
+
+    for string_byte in string_bytes {
+        writer.write_u8(*string_byte, 8)?;
     }
     Ok(())
 }

@@ -6,6 +6,8 @@ use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::ast::zchoice::{add_choice_to_scope, ZChoice, ZChoiceCase};
 use crate::internal::ast::zfunction::ZFunction;
 use crate::internal::ast::zstruct::{add_struct_to_scope, ZStruct};
+use crate::internal::ast::zunion::{add_zunion_to_scope, ZUnion};
+
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -51,6 +53,16 @@ pub fn instantiate_type(
                 pkg,
                 scope,
                 &c.as_ref().borrow(),
+                &zserio_type.template_arguments,
+                &zserio_type.type_arguments,
+                &new_type_name,
+            );
+        }
+        Symbol::Union(u) => {
+            return instantiate_union(
+                pkg,
+                scope,
+                &u.as_ref().borrow(),
                 &zserio_type.template_arguments,
                 &zserio_type.type_arguments,
                 &new_type_name,
@@ -318,6 +330,116 @@ fn instantiate_choice(
     new_type_ref
 }
 
+fn instantiate_union(
+    pkg: &mut ZPackage,
+    scope: &mut ModelScope,
+    z_union: &ZUnion,
+    template_arguments: &[TypeReference],
+    type_arguments: &[Rc<RefCell<Expression>>],
+    instantiated_name: &String,
+) -> TypeReference {
+    assert!(!z_union.template_parameters.is_empty());
+    assert!(z_union.template_parameters.len() == template_arguments.len());
+
+    let new_type_ref = TypeReference {
+        is_builtin: false,
+        package: pkg.name.clone(),
+        name: instantiated_name.clone(),
+        bits: 0,
+        template_arguments: vec![],
+        type_arguments: type_arguments.to_owned(),
+        length_expression: None,
+    };
+
+    if pkg.zunions.contains_key(instantiated_name) {
+        // The union was already instantiated, there is no need to instantiate it again.
+        // Return a new reference to the already existing type.
+        return new_type_ref;
+    }
+
+    // The instantiated struct doesn't exist yet. Start by instantiating the
+    // template parameter itself.
+    let mut instantiated_types: HashMap<String, TypeReference> = HashMap::new();
+    for (index, template_arg) in template_arguments.iter().enumerate() {
+        // In case the type instantiation is a template itself, it must be instantiated
+        // before mapping it. In case the template argument itself is not a template,
+        // instantiate_type() will just pass the type through.
+        let instantiated_type = instantiate_type(pkg, scope, template_arg, "");
+        instantiated_types.insert(
+            z_union.template_parameters[index].clone(),
+            instantiated_type,
+        );
+    }
+
+    let mut instantiated_union = ZUnion {
+        name: instantiated_name.clone(),
+        comment: z_union.comment.clone(),
+        template_parameters: vec![],
+        type_parameters: vec![],
+        fields: vec![],
+        functions: vec![],
+    };
+
+    // Instantiate the fields
+    for field in &z_union.fields {
+        instantiated_union
+            .fields
+            .push(Rc::from(RefCell::from(instantiate_field(
+                pkg,
+                scope,
+                &field.borrow(),
+                &instantiated_types,
+            ))));
+    }
+    // Instantiate the parameters
+    for rc_param in &z_union.type_parameters {
+        // Check if the parameter is a templated type
+        let param = rc_param.as_ref().borrow();
+        if instantiated_types.contains_key(&param.zserio_type.name) {
+            // The parameter is a templated type, so replace the parameter
+            // type by a reference to the newly instantiated type.
+            instantiated_union
+                .type_parameters
+                .push(Rc::new(RefCell::new(Parameter {
+                    name: param.name.clone(),
+                    zserio_type: Box::new(instantiated_types[&param.zserio_type.name].clone()),
+                })));
+        } else {
+            // The parameter is not templated, and is not affected by template instantiation.
+            instantiated_union
+                .type_parameters
+                .push(Rc::new(RefCell::new(param.clone())));
+        }
+    }
+
+    for rc_function in &z_union.functions {
+        let function = rc_function.as_ref().borrow();
+        if instantiated_types.contains_key(&function.return_type.name) {
+            // The parameter is a templated type, so replace the parameter
+            // type by a reference to the newly instantiated type.
+            instantiated_union
+                .functions
+                .push(Rc::new(RefCell::new(ZFunction {
+                    name: function.name.clone(),
+                    result: function.result.clone(),
+                    return_type: Box::new(instantiated_types[&function.return_type.name].clone()),
+                })));
+        } else {
+            instantiated_union
+                .functions
+                .push(Rc::new(RefCell::new(function.clone())));
+        }
+    }
+
+    // Update the scope to contain the newly added union.
+    pkg.zunions.insert(
+        instantiated_name.clone(),
+        Rc::from(RefCell::from(instantiated_union)),
+    );
+    add_zunion_to_scope(&pkg.zunions[instantiated_name], scope.get_package_scope());
+    new_type_ref
+}
+
 pub fn instantiate_field(
     pkg: &mut ZPackage,
     scope: &mut ModelScope,
@@ -331,7 +453,7 @@ pub fn instantiate_field(
         // For example:
         // SomeOtherTemplate<TEMPLATE_TYPE> field;
 
-        // Iterate over the teamplate parameters and instantiate them.
+        // Iterate over the template parameters and instantiate them.
         let mut new_template_arguments = vec![];
 
         for template_parameter in new_field.field_type.template_arguments.iter() {
@@ -358,4 +480,85 @@ pub fn instantiate_field(
             .clone_from(&field.field_type.type_arguments);
     }
     new_field
+}
+
+/// Instantiates a struct that is not templated by itself, but has
+/// templated fields.
+/// For example:
+/// ```zs
+/// struct ZserioStruct {
+///     TemplateType<int32> field;
+/// };
+/// ```
+pub fn instantiate_struct_fields(
+    pkg: &mut ZPackage,
+    scope: &mut ModelScope,
+    zstruct: &mut ZStruct,
+) {
+    // template structs are not instantiated; their instantiation happens when
+    // the template structs are actually used (by template instantiation).
+    if !zstruct.template_parameters.is_empty() {
+        return;
+    }
+    // Instantiate field inside structs.
+    for field in &zstruct.fields {
+        let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+        field.borrow_mut().field_type = new_type;
+    }
+}
+
+/// Instantiates a choice that is not templated by itself, but has
+/// templated fields.
+/// For example:
+/// ```zs
+/// choice ZserioChoice(selector) on selector {
+/// 1:
+///     TemplateType<int32> field;
+/// };
+/// ```
+pub fn instantiate_choice_fields(
+    pkg: &mut ZPackage,
+    scope: &mut ModelScope,
+    zchoice: &mut ZChoice,
+) {
+    // template choice are not instantiated; their instantiation happens when
+    // the template choices are actually used (by template instantiation).
+    if !zchoice.template_parameters.is_empty() {
+        return;
+    }
+    // Instantiate field inside choices.
+    for case in &zchoice.cases {
+        if let Some(field) = &case.field {
+            let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+            field.borrow_mut().field_type = new_type;
+        }
+    }
+    // Don't forget to check if the default case needs instantiations.
+    if let Some(default_case) = &zchoice.default_case {
+        if let Some(field) = &default_case.field {
+            let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+            field.borrow_mut().field_type = new_type;
+        }
+    }
+}
+
+/// Instantiates an union that is not templated by itself, but has
+/// templated fields.
+/// For example:
+/// ```zs
+/// union ZserioUnion {
+///     TemplateType<int32> field;
+/// };
+/// ```
+pub fn instantiate_union_fields(pkg: &mut ZPackage, scope: &mut ModelScope, zunion: &mut ZUnion) {
+    // template unions are not instantiated; their instantiation happens when
+    // the templated union are actually used (by template instantiation).
+    if !zunion.template_parameters.is_empty() {
+        return;
+    }
+    // Instantiate field inside the union.
+    for field in &zunion.fields {
+        let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+        field.borrow_mut().field_type = new_type;
+    }
 }
