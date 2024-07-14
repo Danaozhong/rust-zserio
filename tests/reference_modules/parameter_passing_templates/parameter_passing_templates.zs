@@ -9,10 +9,10 @@ struct ParameterPassingTemplates
     uint32 numElements;
 
     // Test passing of parameters to a single instance.
-    TemplatedBlock<string>(numElements)  block;
+    TemplatedBlock<string>(numElements)  templated_block;
 
     // Test passing of parameters to an array.
-    TemplatedBlock<uint64>(numElements) blocks[2];
+    TemplatedBlock<uint64>(numElements) templated_blocks[2];
 };
 
 struct TemplatedBlock<ITEM_T>(uint32 numElements)
