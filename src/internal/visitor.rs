@@ -167,7 +167,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
             imports,
             structs: HashMap::new(),
             zchoices: HashMap::new(),
-            zunions: vec![],
+            zunions: HashMap::new(),
             enums: vec![],
             consts: vec![],
             subtypes: vec![],
@@ -196,7 +196,8 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                                 package.consts.push(Rc::new(RefCell::new(*c)))
                             }
                             ZserioTreeReturnType::Union(u) => {
-                                package.zunions.push(Rc::new(RefCell::new(*u)))
+                                let name = u.name.clone();
+                                package.zunions.insert(name, Rc::new(RefCell::new(*u)));
                             }
                             ZserioTreeReturnType::Subtype(s) => {
                                 package.subtypes.push(Rc::new(RefCell::new(*s)))

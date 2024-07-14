@@ -98,7 +98,7 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
-            for z_union in &pkg.zunions {
+            for z_union in pkg.zunions.values_mut() {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
@@ -196,7 +196,7 @@ impl Model {
             }
 
             let zunions = pkg.zunions.clone();
-            for z_union in zunions {
+            for z_union in zunions.values() {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,
@@ -247,7 +247,7 @@ impl Model {
                 scope.scope_stack.pop();
             }
 
-            for z_union in &pkg.zunions {
+            for z_union in pkg.zunions.values_mut() {
                 scope.scope_stack.push(ScopeLocation {
                     package: pkg.name.clone(),
                     import_symbol: None,

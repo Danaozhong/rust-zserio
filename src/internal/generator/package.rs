@@ -55,7 +55,7 @@ pub fn generate_package(
     }
 
     // Generate  the rust code for zserio Union types.
-    for zunion_ref_cell in &package.zunions {
+    for zunion_ref_cell in package.zunions.values() {
         let zunion = zunion_ref_cell.borrow();
         // Ignore templates, only generate code for instantiated unions.
         if !zunion.template_parameters.is_empty() {

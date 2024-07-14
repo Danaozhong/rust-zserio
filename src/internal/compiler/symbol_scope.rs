@@ -178,7 +178,7 @@ impl PackageScope {
         for zchoice in package.zchoices.values() {
             add_choice_to_scope(zchoice, &mut scope);
         }
-        for zunion in &package.zunions {
+        for zunion in package.zunions.values() {
             add_zunion_to_scope(zunion, &mut scope);
         }
         for zenum in &package.enums {
