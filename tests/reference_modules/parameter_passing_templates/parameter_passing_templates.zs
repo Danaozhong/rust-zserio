@@ -13,6 +13,13 @@ struct ParameterPassingTemplates
 
     // Test passing of parameters to an array.
     TemplatedBlock<uint64>(numElements) templated_blocks[2];
+
+    TemplatedUnion<uint32, string>(numElements) templated_union;
+    TemplatedUnion<uint32, string>(numElements) templated_unions[2];
+
+    uint32 selector;
+    TemplatedChoice<uint32, string>(selector) templated_choice;
+    TemplatedChoice<uint32, string>(selector) templated_choices[2];
 };
 
 struct TemplatedBlock<ITEM_T>(uint32 numElements)
@@ -27,8 +34,7 @@ struct TemplatedBlock<ITEM_T>(uint32 numElements)
 union TemplatedUnion<ITEM_T, ITEM_U>(uint32 numElements)
 {
     ITEM_T value1;
-    ITEM_U value2;
-
+    ITEM_U value2[numElements];
 };
 
 choice TemplatedChoice<ITEM_T, ITEM_U>(uint32 selector) on selector
@@ -37,5 +43,4 @@ choice TemplatedChoice<ITEM_T, ITEM_U>(uint32 selector) on selector
         ITEM_T value1;
     case 1:
         ITEM_U value2;
-
 };
