@@ -377,7 +377,7 @@ pub fn instantiate_struct_fields(
 ) {
     // template structs are not instantiated; their instantiation happens when
     // the template structs are actually used (by template instantiation).
-    if zstruct.template_parameters.len() > 0 {
+    if !zstruct.template_parameters.is_empty() {
         return;
     }
     // Instantiate field inside structs.
@@ -403,7 +403,7 @@ pub fn instantiate_choice_fields(
 ) {
     // template choice are not instantiated; their instantiation happens when
     // the template choices are actually used (by template instantiation).
-    if zchoice.template_parameters.len() > 0 {
+    if !zchoice.template_parameters.is_empty() {
         return;
     }
     // Instantiate field inside choices.
@@ -433,7 +433,7 @@ pub fn instantiate_choice_fields(
 pub fn instantiate_union_fields(pkg: &mut ZPackage, scope: &mut ModelScope, zunion: &mut ZUnion) {
     // template unions are not instantiated; their instantiation happens when
     // the templated union are actually used (by template instantiation).
-    if zunion.template_parameters.len() > 0 {
+    if !zunion.template_parameters.is_empty() {
         return;
     }
     // Instantiate field inside the union.
