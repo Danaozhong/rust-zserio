@@ -6,6 +6,8 @@ use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::ast::zchoice::{add_choice_to_scope, ZChoice, ZChoiceCase};
 use crate::internal::ast::zfunction::ZFunction;
 use crate::internal::ast::zstruct::{add_struct_to_scope, ZStruct};
+use crate::internal::ast::zunion::ZUnion;
+
 use crate::internal::compiler::symbol_scope::{ModelScope, Symbol};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -331,7 +333,7 @@ pub fn instantiate_field(
         // For example:
         // SomeOtherTemplate<TEMPLATE_TYPE> field;
 
-        // Iterate over the teamplate parameters and instantiate them.
+        // Iterate over the template parameters and instantiate them.
         let mut new_template_arguments = vec![];
 
         for template_parameter in new_field.field_type.template_arguments.iter() {
@@ -358,4 +360,85 @@ pub fn instantiate_field(
             .clone_from(&field.field_type.type_arguments);
     }
     new_field
+}
+
+/// Instantiates a struct that is not templated by itself, but has
+/// templated fields.
+/// For example:
+/// ```zs
+/// struct ZserioStruct {
+///     TemplateType<int32> field;
+/// };
+/// ```
+pub fn instantiate_struct_fields(
+    pkg: &mut ZPackage,
+    scope: &mut ModelScope,
+    zstruct: &mut ZStruct,
+) {
+    // template structs are not instantiated; their instantiation happens when
+    // the template structs are actually used (by template instantiation).
+    if zstruct.template_parameters.len() > 0 {
+        return;
+    }
+    // Instantiate field inside structs.
+    for field in &zstruct.fields {
+        let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+        field.borrow_mut().field_type = new_type;
+    }
+}
+
+/// Instantiates a choice that is not templated by itself, but has
+/// templated fields.
+/// For example:
+/// ```zs
+/// choice ZserioChoice(selector) on selector {
+/// 1:
+///     TemplateType<int32> field;
+/// };
+/// ```
+pub fn instantiate_choice_fields(
+    pkg: &mut ZPackage,
+    scope: &mut ModelScope,
+    zchoice: &mut ZChoice,
+) {
+    // template choice are not instantiated; their instantiation happens when
+    // the template choices are actually used (by template instantiation).
+    if zchoice.template_parameters.len() > 0 {
+        return;
+    }
+    // Instantiate field inside choices.
+    for case in &zchoice.cases {
+        if let Some(field) = &case.field {
+            let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+            field.borrow_mut().field_type = new_type;
+        }
+    }
+    // Don't forget to check if the default case needs instantiations.
+    if let Some(default_case) = &zchoice.default_case {
+        if let Some(field) = &default_case.field {
+            let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+            field.borrow_mut().field_type = new_type;
+        }
+    }
+}
+
+/// Instantiates an union that is not templated by itself, but has
+/// templated fields.
+/// For example:
+/// ```zs
+/// union ZserioUnion {
+///     TemplateType<int32> field;
+/// };
+/// ```
+pub fn instantiate_union_fields(pkg: &mut ZPackage, scope: &mut ModelScope, zunion: &mut ZUnion) {
+    // template unions are not instantiated; their instantiation happens when
+    // the templated union are actually used (by template instantiation).
+    if zunion.template_parameters.len() > 0 {
+        return;
+    }
+    // Instantiate field inside the union.
+    for field in &zunion.fields {
+        let new_type = Box::new(instantiate_type(pkg, scope, &field.borrow().field_type, ""));
+        field.borrow_mut().field_type = new_type;
+    }
 }

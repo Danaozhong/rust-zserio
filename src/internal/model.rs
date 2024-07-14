@@ -11,7 +11,10 @@ use walkdir::WalkDir;
 
 use super::compiler::symbol_scope::ScopeLocation;
 pub mod package;
-use crate::internal::compiler::template_instantiation::instantiate_type;
+use crate::internal::compiler::template_instantiation::{
+    instantiate_choice_fields, instantiate_struct_fields, instantiate_type,
+    instantiate_union_fields,
+};
 
 /// A data structure containing all zserio files related to each other.
 pub struct Model {
@@ -162,6 +165,45 @@ impl Model {
                         &subtype.name.clone(),
                     );
                 }
+            }
+
+            // instantiate all structs/choices/unions that are not templates themselves,
+            // but have templated fields.
+
+            // The template instantiation will generate new structs, unions, choices -
+            // to not work on a list that is modified on the fly, we take a clone of
+            // the current structs/choices/unions.
+            let zstructs = pkg.structs.clone();
+            for z_struct in zstructs.values() {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_struct.borrow().name.clone()),
+                });
+                instantiate_struct_fields(pkg, scope, &mut z_struct.borrow_mut());
+                scope.scope_stack.pop();
+            }
+
+            let zchoices = pkg.zchoices.clone();
+            for z_choice in zchoices.values() {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_choice.borrow().name.clone()),
+                });
+                instantiate_choice_fields(pkg, scope, &mut z_choice.borrow_mut());
+                scope.scope_stack.pop();
+            }
+
+            let zunions = pkg.zunions.clone();
+            for z_union in zunions {
+                scope.scope_stack.push(ScopeLocation {
+                    package: pkg.name.clone(),
+                    import_symbol: None,
+                    symbol_name: Option::from(z_union.borrow().name.clone()),
+                });
+                instantiate_union_fields(pkg, scope, &mut z_union.borrow_mut());
+                scope.scope_stack.pop();
             }
             scope.scope_stack.pop();
         }
