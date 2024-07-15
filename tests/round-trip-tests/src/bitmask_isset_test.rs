@@ -2,14 +2,14 @@ use reference_module_lib::reference_modules::bitmask_isset::bitmask_isset::{
     bitmask_test::BitmaskTest, some_bit_mask::SomeBitMask,
 };
 
-use rust_zserio::ztype::ZserioPackableObject;
-
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
+use rust_zserio::ZserioPackableObject;
 
 pub fn test_bitmask_isset_round_trip() {
-    let mut test_struct = BitmaskTest::new();
-    test_struct.value = SomeBitMask::FlagA | SomeBitMask::FlagB;
+    let test_struct = BitmaskTest {
+        value: SomeBitMask::FlagA | SomeBitMask::FlagB,
+    };
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -20,7 +20,7 @@ pub fn test_bitmask_isset_round_trip() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = BitmaskTest::new();
+    let mut other_test_struct = BitmaskTest::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)
@@ -31,8 +31,9 @@ pub fn test_bitmask_isset_round_trip() {
 }
 
 pub fn test_bitmask_isset_operator() {
-    let mut test_struct = BitmaskTest::new();
-    test_struct.value = SomeBitMask::FlagA | SomeBitMask::FlagB;
+    let mut test_struct = BitmaskTest {
+        value: SomeBitMask::FlagA | SomeBitMask::FlagB,
+    };
 
     // Ensure that the isset() operator works correctly.
     assert!(test_struct.has_a());

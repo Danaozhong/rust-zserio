@@ -8,12 +8,12 @@ use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
 pub fn test_bitmasks() {
-    let mut test_struct = BitmaskTest::new();
-    test_struct.selector = SomeBitMask::HasA | SomeBitMask::HasB;
-
-    test_struct.value_a = 123;
-    test_struct.value_b = 456;
-    test_struct.value_c = 678; // Should be ignored.
+    let test_struct = BitmaskTest {
+        selector: SomeBitMask::HasA | SomeBitMask::HasB,
+        value_a: 123,
+        value_b: 456,
+        value_c: 678, // Should be ignored.
+    };
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -24,7 +24,7 @@ pub fn test_bitmasks() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = BitmaskTest::new();
+    let mut other_test_struct = BitmaskTest::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

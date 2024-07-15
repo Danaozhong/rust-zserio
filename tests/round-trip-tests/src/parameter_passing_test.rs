@@ -39,7 +39,7 @@ pub fn test_parameter_passing() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = ParameterPassing::new();
+    let mut other_test_struct = ParameterPassing::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

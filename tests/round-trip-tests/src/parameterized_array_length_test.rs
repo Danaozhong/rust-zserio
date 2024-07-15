@@ -28,7 +28,7 @@ pub fn test_parameterized_array_length() -> Result<()> {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = ParameterizedArrayLength::new();
+    let mut other_test_struct = ParameterizedArrayLength::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

@@ -51,6 +51,9 @@ pub mod reference_modules {
     pub mod parameter_passing_bitmask {
         pub mod parameter_passing_bitmask;
     }
+    pub mod parameter_passing_templates {
+        pub mod parameter_passing_templates;
+    }
     pub mod parameterized_array_length {
         pub mod parameterized_array_length;
     }

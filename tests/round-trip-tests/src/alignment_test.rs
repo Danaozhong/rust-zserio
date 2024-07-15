@@ -2,11 +2,10 @@ use reference_module_lib::reference_modules::alignment::alignment::alignment_str
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableObject;
-use rust_zserio::Result;
+use rust_zserio::{Result, ZserioPackableObject};
 
 pub fn test_alignment() -> Result<()> {
-    let mut test_struct = AlignmentStruct::new();
+    let mut test_struct = AlignmentStruct::default();
 
     // Even though bo_value_4 is not set, the alignment of the field is still taken into
     // account, because the "is present" bit is written, and this bit takes the alignment
@@ -23,8 +22,10 @@ pub fn test_alignment() -> Result<()> {
 }
 
 pub fn test_alignment_roundtrip() -> Result<()> {
-    let mut test_struct = AlignmentStruct::new();
-    test_struct.bo_value_4 = Some(true);
+    let mut test_struct = AlignmentStruct {
+        bo_value_4: Some(true),
+        ..Default::default()
+    };
     // Set the condition to serialize bo_value_5 to true (bo_value_5 depends on bo_value_3).
     test_struct.bo_value_3 = true;
 
@@ -36,7 +37,7 @@ pub fn test_alignment_roundtrip() -> Result<()> {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = AlignmentStruct::new();
+    let mut other_test_struct = AlignmentStruct::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct.zserio_read(&mut bitreader)?;
 

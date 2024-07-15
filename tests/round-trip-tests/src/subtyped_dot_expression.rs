@@ -6,9 +6,11 @@ use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_subtyped_dot_expression() {
-    let mut test_struct = TestStruct::new();
-    test_struct.value_1 = SubtypedEnum::TestValueB;
-    test_struct.opt_value_2 = 20;
+    let test_struct = TestStruct {
+        value_1: SubtypedEnum::TestValueB,
+        opt_value_2: 20,
+        ..Default::default()
+    };
 
     // serialize.
     let mut bitwriter = BitWriter::new();
@@ -19,7 +21,7 @@ pub fn test_subtyped_dot_expression() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = TestStruct::new();
+    let mut other_test_struct = TestStruct::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

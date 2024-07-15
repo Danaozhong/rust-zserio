@@ -16,9 +16,6 @@ pub struct DrinkOrder {
 }
 
 impl ZserioPackableObject for DrinkOrder {
-    fn new() -> Self {
-        Self::default()
-    }
     fn zserio_read(&mut self, _: &mut BitReader) -> Result<()> {
         Ok(())
     }

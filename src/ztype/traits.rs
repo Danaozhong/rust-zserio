@@ -3,8 +3,7 @@ use crate::ztype::array_traits::packing_context_node::PackingContextNode;
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
 
-pub trait ZserioPackableObject {
-    fn new() -> Self;
+pub trait ZserioPackableObject: Default {
     fn zserio_read(&mut self, reader: &mut BitReader) -> Result<()>;
     fn zserio_write(&self, writer: &mut BitWriter) -> Result<()>;
     fn zserio_read_packed(
