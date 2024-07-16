@@ -123,7 +123,7 @@ pub fn to_writer<W: std::io::Write, T: ZserioPackableObject>(
 /// enough data in the slice.
 pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T> {
     let mut bitreader = BitReader::new(data);
-    let mut v = T::new();
+    let mut v: T = Default::default();
     v.zserio_read(&mut bitreader)?;
     Ok(v)
 }

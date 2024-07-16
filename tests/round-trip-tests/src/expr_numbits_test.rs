@@ -1,10 +1,9 @@
 use reference_module_lib::reference_modules::expr_numbits::expr_numbits::expression_numbits_test::ExpressionNumbitsTest;
-use rust_zserio::ztype::ZserioPackableObject;
 
 /// Tests a zserio struct, which uses a function with the numbits() operator.
 /// The function get_num_bits() is defined as `return numbits(u16Value) + numbits(8);`.
 pub fn test_expr_numbits() {
-    let mut test_struct = ExpressionNumbitsTest::new();
+    let mut test_struct = ExpressionNumbitsTest::default();
     assert_eq!(test_struct.get_num_bits(), 3);
 
     test_struct.u_16_value = 1;

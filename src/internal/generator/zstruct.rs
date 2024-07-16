@@ -83,11 +83,6 @@ pub fn generate_struct(
     let struct_impl = codegen_scope.new_impl(&rust_type_name);
     struct_impl.impl_trait("ztype::ZserioPackableObject");
 
-    // Generate a function to create a new instance of the struct
-    let new_fn = struct_impl.new_fn("new");
-    new_fn.ret("Self");
-    new_fn.line("Self::default()");
-
     // Generate the functions to read, write and bitcount the data to/from zserio format.
     generate_zserio_read(symbol_scope, type_generator, struct_impl, &field_details);
     generate_zserio_write(symbol_scope, type_generator, struct_impl, &field_details);

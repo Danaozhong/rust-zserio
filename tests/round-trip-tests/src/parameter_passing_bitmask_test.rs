@@ -10,7 +10,7 @@ pub fn test_passing_bitmask_parameter() {
     // Create a test structure, which uses parameter passing
     let mut test_struct = ParameterPassingBitmask {
         some_mask: SomeBitMask::HasA,
-        block: Item::new(),
+        block: Item::default(),
     };
 
     // We will assign a random value to the optional field, then
@@ -41,7 +41,7 @@ fn serialize_and_deserialize(test_obj: &ParameterPassingBitmask) -> ParameterPas
         .expect("can not write zserio data");
     let serialized_bytes = bitwriter.data();
 
-    let mut other_test_struct = ParameterPassingBitmask::new();
+    let mut other_test_struct = ParameterPassingBitmask::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

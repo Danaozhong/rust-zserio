@@ -87,11 +87,6 @@ pub fn generate_enum(
     let z_impl = gen_scope.new_impl(&rust_type_name);
     z_impl.impl_trait("ztype::ZserioPackableObject");
 
-    // Generate a function to create a new instance of the enum
-    let new_fn = z_impl.new_fn("new");
-    new_fn.ret("Self");
-    new_fn.line("Self::default()");
-
     // generate the functions to serialize/deserialize
     generate_zserio_read(scope, type_generator, z_impl, zenum, &fundamental_type);
     generate_zserio_write(scope, type_generator, z_impl, zenum, &fundamental_type);

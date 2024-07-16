@@ -86,11 +86,6 @@ pub fn generate_choice(
     let choice_impl = codegen_scope.new_impl(&rust_type_name);
     choice_impl.impl_trait("ztype::ZserioPackableObject");
 
-    // Generate a function to create a new instance of the struct
-    let new_fn = choice_impl.new_fn("new");
-    new_fn.ret("Self");
-    new_fn.line("Self::default()");
-
     generate_zserio_read(symbol_scope, type_generator, choice_impl, zchoice);
     generate_zserio_write(symbol_scope, type_generator, choice_impl, zchoice);
     generate_zserio_bitsize(symbol_scope, type_generator, choice_impl, zchoice);

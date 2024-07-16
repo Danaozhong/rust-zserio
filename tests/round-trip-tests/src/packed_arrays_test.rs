@@ -11,8 +11,12 @@ use std::{fs::File, io::Write};
 
 fn get_test_data() -> PackedArrayWrapper {
     let mut test_struct = PackedArrayWrapper {
-        packed_array: vec![DataStruct::new(), DataStruct::new(), DataStruct::new()],
-        standard_array: vec![DataStruct::new(), DataStruct::new()],
+        packed_array: vec![
+            DataStruct::default(),
+            DataStruct::default(),
+            DataStruct::default(),
+        ],
+        standard_array: vec![DataStruct::default(), DataStruct::default()],
     };
 
     test_struct.packed_array[0].u_32_packed_array = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -61,7 +65,7 @@ pub fn test_packed_arrays() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = PackedArrayWrapper::new();
+    let mut other_test_struct = PackedArrayWrapper::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     let mut new_context_node = PackingContextNode::new();
     PackedArrayWrapper::zserio_create_packing_context(&mut new_context_node);

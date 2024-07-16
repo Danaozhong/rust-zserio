@@ -1,14 +1,13 @@
 use reference_module_lib::reference_modules::constants::constants::constant_test_struct::ConstantTestStruct;
 
-use rust_zserio::ztype::ZserioPackableObject;
-
 pub fn test_constants() {
     // The test structure created in this test generates a function that
     // requires a lot of type casts.
     // The test passes if the generated structure compiles.
-    let mut test_struct = ConstantTestStruct::new();
-    test_struct.str_value = String::from("StrValue");
-    test_struct.other_str_value = String::from("Other");
+    let test_struct = ConstantTestStruct {
+        str_value: String::from("StrValue"),
+        other_str_value: String::from("Other"),
+    };
 
     // CONSTANT_STRING + "DummyString" + CONSTANT_STRING;
     let expected_result = "TestDummyStringTest";

@@ -33,7 +33,7 @@ pub fn test_integer_types() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = IntegerTypesTest::new();
+    let mut other_test_struct = IntegerTypesTest::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

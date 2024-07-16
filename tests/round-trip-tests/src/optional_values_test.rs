@@ -7,11 +7,13 @@ use rust_bitwriter::BitWriter;
 use rust_zserio::ztype::ZserioPackableObject;
 
 pub fn test_optional_values() {
-    let mut test_struct = OptionalValuesTest::new();
-    test_struct.field_selector = OptionEnum::HasB;
-    test_struct.field_a = 123; // Should be ignored.
-    test_struct.field_b = 456; // Should be serialized.
-    test_struct.field_c = 789; // Should be ignored.
+    let test_struct = OptionalValuesTest {
+        field_selector: OptionEnum::HasB,
+        field_a: 123, // Should be ignored.
+        field_b: 456, // Should be serialized.
+        field_c: 789, // Should be ignored.
+        ..Default::default()
+    };
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -22,7 +24,7 @@ pub fn test_optional_values() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = OptionalValuesTest::new();
+    let mut other_test_struct = OptionalValuesTest::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)
@@ -38,9 +40,11 @@ pub fn test_optional_values() {
 }
 
 pub fn test_optional_members() {
-    let mut test_struct = OptionalValuesTest::new();
-    test_struct.option_str_field = Some("Test".to_owned());
-    test_struct.option_custom_str_field = Some("OtherTest".to_owned());
+    let test_struct = OptionalValuesTest {
+        option_str_field: Some("Test".to_owned()),
+        option_custom_str_field: Some("OtherTest".to_owned()),
+        ..Default::default()
+    };
     // serialize
     let mut bitwriter = BitWriter::new();
     test_struct
@@ -50,7 +54,7 @@ pub fn test_optional_members() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = OptionalValuesTest::new();
+    let mut other_test_struct = OptionalValuesTest::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)
@@ -65,12 +69,14 @@ pub fn test_optional_members() {
 /// It ensures that zserio structures with optional arrays compile, and the arrays can be correctly
 /// set and deserialized.
 pub fn test_optional_arrays() {
-    let mut test_struct = OptionalValuesTest::new();
-    test_struct.option_string_array = Some(vec![
-        "Hokkien Mee".to_string(),
-        "Kaya Toast".to_string(),
-        "Char Kway Teow".to_string(),
-    ]);
+    let test_struct = OptionalValuesTest {
+        option_string_array: Some(vec![
+            "Hokkien Mee".to_string(),
+            "Kaya Toast".to_string(),
+            "Char Kway Teow".to_string(),
+        ]),
+        ..Default::default()
+    };
     // serialize
     let mut bitwriter = BitWriter::new();
     test_struct
@@ -80,7 +86,7 @@ pub fn test_optional_arrays() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_test_struct = OptionalValuesTest::new();
+    let mut other_test_struct = OptionalValuesTest::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_test_struct
         .zserio_read(&mut bitreader)

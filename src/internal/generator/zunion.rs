@@ -119,11 +119,6 @@ pub fn generate_union(
     let union_impl = codegen_scope.new_impl(&rust_type_name);
     union_impl.impl_trait("ztype::ZserioPackableObject");
 
-    // Generate a function to create a new instance of the struct
-    let new_fn = union_impl.new_fn("new");
-    new_fn.ret("Self");
-    new_fn.line("Self::default()");
-
     // Generate the functions to read, write and bitcount the data to/from zserio format.
     generate_zserio_read(symbol_scope, type_generator, union_impl, zunion);
     generate_zserio_write(symbol_scope, type_generator, union_impl, zunion);

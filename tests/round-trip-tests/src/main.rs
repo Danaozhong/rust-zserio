@@ -95,13 +95,15 @@ fn test_structure() -> Result<()> {
     // that the data is still the same.
 
     // Instantiate the data
-    let mut value_wrapper = value_wrapper::ValueWrapper::new();
-    value_wrapper.parameter = 7;
-    value_wrapper.value = 14;
-    value_wrapper.enum_value = Color::Red; // this field only gets serialized, if parameter = 7
-    value_wrapper.description = "test".into();
-    value_wrapper.fixed_array = vec![100, 101, 102, 103];
-    value_wrapper.packed_array = vec![200, 201, 202, 203, 205, 204];
+    let value_wrapper = value_wrapper::ValueWrapper {
+        parameter: 7,
+        value: 14,
+        enum_value: Color::Red, // this field only gets serialized, if parameter: 7
+        description: "test".into(),
+        fixed_array: vec![100, 101, 102, 103],
+        packed_array: vec![200, 201, 202, 203, 205, 204],
+        ..Default::default()
+    };
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -110,10 +112,10 @@ fn test_structure() -> Result<()> {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_value_wrapper = value_wrapper::ValueWrapper::new();
-
-    // Pass parameters.
-    other_value_wrapper.parameter = 7;
+    let mut other_value_wrapper = value_wrapper::ValueWrapper {
+        parameter: 7,
+        ..Default::default()
+    };
 
     // Deserialize.
     let mut bitreader = BitReader::new(serialized_bytes);
@@ -140,9 +142,11 @@ fn test_functions() {
     // that the function is generated correctly.
 
     // Instantiate the data
-    let mut value_wrapper = value_wrapper::ValueWrapper::new();
-    value_wrapper.parameter = 2;
-    value_wrapper.value = 9;
+    let value_wrapper = value_wrapper::ValueWrapper {
+        parameter: 2,
+        value: 9,
+        ..Default::default()
+    };
     // Call the function, and expect it to return the correct value.
     assert!(value_wrapper.get_some_random_value() == 36)
 }
@@ -151,9 +155,11 @@ fn test_choice() {
     // that the data is identical to what was serialized.
     let choice_param = SomeEnum::AttrC;
 
-    let mut basic_choice = BasicChoice::new();
-    basic_choice.z_type = choice_param;
-    basic_choice.field_c = 42;
+    let basic_choice = BasicChoice {
+        z_type: choice_param,
+        field_c: 42,
+        ..Default::default()
+    };
 
     // Serialize to binary.
     let mut bitwriter = BitWriter::new();
@@ -164,8 +170,11 @@ fn test_choice() {
     let serialized_bytes = bitwriter.data();
 
     // Deserialize the binary stream.
-    let mut other_basic_choice = BasicChoice::new();
-    other_basic_choice.z_type = choice_param;
+    let mut other_basic_choice = BasicChoice {
+        z_type: choice_param,
+        ..Default::default()
+    };
+
     let mut bitreader = BitReader::new(serialized_bytes);
     other_basic_choice
         .zserio_read(&mut bitreader)
@@ -186,7 +195,7 @@ fn test_choice() {
 fn test_template_instantiation() {
     // This function tests that templates can be successfully instantiated, and their
     // generated types can be serialized and deserialized.
-    let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
+    let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::default();
     z_struct.field.description = "Test Description".into();
     z_struct.field.fixed_array = vec![0, 1, 2, 3];
 
@@ -199,7 +208,7 @@ fn test_template_instantiation() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
+    let mut other_struct = instantiated_template_struct::InstantiatedTemplateStruct::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_struct
         .zserio_read(&mut bitreader)
@@ -212,7 +221,7 @@ fn test_template_instantiation() {
 fn test_functions_in_instantiated_templates() {
     // This function tests that templates can be successfully instantiated, functions that rely on
     // template properties (e.g. "T.getValue()") that are unknown before tempalte instantiation.
-    let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::new();
+    let mut z_struct = instantiated_template_struct::InstantiatedTemplateStruct::default();
     z_struct.field.description = "Test Description".into();
     z_struct.parameter = 15;
     z_struct.field.value = 32;
@@ -222,7 +231,7 @@ fn test_functions_in_instantiated_templates() {
 /// This test case tests that extern types (that store bit buffers) and bytes types (that store
 /// byte buffers) can be serialized and deserialized without changes.
 fn test_extern_type() {
-    let mut extern_test_struct = ExternTestCase::new();
+    let mut extern_test_struct = ExternTestCase::default();
 
     // fill the extern buffer with three bytes and three bits
     extern_test_struct.extern_buffer.data_blob = vec![0xf1, 0xaa, 0x12, 0xe0];
@@ -241,7 +250,7 @@ fn test_extern_type() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_struct = ExternTestCase::new();
+    let mut other_struct = ExternTestCase::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_struct
         .zserio_read(&mut bitreader)
@@ -252,7 +261,7 @@ fn test_extern_type() {
 }
 
 fn test_type_lookup() {
-    let mut ztype_struct = ZTypeStruct::new();
+    let mut ztype_struct = ZTypeStruct::default();
     // If this line compiles, the test is already successful. That means that the correct type
     // got looked up (integer).
     ztype_struct.ztype.ztype = 16;
@@ -268,11 +277,12 @@ fn test_type_lookup() {
 fn test_union_type() {
     // This test case checks union types, by creating them, assigning a value,
     // and then performing a round-trip test.
-    let mut union_instance = UnionType::new();
-
-    // fill the bytes buffer with four bytes
-    union_instance.u_16_value = 32;
-    union_instance.union_selector = UnionTypeSelector::U16Value;
+    let union_instance = UnionType {
+        // fill the bytes buffer with four bytes
+        u_16_value: 32,
+        union_selector: UnionTypeSelector::U16Value,
+        ..Default::default()
+    };
 
     // serialize
     let mut bitwriter = BitWriter::new();
@@ -283,7 +293,7 @@ fn test_union_type() {
     let serialized_bytes = bitwriter.data();
 
     // deserialize
-    let mut other_union_instance = UnionType::new();
+    let mut other_union_instance = UnionType::default();
     let mut bitreader = BitReader::new(serialized_bytes);
     other_union_instance
         .zserio_read(&mut bitreader)
