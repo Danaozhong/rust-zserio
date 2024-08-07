@@ -64,7 +64,7 @@ use crate::internal::parser::gen::zserioparser::{
 use antlr_rust::parser_rule_context::ParserRuleContext;
 use antlr_rust::token::Token;
 use antlr_rust::tree::{ParseTree, ParseTreeVisitorCompat, TerminalNode, Tree};
-
+use log::{debug, info, trace, warn};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -147,10 +147,10 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         let mut package_name = "".into();
         match self.visit(&*ctx.packageNameDefinition().unwrap()) {
             ZserioTreeReturnType::Str(n) => package_name = n,
-            _ => println!("package declaration missing"),
+            _ => warn!("package declaration missing"),
         }
 
-        println!("package found with name {package_name}");
+        info!("package found with name {package_name}");
 
         let mut imports = Vec::new();
         for import in ctx.importDeclaration_all() {
@@ -177,7 +177,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
 
         for directive in ctx.languageDirective_all() {
             match self.visit(&*directive) {
-                ZserioTreeReturnType::Str(s) => println!("unknown: {0}", s),
+                ZserioTreeReturnType::Str(s) => warn!("unknown package directive: {0}", s),
                 ZserioTreeReturnType::Vec(v) => {
                     for ve in v {
                         match ve {
@@ -207,13 +207,13 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
                                 .push(Rc::new(RefCell::new(*bitmask_type))),
                             ZserioTreeReturnType::Str(_) => {}
                             ZserioTreeReturnType::StrVec(s) => {
-                                println!("unknown str vec: {0}", s[0])
+                                warn!("unknown str vec: {0}", s[0])
                             }
                             ZserioTreeReturnType::TypeReference(z) => {
-                                println!("unknown type ref: {0}", z.bits)
+                                debug!("unknown type ref: {0}", z.bits)
                             }
-                            ZserioTreeReturnType::Field(_z) => print!("field found"),
-                            ZserioTreeReturnType::Expression(_e) => print!("expression found"),
+                            ZserioTreeReturnType::Field(_z) => trace!("field found"),
+                            ZserioTreeReturnType::Expression(_e) => trace!("expression found"),
                             ZserioTreeReturnType::InstantiateType(t) => {
                                 package.instantiated_types.push(Rc::new(RefCell::new(*t)))
                             }
@@ -529,7 +529,7 @@ impl ZserioParserVisitorCompat<'_> for Visitor {
         if let Some(x) = ctx.templateParameters() {
             match ZserioParserVisitorCompat::visit_templateParameters(self, &x) {
                 ZserioTreeReturnType::StrVec(n) => choice.template_parameters = n,
-                _ => println!("template parameters should be a list of strings"),
+                _ => warn!("template parameters should be a list of strings"),
             }
         }
 
