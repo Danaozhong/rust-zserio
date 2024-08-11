@@ -129,3 +129,17 @@ pub fn instantiate_zserio_array(
     function.line(format!("is_packed: {is_packed},"));
     function.line("};");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_array_type_name() {
+        assert_eq!(array_type_name(&"points".to_string()), "zs_array_points");
+        assert_eq!(
+            array_type_name(&"adasGeometry".to_string()),
+            "zs_array_adas_geometry"
+        );
+    }
+}

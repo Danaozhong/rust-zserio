@@ -201,3 +201,41 @@ pub fn zserio_type_bit_size(name: &str) -> Result<u8, &'static str> {
         _ => Err("not found"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_rust_constant_name() {
+        assert_eq!(to_rust_constant_name("NAME"), "NAME");
+        assert_eq!(to_rust_constant_name("MIN_VERSION"), "MIN_VERSION");
+    }
+
+    #[test]
+    fn test_convert_to_enum_field_name() {
+        assert_eq!(convert_to_enum_field_name("UNKNOWN"), "Unknown");
+        assert_eq!(
+            convert_to_enum_field_name("MORE_THAN_4_TOWARDS_CURB"),
+            "MoreThan4TowardsCurb"
+        );
+    }
+
+    #[test]
+    fn test_convert_to_union_selector_name() {
+        assert_eq!(convert_to_enum_field_name("UNKNOWN"), "Unknown");
+        assert_eq!(
+            convert_to_enum_field_name("MORE_THAN_4_TOWARDS_CURB"),
+            "MoreThan4TowardsCurb"
+        );
+    }
+
+    #[test]
+    fn test_convert_to_function_name() {
+        assert_eq!(convert_to_function_name("getLayerType"), "get_layer_type");
+        assert_eq!(
+            convert_to_function_name("getSomeRandomValue"),
+            "get_some_random_value"
+        );
+    }
+}
