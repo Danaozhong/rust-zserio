@@ -37,6 +37,7 @@ pub fn generate_enum(
     gen_enum.derive("PartialEq");
 
     let mut enum_value = 0;
+    let mut first_option = true;
     for item in &zenum.items {
         if let Some(value_expression) = &item.value {
             match value_expression.as_ref().borrow().result_type {
@@ -49,8 +50,9 @@ pub fn generate_enum(
             convert_to_enum_field_name(&item.name),
             enum_value
         ));
-        if enum_value == 0 {
+        if first_option {
             v.annotation("#[default]");
+            first_option = false;
         }
         enum_value += 1;
     }
