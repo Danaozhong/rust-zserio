@@ -1,5 +1,5 @@
-//! [zserio](http://zserio.org/) serialization bindings for rust.
-//! `zserio` is a binary serialization language, similar to Protobuf. The key features are:
+//! [zserio](http://zserio.org/) serialization bindings for rust. `zserio` is a
+//! binary serialization language, similar to Protobuf. The key features are:
 //! - It features a rich schema.
 //! - Programming language agnostic.
 //! - Compact and easy to use.
@@ -25,11 +25,10 @@
 //! };
 //! ```
 //! Above code is `zserio` code. Using the `zserio` serialization bindings, this
-//! code can be used to generate C++/Python/Java code to read/write `zserio`-encoded
-//! data.
-//! With this crate, it is now possible to read/write `zserio`-encoded binary data
-//! in rust.
-//! To compile a `zs` file with rust-zserio, first install rust-zserio:
+//! code can be used to generate C++/Python/Java code to read/write
+//! `zserio`-encoded data. With this crate, it is now possible to read/write
+//! `zserio`-encoded binary data in rust. To compile a `zs` file with
+//! rust-zserio, first install rust-zserio:
 //!
 //! ```sh
 //! cargo install rust-zserio
@@ -40,10 +39,18 @@
 //! ```sh
 //! rust-zserio --root=<code_root_path> -o=<output_directory> <path_to_zserio_files>
 //! ```
-//! This will generate the interface files in rust, that allow reading/writing zserio-encoded
-//! data.
+//! This will generate the interface files in rust, that allow reading/writing
+//! zserio-encoded data.
 //!
-//! The `--root` CLI flag is optional, and enforces an overall crate prefix to the generated code.
+//! The `--root` CLI flag is optional, and enforces an overall crate prefix to
+//! the generated code.
+//!
+//! The generated code is formatted, but does not match the exact standards from
+//! rustfmt. If you are using rustfmt from the nightly channel you can set
+//! [`format_generated_files =
+//! false`](https://rust-lang.github.io/rustfmt/?version=v1.6.0&search=#format_generated_files)
+//! in `rustfmt.toml` (see
+//! [rust-lang/rustfmt#5080](https://github.com/rust-lang/rustfmt/issues/5080).
 pub mod doctest;
 mod error;
 pub mod internal;
