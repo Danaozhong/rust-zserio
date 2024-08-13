@@ -1,6 +1,6 @@
 use crate::internal::ast::type_reference::TypeReference;
-use convert_case::{Case, Casing};
 use std::{collections::HashMap, result::Result};
+use stringcase::Caser;
 
 const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct", "self"];
 
@@ -51,7 +51,8 @@ impl TypeGenerator {
         if let Some(converted_field_name) = self.field_name_cache.get(name) {
             return converted_field_name.clone();
         }
-        let converted_field_name = remove_reserved_identifier(name).to_case(Case::Snake);
+        let converted_field_name =
+            remove_reserved_identifier(name).to_snake_case_with_nums_as_word();
         self.field_name_cache
             .insert(name.to_owned(), converted_field_name.clone());
         converted_field_name
@@ -86,7 +87,7 @@ impl TypeGenerator {
             return converted_module_name.clone();
         }
 
-        let rust_module_name = remove_reserved_identifier(name).to_case(Case::Snake);
+        let rust_module_name = remove_reserved_identifier(name).to_snake_case_with_nums_as_word();
         self.module_name_cache
             .insert(name.to_owned(), rust_module_name.clone());
         rust_module_name
@@ -96,7 +97,7 @@ impl TypeGenerator {
         if let Some(converted_rust_type_name) = self.type_name_cache.get(name) {
             return converted_rust_type_name.clone();
         }
-        let rust_type_name = remove_reserved_identifier(name).to_case(Case::UpperCamel);
+        let rust_type_name = remove_reserved_identifier(name).to_pascal_case();
         self.type_name_cache
             .insert(name.to_owned(), rust_type_name.clone());
         rust_type_name
@@ -132,16 +133,16 @@ pub fn to_rust_constant_name(name: &str) -> String {
 }
 
 pub fn convert_to_enum_field_name(name: &str) -> String {
-    remove_reserved_identifier(name).to_case(Case::UpperCamel)
+    remove_reserved_identifier(name).to_pascal_case()
 }
 
 pub fn convert_to_union_selector_name(field_name: &str) -> String {
-    remove_reserved_identifier(field_name).to_case(Case::UpperCamel)
+    remove_reserved_identifier(field_name).to_pascal_case()
 }
 
 pub fn convert_to_function_name(name: &str) -> String {
     // Converts a function name from zserio style to rust style (snake case).
-    remove_reserved_identifier(name).to_case(Case::Snake)
+    remove_reserved_identifier(name).to_snake_case_with_nums_as_word()
 }
 
 pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
@@ -199,5 +200,51 @@ pub fn zserio_type_bit_size(name: &str) -> Result<u8, &'static str> {
         "float64" => Ok(64),
         "bool" => Ok(1),
         _ => Err("not found"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_rust_constant_name() {
+        assert_eq!(to_rust_constant_name("NAME"), "NAME");
+        assert_eq!(to_rust_constant_name("MIN_VERSION"), "MIN_VERSION");
+    }
+
+    #[test]
+    fn test_convert_to_enum_field_name() {
+        assert_eq!(convert_to_enum_field_name("UNKNOWN"), "Unknown");
+        assert_eq!(
+            convert_to_enum_field_name("MORE_THAN_4_TOWARDS_CURB"),
+            "MoreThan4TowardsCurb"
+        );
+    }
+
+    #[test]
+    fn test_convert_to_union_selector_name() {
+        assert_eq!(convert_to_enum_field_name("UNKNOWN"), "Unknown");
+        assert_eq!(
+            convert_to_enum_field_name("MORE_THAN_4_TOWARDS_CURB"),
+            "MoreThan4TowardsCurb"
+        );
+    }
+
+    #[test]
+    fn test_convert_to_function_name() {
+        assert_eq!(convert_to_function_name("getLayerType"), "get_layer_type");
+        assert_eq!(
+            convert_to_function_name("getSomeRandomValue"),
+            "get_some_random_value"
+        );
+    }
+
+    #[test]
+    fn test_convert_field_name() {
+        let mut tg = TypeGenerator::new("tests".into());
+        assert_eq!(tg.convert_field_name("simple"), "simple");
+        assert_eq!(tg.convert_field_name("numItems"), "num_items");
+        assert_eq!(tg.convert_field_name("boValue1"), "bo_value_1");
     }
 }

@@ -5,10 +5,10 @@ use crate::internal::compiler::symbol_scope::ModelScope;
 use crate::internal::generator::expression::generate_expression;
 use crate::internal::generator::types::TypeGenerator;
 use codegen::Function;
-use convert_case::{Case, Casing};
+use stringcase::Caser;
 
 pub fn array_type_name(name: &String) -> String {
-    String::from("zs_array_") + &name.to_case(Case::Snake)
+    String::from("zs_array_") + &name.to_snake_case()
 }
 
 pub fn get_array_trait_for_type(zserio_type: &TypeReference) -> String {
@@ -128,4 +128,18 @@ pub fn instantiate_zserio_array(
     function.line(format!("fixed_size: {array_length_str},"));
     function.line(format!("is_packed: {is_packed},"));
     function.line("};");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_array_type_name() {
+        assert_eq!(array_type_name(&"points".to_string()), "zs_array_points");
+        assert_eq!(
+            array_type_name(&"adasGeometry".to_string()),
+            "zs_array_adas_geometry"
+        );
+    }
 }
