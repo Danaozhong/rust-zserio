@@ -582,14 +582,17 @@ where
             _decision_to_DFA.clone(),
             _shared_context_cache.clone(),
         ));
+        let mut base = BaseParser::new_base_parser(
+            input,
+            Arc::clone(&interpreter),
+            ZserioParserExt {
+                _pd: Default::default(),
+            },
+        );
+        base.remove_error_listeners();
+        base.add_error_listener(Box::new(super::error::LogErrorListener {}));
         Self {
-            base: BaseParser::new_base_parser(
-                input,
-                Arc::clone(&interpreter),
-                ZserioParserExt {
-                    _pd: Default::default(),
-                },
-            ),
+            base,
             interpreter,
             _shared_context_cache: Box::new(PredictionContextCache::new()),
             err_handler: strategy,
