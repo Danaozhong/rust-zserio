@@ -15,10 +15,32 @@ is not open source.
   deserializing it again results in the exact same data. You can run these
   by running `cargo test` in the `tests/round-trip-tests` folder.
 - `tests-compare-ref-impl-tests` compares `rust-zserio` with the reference
-  Python zserio implementation. These tests can currently not be run from
-  this repository.
+  Python zserio implementation.
 
-You can run all tests using `cargo test --all`
+### Verifying against zserio reference implementation
+
+To run the reference comparison test you must install the zserio compiler
+The simplest way to do this is using [pipx](https://pipx.pypa.io/stable/):
+
+```shell
+pipx install zserio==2.11.0
+```
+
+You can now generate the test data using the Python code. Please note that
+Python 3.12 is currently not supported.
+
+```shell
+cd tests/compare-ref-impl-tests/python
+poetry install
+poetry run python main.py
+```
+
+The test data can now be found in the `tests/artifacts` folder. Finally you can
+now run the Rust code to verify the rust behavior matches the Python behavior:
+
+```shell
+cargo run -p compare-ref-impl-tests
+```
 
 ## Profiling
 
