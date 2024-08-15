@@ -23,6 +23,10 @@ homepage = "https://github.com/Danaozhong/rust-zserio"
 repository = "https://github.com/Danaozhong/rust-zserio"
 license = "BSD-3-Clause"
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 [dependencies]
 antlr-rust = "0.3.0-beta"
 bitmask-enum = "2.2.4"
