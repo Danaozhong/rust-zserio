@@ -36,6 +36,7 @@
             "args": [
                 "-o=tests/reference-module-lib/src",
                 "tests/reference_modules",
+                "-vvvvvvvv",
             ],
             "cwd": "${workspaceFolder}"
         },
