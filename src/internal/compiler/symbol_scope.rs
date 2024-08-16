@@ -129,7 +129,10 @@ impl ModelScope {
 
             for import in imports_to_process {
                 let package_name = import.package_dir.join(".");
-                let imported_package = self.package_scopes.get(&package_name).unwrap();
+                let imported_package = self
+                    .package_scopes
+                    .get(&package_name)
+                    .unwrap_or_else(|| panic!("reference to unknown package {package_name}"));
                 if let Some(symbol) = imported_package.resolve_symbol(
                     name,
                     ignore_symbol_local_scopes,
