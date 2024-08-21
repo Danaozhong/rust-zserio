@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::valueof_operator::valueof_operator::{
-    color::Color, option_enum::OptionEnum, other_enum::OtherEnum, value_of_test::ValueOfTest,
+    Color, OptionEnum, OtherEnum, ValueOfTest,
 };
 
 pub fn test_valueof_operator() {

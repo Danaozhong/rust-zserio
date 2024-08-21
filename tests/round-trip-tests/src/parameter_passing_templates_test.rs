@@ -1,10 +1,10 @@
 use reference_module_lib::reference_modules::parameter_passing_templates::parameter_passing_templates::{
-    parameter_passing_templates::ParameterPassingTemplates,
-    templated_blockstring::TemplatedBlockstring,
-    templated_blockuint_64::TemplatedBlockuint64,
-    templated_choiceuint_32_string::TemplatedChoiceuint32String,
-    templated_unionuint_32_string::TemplatedUnionuint32String,
-    templated_unionuint_32_string::TemplatedUnionuint32StringSelector,
+    ParameterPassingTemplates,
+    TemplatedBlockstring,
+    TemplatedBlockuint64,
+    TemplatedChoiceuint32String,
+    TemplatedUnionuint32String,
+    TemplatedUnionuint32StringSelector,
 };
 
 use bitreader::BitReader;

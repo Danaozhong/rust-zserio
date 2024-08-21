@@ -1,5 +1,5 @@
-use reference_module_lib::reference_modules::subtyped_dot_expression::test::test_struct::TestStruct;
-use reference_module_lib::reference_modules::subtyped_dot_expression::subtyped_enum::subtyped_enum::SubtypedEnum;
+use reference_module_lib::reference_modules::subtyped_dot_expression::subtyped_enum::SubtypedEnum;
+use reference_module_lib::reference_modules::subtyped_dot_expression::test::TestStruct;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;

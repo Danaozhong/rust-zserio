@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::bitmask_isset::bitmask_isset::{
-    bitmask_test::BitmaskTest, some_bit_mask::SomeBitMask,
+    BitmaskTest, SomeBitMask,
 };
 
 use bitreader::BitReader;

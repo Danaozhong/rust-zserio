@@ -1,5 +1,5 @@
-use reference_module_lib::reference_modules::core::types::color::Color;
-use reference_module_lib::reference_modules::core::types::value_wrapper::ValueWrapper;
+use reference_module_lib::reference_modules::core::types::Color;
+use reference_module_lib::reference_modules::core::types::ValueWrapper;
 
 pub fn test_debug_trait() {
     let value_wrapper = ValueWrapper {

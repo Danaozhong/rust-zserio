@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::parameter_passing::parameter_passing::{
-    block::Block, parameter_passing::ParameterPassing,
+    Block, ParameterPassing,
 };
 
 use bitreader::BitReader;

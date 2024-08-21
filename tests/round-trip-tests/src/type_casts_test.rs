@@ -1,4 +1,4 @@
-use reference_module_lib::reference_modules::type_casts::type_casts::type_cast_struct::TypeCastStruct;
+use reference_module_lib::reference_modules::type_casts::type_casts::TypeCastStruct;
 
 pub fn test_type_casts() {
     // The test structure created in this test generates a function that

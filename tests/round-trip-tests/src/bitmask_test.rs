@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::bitmask_test::bitmask_test::{
-    bitmask_test::BitmaskTest, bitmask_with_zero::BitmaskWithZero, some_bit_mask::SomeBitMask,
+    BitmaskTest, BitmaskWithZero, SomeBitMask,
 };
 
 use rust_zserio::ztype::ZserioPackableObject;

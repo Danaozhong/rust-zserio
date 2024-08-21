@@ -142,8 +142,14 @@ pub fn generate_package(
     mod_file_content += "#![allow(clippy::all)]\n";
     mod_file_content += "#![allow(warnings)]\n";
 
-    for module_name in module_names {
-        mod_file_content += format!("pub mod {};\n", module_name).as_str();
+    // Sort module names so our output is in a predictable order.
+    module_names.sort_unstable();
+    for module_name in &module_names {
+        mod_file_content += format!("pub mod {module_name};\n").as_str();
+    }
+
+    for module_name in &module_names {
+        mod_file_content += format!("pub use {module_name}::*;\n").as_str();
     }
 
     write_to_file(
