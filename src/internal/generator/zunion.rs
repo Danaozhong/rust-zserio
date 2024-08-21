@@ -131,6 +131,8 @@ pub fn generate_union(
     let init_packing_context_fn = union_impl.new_fn("zserio_init_packing_context");
     init_packing_context_fn.arg_ref_self();
     init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    init_packing_context_fn.ret("Result<()>");
+    init_packing_context_fn.line("Ok(())");
 
     // Generate all the zserio functions.
     let pub_impl = codegen_scope.new_impl(&rust_type_name);

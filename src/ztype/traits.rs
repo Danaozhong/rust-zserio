@@ -23,5 +23,5 @@ pub trait ZserioPackableObject: Default {
         bit_position: u64,
     ) -> Result<u64>;
     fn zserio_create_packing_context(context_node: &mut PackingContextNode);
-    fn zserio_init_packing_context(&self, context_node: &mut PackingContextNode);
+    fn zserio_init_packing_context(&self, context_node: &mut PackingContextNode) -> Result<()>;
 }

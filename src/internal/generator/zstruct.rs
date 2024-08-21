@@ -98,6 +98,7 @@ pub fn generate_struct(
     let init_packing_context_fn = struct_impl.new_fn("zserio_init_packing_context");
     init_packing_context_fn.arg_ref_self();
     init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    init_packing_context_fn.ret("Result<()>");
     for field in &field_details {
         generate_init_packed_context_for_field(
             symbol_scope,
@@ -106,6 +107,7 @@ pub fn generate_struct(
             field,
         );
     }
+    init_packing_context_fn.line("Ok(())");
 
     // Generate all the zserio functions (defined in the zserio language).
     let pub_impl = codegen_scope.new_impl(&rust_type_name);

@@ -102,8 +102,9 @@ pub fn generate_enum(
     let init_packing_context_fn = z_impl.new_fn("zserio_init_packing_context");
     init_packing_context_fn.arg_ref_self();
     init_packing_context_fn.arg("context_node", "&mut PackingContextNode");
+    init_packing_context_fn.ret("Result<()>");
     init_packing_context_fn.line(format!(
-        "context_node.children[0].context.as_mut().unwrap().init(&{}, &(*self as {}));",
+        "context_node.children[0].context.as_mut().unwrap().init(&{}, &(*self as {}))",
         &initialize_array_trait(scope, type_generator, &fundamental_type.fundamental_type),
         &rust_type_type,
     ));

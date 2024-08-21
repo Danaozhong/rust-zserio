@@ -49,8 +49,7 @@ where
     }
 
     fn init_context(&self, context_node: &mut PackingContextNode, element: &T) -> Result<()> {
-        element.zserio_init_packing_context(context_node);
-        Ok(())
+        element.zserio_init_packing_context(context_node)
     }
 
     fn bitsize_of_packed(
