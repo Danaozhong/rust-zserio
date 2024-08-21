@@ -42,5 +42,7 @@ impl ZserioPackableObject for DrinkOrder {
 
     fn zserio_create_packing_context(_: &mut PackingContextNode) {}
 
-    fn zserio_init_packing_context(&self, _: &mut PackingContextNode) {}
+    fn zserio_init_packing_context(&self, _: &mut PackingContextNode) -> Result<()> {
+        Ok(())
+    }
 }

@@ -58,7 +58,7 @@ pub fn encode_type(
         } else if packed {
             // packed encoding
             function.line(format!(
-                "context_node.children[{}].context.as_mut().unwrap().write(&{}, writer, &{});",
+                "context_node.children[{}].context.as_mut().unwrap().write(&{}, writer, &{})?;",
                 field_index,
                 initialize_array_trait(scope, type_generator, fund_type),
                 field_name,
