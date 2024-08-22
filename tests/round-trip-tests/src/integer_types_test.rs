@@ -1,5 +1,5 @@
 use bitreader::BitReader;
-use reference_module_lib::reference_modules::integer_types::integer_types::integer_types_test::IntegerTypesTest;
+use reference_module_lib::reference_modules::integer_types::integer_types::IntegerTypesTest;
 use rust_bitwriter::BitWriter;
 
 use rust_zserio::ztype::ZserioPackableObject;

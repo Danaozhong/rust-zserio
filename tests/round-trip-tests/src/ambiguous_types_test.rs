@@ -1,4 +1,4 @@
-use reference_module_lib::reference_modules::ambiguous_types::main::ambiguous_types_struct::AmbiguousTypesStruct;
+use reference_module_lib::reference_modules::ambiguous_types::main::AmbiguousTypesStruct;
 
 pub fn test_ambiguous_types() {
     // Create a test structure, and assign a new instance.

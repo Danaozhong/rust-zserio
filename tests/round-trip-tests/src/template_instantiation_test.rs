@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::template_instantiation::template_instantiation::{
-    instantiated_struct_1::InstantiatedStruct1, instantiated_struct_2::InstantiatedStruct2,
+    InstantiatedStruct1, InstantiatedStruct2,
 };
 use rust_bitwriter::BitWriter;
 

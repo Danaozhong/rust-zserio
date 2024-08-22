@@ -1,5 +1,5 @@
 use reference_module_lib::reference_modules::parameter_passing_bitmask::parameter_passing_bitmask::{
-    item::Item, some_bit_mask::SomeBitMask, parameter_passing_bitmask::ParameterPassingBitmask
+    Item, SomeBitMask, ParameterPassingBitmask
 };
 
 use bitreader::BitReader;

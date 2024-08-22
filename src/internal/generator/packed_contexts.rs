@@ -165,7 +165,7 @@ pub fn generate_init_packed_context_for_field(
 
     if field_details.native_type.is_marshaler {
         fn_gen.line(format!(
-            "{}.zserio_init_packing_context(&mut context_node.children[{}]);",
+            "{}.zserio_init_packing_context(&mut context_node.children[{}])?;",
             &field_name, field_details.field_index
         ));
     } else if field_details.is_packable {
@@ -175,7 +175,7 @@ pub fn generate_init_packed_context_for_field(
             field_details.field_context_node_name, field_details.field_index
         ));
         fn_gen.line(format!(
-            "{}_delta_context.init(&{}, &{});",
+            "{}_delta_context.init(&{}, &{})?;",
             &field_details.field_context_node_name,
             initialize_array_trait(
                 model_scope,

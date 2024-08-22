@@ -1,4 +1,4 @@
-use reference_module_lib::reference_modules::constants::constants::constant_test_struct::ConstantTestStruct;
+use reference_module_lib::reference_modules::constants::constants::ConstantTestStruct;
 
 pub fn test_constants() {
     // The test structure created in this test generates a function that
