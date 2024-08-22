@@ -76,7 +76,9 @@ pub fn compare_bitlength_calculations_with_python_reference<T: ZserioPackableObj
     // Calculate the packed bitsize
     let mut packing_context = PackingContextNode::new();
     T::zserio_create_packing_context(&mut packing_context);
-    zserio_object.zserio_init_packing_context(&mut packing_context);
+    zserio_object
+        .zserio_init_packing_context(&mut packing_context)
+        .unwrap();
     let actual_packed_bitsize = zserio_object
         .zserio_bitsize_packed(&mut packing_context, 0)
         .unwrap();
