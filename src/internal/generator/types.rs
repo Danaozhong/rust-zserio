@@ -177,32 +177,6 @@ pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
     }
 }
 
-pub fn zserio_type_bit_size(name: &str) -> Result<u8, &'static str> {
-    match name {
-        "int8" => Ok(8),
-        "int16" => Ok(16),
-        "int32" => Ok(32),
-        "int64" => Ok(64),
-        "varint16" => Ok(16),
-        "varint32" => Ok(32),
-        "varint64" => Ok(64),
-        "varint" => Ok(64),
-        "uint8" => Ok(8),
-        "uint16" => Ok(16),
-        "uint32" => Ok(32),
-        "varuint16" => Ok(16),
-        "varuint32" => Ok(32),
-        "varuint64" => Ok(64),
-        "varuint" => Ok(64),
-        "varsize" => Ok(32),
-        "float16" => Ok(16),
-        "float32" => Ok(32),
-        "float64" => Ok(64),
-        "bool" => Ok(1),
-        _ => Err("not found"),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

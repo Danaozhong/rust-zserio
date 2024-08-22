@@ -3,7 +3,7 @@ use crate::internal::ast::zbitmask::ZBitmaskType;
 use crate::internal::ast::evaluate_mixing_native_types::{
     evaluate_mixing_float_types, evaluate_mixing_integer_types,
 };
-use crate::internal::ast::{field::Field, zenum::ZEnum, zstruct::ZStruct};
+use crate::internal::ast::zenum::ZEnum;
 use crate::internal::compiler::fundamental_type::get_fundamental_type;
 use crate::internal::compiler::symbol_scope::{ModelScope, ScopeLocation, Symbol, SymbolReference};
 use crate::internal::parser::gen::zserioparser::{
@@ -18,12 +18,6 @@ use zserio::numbits;
 
 use super::type_reference::TypeReference;
 use super::zfunction::ZFunction;
-
-#[derive(Clone)]
-pub enum CompoundExpressionType {
-    Field(Rc<RefCell<Field>>),
-    ZStruct(Rc<RefCell<ZStruct>>),
-}
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ExpressionFlag {
