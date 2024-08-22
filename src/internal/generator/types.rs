@@ -26,6 +26,7 @@ impl TypeGenerator {
             type_name_cache: HashMap::new(),
         }
     }
+
     pub fn zserio_package_to_rust_module(&mut self, package: &str) -> String {
         assert!(!package.is_empty(), "package type has not been resolved");
 
@@ -81,6 +82,7 @@ impl TypeGenerator {
         )
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_rust_module_name(&mut self, name: &str) -> String {
         // Try to read from cache, if it already exists
         if let Some(converted_module_name) = self.module_name_cache.get(name) {
@@ -93,6 +95,7 @@ impl TypeGenerator {
         rust_module_name
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_rust_type_name(&mut self, name: &str) -> String {
         if let Some(converted_rust_type_name) = self.type_name_cache.get(name) {
             return converted_rust_type_name.clone();
