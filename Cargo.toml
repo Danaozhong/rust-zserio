@@ -9,7 +9,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 authors = ["Clemens Zangl <clemens.zangl@gmail.com>"]
 documentation = "https://docs.rs/rust-zserio"
@@ -19,7 +19,6 @@ license = "BSD-3-Clause"
 
 [package]
 name = "rust-zserio"
-version = "0.0.0"
 edition = "2021"
 authors = ["Clemens Zangl <clemens.zangl@gmail.com>"]
 exclude = [".pre-commit-config.yaml"]
@@ -27,11 +26,6 @@ exclude = [".pre-commit-config.yaml"]
 description = """
 Rust bindings for the zserio serialization protocol.
 """
-
-documentation = "https://docs.rs/rust-zserio"
-homepage = "https://github.com/Danaozhong/rust-zserio"
-repository = "https://github.com/Danaozhong/rust-zserio"
-license = "BSD-3-Clause"
 
 [profile.profiling]
 inherits = "release"
@@ -47,7 +41,7 @@ prettyplease = "0.2.20"
 stringcase = "0.3.0"
 syn = "2.0.74"
 walkdir = "2.3.2"
-zserio = { version = "0.1.0", path = "crates/zserio" }
+zserio = { path = "crates/zserio" }
 
 [dependencies.simple_logger]
 version = "5.0.0"

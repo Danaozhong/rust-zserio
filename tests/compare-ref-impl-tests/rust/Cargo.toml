@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bitreader =  "0.3.8"
+bitreader = "0.3.8"
 rust-bitwriter = "0.0.1"
 reference-module-lib = { path = "../../reference-module-lib" }
 serde_json = "1.0.107"
 serde = { version = "1.0.188", features = ["derive"] }
-zserio = { version = "0.1.0", path = "../../../crates/zserio" }
+zserio = { path = "../../../crates/zserio" }

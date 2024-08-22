@@ -7,10 +7,10 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bitreader =  "0.3.8"
+bitreader = "0.3.8"
 rust-bitwriter = "0.0.1"
 reference-module-lib = { path = "../reference-module-lib" }
-zserio = { version = "0.1.0", path = "../../crates/zserio" }
+zserio = { path = "../../crates/zserio" }
 
 [build-dependencies]
 rust-zserio = { path = "../.." }
