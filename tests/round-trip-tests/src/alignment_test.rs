@@ -2,7 +2,7 @@ use reference_module_lib::reference_modules::alignment::alignment::AlignmentStru
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::{Result, ZserioPackableObject};
+use zserio::{Result, ZserioPackableObject};
 
 pub fn test_alignment() -> Result<()> {
     let mut test_struct = AlignmentStruct::default();

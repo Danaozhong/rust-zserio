@@ -2,7 +2,7 @@ use reference_module_lib::reference_modules::bitmask_test::bitmask_test::{
     BitmaskTest, BitmaskWithZero, SomeBitMask,
 };
 
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;

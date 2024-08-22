@@ -4,7 +4,7 @@ use reference_module_lib::reference_modules::parameter_passing::parameter_passin
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_parameter_passing() {
     // Create a test structure, which uses parameter passing

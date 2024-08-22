@@ -3,7 +3,7 @@ use reference_module_lib::reference_modules::subtyped_dot_expression::test::Test
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_subtyped_dot_expression() {
     let test_struct = TestStruct {

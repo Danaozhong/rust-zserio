@@ -2,8 +2,7 @@ use reference_module_lib::reference_modules::parameterized_array_length::paramet
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableObject;
-use rust_zserio::Result;
+use zserio::{Result, ZserioPackableObject};
 
 pub fn test_parameterized_array_length() -> Result<()> {
     let test_struct = ParameterizedArrayLength {

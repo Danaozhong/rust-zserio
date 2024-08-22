@@ -53,10 +53,12 @@
 //! [rust-lang/rustfmt#5080](https://github.com/rust-lang/rustfmt/issues/5080).
 
 mod error;
-mod ztype;
+mod numbits;
+pub mod ztype;
 
 pub use error::*;
-pub use ztype::*;
+pub use numbits::*;
+pub use ztype::ZserioPackableObject;
 
 pub mod doctest;
 

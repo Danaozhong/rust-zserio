@@ -1,12 +1,11 @@
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::array_traits::packing_context_node::PackingContextNode;
-use rust_zserio::ztype::ZserioPackableObject;
-use rust_zserio::Result;
 use serde::Deserialize;
 use serde_json;
 use std::env;
 use std::path::PathBuf;
+use zserio::ztype::array_traits::packing_context_node::PackingContextNode;
+use zserio::{Result, ZserioPackableObject};
 
 pub fn get_test_directory() -> PathBuf {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

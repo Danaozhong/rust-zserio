@@ -1,8 +1,7 @@
 use bitreader::BitReader;
 use reference_module_lib::reference_modules::offsets::offsets::Offsets;
 use rust_bitwriter::BitWriter;
-
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_offsets() {
     let mut test_struct = Offsets {

@@ -3,10 +3,9 @@ use reference_module_lib::reference_modules::packed_arrays::packed_arrays::{
     BubbleTeaAddons, BubbleTeaSize, DataStruct, PackedArrayWrapper,
 };
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::array_traits::packing_context_node::PackingContextNode;
-
-use rust_zserio::ztype::ZserioPackableObject;
 use std::{fs::File, io::Write};
+use zserio::ztype::array_traits::packing_context_node::PackingContextNode;
+use zserio::ztype::ZserioPackableObject;
 
 fn get_test_data() -> PackedArrayWrapper {
     let mut test_struct = PackedArrayWrapper {

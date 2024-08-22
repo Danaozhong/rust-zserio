@@ -1,5 +1,4 @@
-use rust_zserio::internal::generator::model::generate_model;
-use rust_zserio::internal::model::Model;
+use rust_zserio::{generate_model, Model};
 
 use std::path::Path;
 

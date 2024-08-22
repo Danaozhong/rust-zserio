@@ -10,7 +10,7 @@ publish = false
 bitmask-enum = "2.2.4"
 bitreader =  "0.3.8"
 rust-bitwriter = "0.0.1"
-rust-zserio = { path = "../.." }
+zserio = { version = "0.1.0", path = "../../crates/zserio" }
 
 [build-dependencies]
 rust-zserio = { path = "../.." }

@@ -28,12 +28,6 @@ use reference_module_lib::reference_modules::type_lookup_test::ztype::union_type
 };
 use reference_module_lib::reference_modules::type_lookup_test::ztype::z_type_struct::ZTypeStruct;
 
-use bitreader::BitReader;
-use reference_module_lib::reference_modules::core::instantiations::instantiated_template_struct;
-use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableObject;
-use rust_zserio::Result;
-
 use crate::alignment_test::{test_alignment, test_alignment_roundtrip};
 use crate::ambiguous_types_test::test_ambiguous_types;
 use crate::bitmask_isset_test::{test_bitmask_isset_operator, test_bitmask_isset_round_trip};
@@ -54,6 +48,10 @@ use crate::parameterized_array_length_test::test_parameterized_array_length;
 use crate::subtyped_dot_expression::test_subtyped_dot_expression;
 use crate::type_casts_test::test_type_casts;
 use crate::valueof_operator_test::test_valueof_operator;
+use bitreader::BitReader;
+use reference_module_lib::reference_modules::core::instantiations::instantiated_template_struct;
+use rust_bitwriter::BitWriter;
+use zserio::{Result, ZserioPackableObject};
 
 fn main() {
     test_structure().expect("structure tests failed");

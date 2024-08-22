@@ -4,7 +4,7 @@ use reference_module_lib::reference_modules::optional_values::optional_values::{
 };
 use rust_bitwriter::BitWriter;
 
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_optional_values() {
     let test_struct = OptionalValuesTest {
