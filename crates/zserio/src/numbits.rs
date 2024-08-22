@@ -60,8 +60,8 @@ mod test {
         assert_eq!(bit_length(8), 4);
         assert_eq!(bit_length(32), 6);
         assert_eq!(bit_length(6917529027641081856u64), 63);
-        assert_eq!(bit_length(std::u64::MAX), 64);
-        assert_eq!(bit_length(std::u32::MAX), 32);
+        assert_eq!(bit_length(u64::MAX), 64);
+        assert_eq!(bit_length(u32::MAX), 32);
     }
 
     #[test]
@@ -74,7 +74,7 @@ mod test {
         assert_eq!(numbits(32), 5);
         assert_eq!(numbits(33), 6);
         assert_eq!(numbits(6917529027641081856u64), 63);
-        assert_eq!(numbits(std::u64::MAX), 64);
-        assert_eq!(numbits(std::u32::MAX), 32);
+        assert_eq!(numbits(u64::MAX), 64);
+        assert_eq!(numbits(u32::MAX), 32);
     }
 }
