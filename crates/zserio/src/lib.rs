@@ -18,7 +18,7 @@
 //!     uint32 price;
 //!     optional string extraWishes;
 //!     uint32 extraCharges;
-//!     
+//!
 //!     function uint32 getTotal() {
 //!         return price + extraCharges;
 //!     };
@@ -51,13 +51,14 @@
 //! false`](https://rust-lang.github.io/rustfmt/?version=v1.6.0&search=#format_generated_files)
 //! in `rustfmt.toml` (see
 //! [rust-lang/rustfmt#5080](https://github.com/rust-lang/rustfmt/issues/5080).
-pub mod doctest;
-mod error;
-pub mod internal;
-pub mod ztype;
 
-pub use self::error::*;
-pub use ztype::ZserioPackableObject;
+mod error;
+mod ztype;
+
+pub use error::*;
+pub use ztype::*;
+
+pub mod doctest;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
@@ -69,9 +70,9 @@ use std::path::Path;
 /// # Example
 ///
 /// ```
-/// # use rust_zserio::doctest::DrinkOrder;
+/// # use zserio::doctest::DrinkOrder;
 /// let order = DrinkOrder{ customer_name: "Jane Doe".into() };
-/// let data: Vec<u8> = rust_zserio::to_bytes(&order).expect("can not write data");
+/// let data: Vec<u8> = zserio::to_bytes(&order).expect("can not write data");
 /// ```
 ///
 /// # Errors
@@ -89,12 +90,12 @@ pub fn to_bytes<T: ZserioPackableObject>(v: &T) -> self::error::Result<Vec<u8>> 
 /// # Example
 ///
 /// ```
-/// # use rust_zserio::doctest::DrinkOrder;
+/// # use zserio::doctest::DrinkOrder;
 /// use std::fs::File;
 ///
 /// let order = DrinkOrder{ customer_name: "Jane Doe".into() };
 /// let mut out = File::create("tests/12345678.bin").expect("can not create file");
-/// rust_zserio::to_writer(&mut out, &order).expect("can not write data");
+/// zserio::to_writer(&mut out, &order).expect("can not write data");
 /// ```
 ///
 /// # Errors
@@ -118,9 +119,9 @@ pub fn to_writer<W: std::io::Write, T: ZserioPackableObject>(
 /// Read a smart layer tile from a byte slice.
 ///
 /// ```
-/// # use rust_zserio::doctest::DrinkOrder;
+/// # use zserio::doctest::DrinkOrder;
 /// let data: &[u8] = b"binarydata";
-/// let tile: DrinkOrder = rust_zserio::from_bytes(data).expect("can not parse data");
+/// let tile: DrinkOrder = zserio::from_bytes(data).expect("can not parse data");
 /// println!("{tile:?}");
 /// ```
 ///
@@ -145,11 +146,11 @@ pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T
 /// Read a smart layer tile from a file.
 ///
 /// ```
-/// # use rust_zserio::doctest::DrinkOrder;
+/// # use zserio::doctest::DrinkOrder;
 /// use std::fs::File;
 ///
 /// let file = File::open("tests/12345678.bin").unwrap();
-/// let tile: DrinkOrder = rust_zserio::from_reader(file).unwrap();
+/// let tile: DrinkOrder = zserio::from_reader(file).unwrap();
 /// println!("{tile:?}");
 /// ```
 ///
@@ -172,8 +173,8 @@ pub fn from_reader<R: std::io::Read, T: ZserioPackableObject>(
 /// Read a smart layer tile from a file.
 ///
 /// ```
-/// # use rust_zserio::doctest::DrinkOrder;
-/// let order: DrinkOrder = rust_zserio::from_file("tests/12345678.bin").unwrap();
+/// # use zserio::doctest::DrinkOrder;
+/// let order: DrinkOrder = zserio::from_file("tests/12345678.bin").unwrap();
 /// println!("{order:?}");
 /// ```
 ///

@@ -1,7 +1,11 @@
+#![deny(unused_crate_dependencies)]
+
+mod internal;
+
+use crate::internal::generator::model::generate_model;
+use crate::internal::model::Model;
 use clap::Parser;
 use log::LevelFilter;
-use rust_zserio::internal::generator::model::generate_model;
-use rust_zserio::internal::model::Model;
 use simple_logger::SimpleLogger;
 use std::path::Path;
 

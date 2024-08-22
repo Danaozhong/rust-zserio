@@ -1,7 +1,7 @@
 ///  Gets the minimum number of bits required to encode given number of different values.
 /// For example:
 /// ```rust
-/// use rust_zserio::ztype::numbits;
+/// use zserio::numbits;
 /// assert!(numbits(0) == 0);
 /// assert!(numbits(1) == 1);
 /// assert!(numbits(7) == 3);
@@ -27,7 +27,7 @@ pub fn numbits<T: num::PrimInt>(value: T) -> u8 {
 // of bits needed to represent this number.
 /// For example:
 /// ```rust
-/// use rust_zserio::ztype::bit_length;
+/// use zserio::bit_length;
 /// assert!(bit_length(0) == 0);
 /// assert!(bit_length(1) == 1);
 /// assert!(bit_length(7) == 3);

@@ -11,10 +11,10 @@ use crate::internal::parser::gen::zserioparser::{
     LOGICAL_OR, LPAREN, LSHIFT, LT, MINUS, MODULO, MULTIPLY, NE, NUMBITS, OR, PLUS, QUESTIONMARK,
     RPAREN, RSHIFT, TILDE, VALUEOF, XOR,
 };
-use crate::ztype::numbits;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::string::String;
+use zserio::numbits;
 
 use super::type_reference::TypeReference;
 use super::zfunction::ZFunction;
