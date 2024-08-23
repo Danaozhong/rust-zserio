@@ -95,12 +95,6 @@ pub fn generate_top_level_mod_file(
 
     // Generate the mod.rs file content.
     let mut mod_file_content = String::from("");
-    // https://github.com/Danaozhong/rust-zserio/issues/28
-    // The generated code does not pass clippy format checks.
-    // Fixing these is moved to later, once the generated code works correctly.
-    mod_file_content += "#![allow(clippy::all)]\n";
-    mod_file_content += "#![allow(warnings)]\n";
-
     generate_mod_section(&mut mod_file_content, "", &module_tree_root);
 
     // Generate a "mod.rs" file, if the zserio libraries are generated into a
