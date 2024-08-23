@@ -146,7 +146,6 @@ pub fn generate_package(
     mod_file_content += "#![allow(clippy::field_reassign_with_default)]\n";
     mod_file_content += "#![allow(clippy::needless_borrow)]\n";
     mod_file_content += "#![allow(clippy::format_in_format_args)]\n";
-    mod_file_content += "#![allow(clippy::needless_if)]\n";
     mod_file_content += "#![allow(clippy::double_parens)]\n";
     // In many places we cast the result of a generated expression, which could
     // result in casting to the same type or not using "###_type" notation for
@@ -155,6 +154,7 @@ pub fn generate_package(
     // We have no control over zserio package names people use, so do not
     // complain about generated module names.
     mod_file_content += "#![allow(clippy::module_inception)]\n";
+
     // Sort module names so our output is in a predictable order.
     module_names.sort_unstable();
     for module_name in &module_names {
