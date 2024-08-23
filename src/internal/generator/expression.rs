@@ -11,12 +11,6 @@ use crate::internal::parser::gen::zserioparser::{
     OCTAL_LITERAL, OR, PLUS, QUESTIONMARK, RPAREN, RSHIFT, STRING_LITERAL, TILDE, VALUEOF, XOR,
 };
 
-pub struct ExpressionGenerationResult {
-    pub generated_value: String,
-    pub is_lvalue: bool,
-    pub lvalue_name: String,
-}
-
 pub fn generate_boolean_expression(
     expression: &Expression,
     type_generator: &mut TypeGenerator,
@@ -292,7 +286,7 @@ fn generate_numbits_expression(
     scope: &ModelScope,
 ) -> String {
     format!(
-        "(ztype::numbits({}) as u32)",
+        "(zserio::numbits({}) as u32)",
         generate_expression(expression.operand1.as_ref().unwrap(), type_generator, scope)
     )
 }

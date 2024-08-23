@@ -1,0 +1,15 @@
+[package]
+name = "zserio"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bitreader = "0.3.8"
+duplicate = "1.0.0"
+half = "2.4.1"
+num = "0.4.3"
+rust-bitwriter = "0.0.1"
+thiserror = "1.0.63"
+
+[dev-dependencies]
+rstest = "0.22.0"

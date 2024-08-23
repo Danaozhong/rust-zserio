@@ -3,7 +3,7 @@ use reference_module_lib::reference_modules::template_instantiation::template_in
 };
 use rust_bitwriter::BitWriter;
 
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_ambiguous_types() {
     // Create a test structure, and assign a new instance.

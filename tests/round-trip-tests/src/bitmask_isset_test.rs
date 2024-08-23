@@ -4,7 +4,7 @@ use reference_module_lib::reference_modules::bitmask_isset::bitmask_isset::{
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_bitmask_isset_round_trip() {
     let test_struct = BitmaskTest {

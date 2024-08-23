@@ -26,6 +26,7 @@ impl TypeGenerator {
             type_name_cache: HashMap::new(),
         }
     }
+
     pub fn zserio_package_to_rust_module(&mut self, package: &str) -> String {
         assert!(!package.is_empty(), "package type has not been resolved");
 
@@ -81,6 +82,7 @@ impl TypeGenerator {
         )
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_rust_module_name(&mut self, name: &str) -> String {
         // Try to read from cache, if it already exists
         if let Some(converted_module_name) = self.module_name_cache.get(name) {
@@ -93,6 +95,7 @@ impl TypeGenerator {
         rust_module_name
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn to_rust_type_name(&mut self, name: &str) -> String {
         if let Some(converted_rust_type_name) = self.type_name_cache.get(name) {
             return converted_rust_type_name.clone();
@@ -173,32 +176,6 @@ pub fn zserio_to_rust_type(name: &str) -> Result<String, &'static str> {
         "int" => Ok("i64".into()),
         "extern" => Ok("ztype::ExternType".into()),
         "bytes" => Ok("ztype::BytesType".into()),
-        _ => Err("not found"),
-    }
-}
-
-pub fn zserio_type_bit_size(name: &str) -> Result<u8, &'static str> {
-    match name {
-        "int8" => Ok(8),
-        "int16" => Ok(16),
-        "int32" => Ok(32),
-        "int64" => Ok(64),
-        "varint16" => Ok(16),
-        "varint32" => Ok(32),
-        "varint64" => Ok(64),
-        "varint" => Ok(64),
-        "uint8" => Ok(8),
-        "uint16" => Ok(16),
-        "uint32" => Ok(32),
-        "varuint16" => Ok(16),
-        "varuint32" => Ok(32),
-        "varuint64" => Ok(64),
-        "varuint" => Ok(64),
-        "varsize" => Ok(32),
-        "float16" => Ok(16),
-        "float32" => Ok(32),
-        "float64" => Ok(64),
-        "bool" => Ok(1),
         _ => Err("not found"),
     }
 }

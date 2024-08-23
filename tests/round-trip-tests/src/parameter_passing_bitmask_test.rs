@@ -4,7 +4,7 @@ use reference_module_lib::reference_modules::parameter_passing_bitmask::paramete
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ztype::ZserioPackableObject;
 
 pub fn test_passing_bitmask_parameter() {
     // Create a test structure, which uses parameter passing

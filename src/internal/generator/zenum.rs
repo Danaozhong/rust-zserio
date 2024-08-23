@@ -81,8 +81,10 @@ pub fn generate_enum(
         enum_value += 1;
     }
 
-    from_int_fn
-        .line(format!("_ => Err(rust_zserio::ZserioError::DataError(format!(\"unexpected value for {}: {{}}\", v))),", rust_type_name));
+    from_int_fn.line(format!(
+        "_ => Err(zserio::ZserioError::DataError(format!(\"unexpected value for {}: {{}}\", v))),",
+        rust_type_name
+    ));
 
     from_int_fn.line("}");
 

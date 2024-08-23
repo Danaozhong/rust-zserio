@@ -1,43 +1,5 @@
-///  Gets the minimum number of bits required to encode given number of different values.
-/// For example:
-/// ```rust
-/// use rust_zserio::ztype::numbits;
-/// assert!(numbits(0) == 0);
-/// assert!(numbits(1) == 1);
-/// assert!(numbits(7) == 3);
-/// assert!(numbits(8) == 3);
-/// assert!(numbits(9) == 4);
-/// assert!(numbits(32) == 5);
-/// assert!(numbits(33) == 6);
-/// assert!(numbits(6917529027641081856u64) == 63);
-/// assert!(numbits(std::u64::MAX) == 64);
-/// assert!(numbits(std::u32::MAX) == 32);
-/// ```
-pub fn numbits<T: num::PrimInt>(value: T) -> u8 {
-    if T::is_zero(&value) {
-        return 0;
-    }
-    if T::is_one(&value) {
-        return 1;
-    }
-    bit_length(value - T::from(1).expect("failed to subtract 1"))
-}
-
 // Calculates the bit length of an integer type, i.e. the numbers
 // of bits needed to represent this number.
-/// For example:
-/// ```rust
-/// use rust_zserio::ztype::bit_length;
-/// assert!(bit_length(0) == 0);
-/// assert!(bit_length(1) == 1);
-/// assert!(bit_length(7) == 3);
-/// assert!(bit_length(8) == 4);
-/// assert!(bit_length(8) == 4);
-/// assert!(bit_length(32) == 6);
-/// assert!(bit_length(6917529027641081856u64) == 63);
-/// assert!(bit_length(std::u64::MAX) == 64);
-/// assert!(bit_length(std::u32::MAX) == 32);
-/// ```
 pub fn bit_length<T: num::PrimInt>(value: T) -> u8 {
     let mut x = value.to_u64().expect("failed to convert to u64");
     let mut n = 0u8;
@@ -73,3 +35,46 @@ const BIT_LENGTH_BYTE: &str = "\x00\x01\x02\x02\x03\x03\x03\x03\x04\x04\x04\x04\
  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\
  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08";
+
+/// Gets the minimum number of bits required to encode given number of different values.
+pub fn numbits<T: num::PrimInt>(value: T) -> u8 {
+    if T::is_zero(&value) {
+        return 0;
+    }
+    if T::is_one(&value) {
+        return 1;
+    }
+    bit_length(value - T::from(1).expect("failed to subtract 1"))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_bit_length() {
+        assert_eq!(bit_length(0), 0);
+        assert_eq!(bit_length(1), 1);
+        assert_eq!(bit_length(7), 3);
+        assert_eq!(bit_length(8), 4);
+        assert_eq!(bit_length(8), 4);
+        assert_eq!(bit_length(32), 6);
+        assert_eq!(bit_length(6917529027641081856u64), 63);
+        assert_eq!(bit_length(u64::MAX), 64);
+        assert_eq!(bit_length(u32::MAX), 32);
+    }
+
+    #[test]
+    fn test_numbits() {
+        assert_eq!(numbits(0), 0);
+        assert_eq!(numbits(1), 1);
+        assert_eq!(numbits(7), 3);
+        assert_eq!(numbits(8), 3);
+        assert_eq!(numbits(9), 4);
+        assert_eq!(numbits(32), 5);
+        assert_eq!(numbits(33), 6);
+        assert_eq!(numbits(6917529027641081856u64), 63);
+        assert_eq!(numbits(u64::MAX), 64);
+        assert_eq!(numbits(u32::MAX), 32);
+    }
+}

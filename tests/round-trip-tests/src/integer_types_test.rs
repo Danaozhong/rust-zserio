@@ -2,7 +2,7 @@ use bitreader::BitReader;
 use reference_module_lib::reference_modules::integer_types::integer_types::IntegerTypesTest;
 use rust_bitwriter::BitWriter;
 
-use rust_zserio::ztype::ZserioPackableObject;
+use zserio::ZserioPackableObject;
 
 pub fn test_integer_types() {
     let test_struct = IntegerTypesTest {

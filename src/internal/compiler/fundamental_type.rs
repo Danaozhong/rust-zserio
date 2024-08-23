@@ -3,7 +3,6 @@ use crate::internal::compiler::symbol_scope::{ModelScope, Symbol, SymbolReferenc
 
 pub struct FundamentalZserioTypeReference {
     pub fundamental_type: Box<TypeReference>,
-    pub requires_cast: bool,
     pub is_marshaler: bool,
 }
 
@@ -16,7 +15,6 @@ pub fn get_fundamental_type(
     type_ref: &TypeReference,
     scope: &ModelScope,
 ) -> Box<FundamentalZserioTypeReference> {
-    let mut requires_cast = false;
     let mut is_marshaler = false;
 
     let mut current_type_ref = type_ref.clone();
@@ -25,7 +23,6 @@ pub fn get_fundamental_type(
         if current_type_ref.is_builtin {
             return Box::new(FundamentalZserioTypeReference {
                 fundamental_type: Box::new(current_type_ref),
-                requires_cast,
                 is_marshaler,
             });
         }
@@ -57,12 +54,9 @@ pub fn get_fundamental_type(
             // If the type is a marshaller type, return the type reference
             return Box::new(FundamentalZserioTypeReference {
                 fundamental_type: Box::from(current_type_ref),
-                requires_cast,
                 is_marshaler,
             });
         }
-
-        requires_cast = true;
     }
 }
 

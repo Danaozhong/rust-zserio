@@ -1,6 +1,5 @@
 use crate::error::Result;
 use bitreader::BitReader;
-use rstest::rstest;
 
 pub fn read_varint16(reader: &mut BitReader) -> Result<i16> {
     read_sized_int(reader, 2).map(|v| v as i16)
@@ -43,9 +42,10 @@ fn read_sized_int(reader: &mut BitReader, bit_length: u8) -> Result<i64> {
     Ok(value)
 }
 
+#[cfg(test)]
 mod tests {
-
     use super::*;
+    use rstest::rstest;
 
     #[rstest]
     #[case(vec![0x0], 0)] // zero

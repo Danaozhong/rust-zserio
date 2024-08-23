@@ -42,6 +42,7 @@ fn read_sized_uint(reader: &mut BitReader, num_byes: u8) -> Result<u64> {
     Ok(value)
 }
 
+#[cfg(test)]
 mod tests {
     // Due to how rstest works rust will incorrectly warn about super::* being an
     // unused import.

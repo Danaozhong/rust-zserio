@@ -1,7 +1,8 @@
+use crate::bit_length;
 use crate::error::Result;
 use crate::ztype::array_traits::array_trait::ArrayTrait;
 use crate::ztype::bits_decode::read_signed_bits;
-use crate::ztype::{self, bit_length, read_unsigned_bits};
+use crate::ztype::{self, read_unsigned_bits};
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
