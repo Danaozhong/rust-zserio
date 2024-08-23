@@ -14,7 +14,7 @@ is not open source.
 - unit tests for the compiler. You can run this with `cargo test -p zserio-cli`.
 - round trip tests. These test that serializing data to zserio and then
   deserializing it again results in the exact same data. You can run these
-  by running `cargo test -p round-trip-tests`.
+  by running `cargo run -p round-trip-tests`.
 - `tests-compare-ref-impl-tests` compares `rust-zserio` with the reference
   Python zserio implementation.
 
@@ -27,8 +27,8 @@ The simplest way to do this is using [uv](https://docs.astral.sh/uv/)
 uv tool install zserio==2.11.0
 ```
 
-You can now generate the test data using the Python code. *Please note that
-Python 3.12 is currently not supported.*
+You can now generate the test data using the Python code. _Please note that
+Python 3.12 is currently not supported._
 
 ```sh
 cd tests/compare-ref-impl-tests/python
