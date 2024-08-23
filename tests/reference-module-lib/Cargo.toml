@@ -13,4 +13,4 @@ rust-bitwriter = "0.0.1"
 zserio = { path = "../../crates/zserio" }
 
 [build-dependencies]
-rust-zserio = { path = "../.." }
+zserio-cli = { path = "../../crates/zserio-cli" }

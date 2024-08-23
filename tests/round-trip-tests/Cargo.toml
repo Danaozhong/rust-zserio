@@ -11,6 +11,3 @@ bitreader = "0.3.8"
 rust-bitwriter = "0.0.1"
 reference-module-lib = { path = "../reference-module-lib" }
 zserio = { path = "../../crates/zserio" }
-
-[build-dependencies]
-rust-zserio = { path = "../.." }

@@ -1,0 +1,27 @@
+[package]
+name = "zserio-cli"
+description = "zserio compiler"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+antlr-rust = "0.3.0-beta"
+clap = { version = "4.2.7", features = ["derive"] }
+codegen = "0.2.0"
+itertools = "0.11.0"
+log = "0.4.22"
+prettyplease = "0.2.20"
+stringcase = "0.3.0"
+syn = "2.0.74"
+walkdir = "2.3.2"
+zserio = { path = "../zserio" }
+
+[dependencies.simple_logger]
+version = "5.0.0"
+default-features = false
+features = ["colors", "stderr"]

@@ -1,8 +1,8 @@
 use clap::Parser;
 use log::LevelFilter;
-use rust_zserio::{generate_model, Model};
 use simple_logger::SimpleLogger;
 use std::path::Path;
+use zserio_cli::{generate_model, Model};
 
 /// zserio generator for rust.
 #[derive(Parser, Debug)]
