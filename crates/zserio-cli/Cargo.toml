@@ -8,6 +8,13 @@ documentation.workspace = true
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
+keywords.workspace = true
+categories = [
+    "encoding",
+    "copmilers",
+    "command-line-utilities",
+    "development-tools::build-utils",
+]
 
 [dependencies]
 antlr-rust = "0.3.0-beta"

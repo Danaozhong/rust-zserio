@@ -10,26 +10,27 @@ is not open source.
 
 `rust-zserio` comes with multiple sets of tests:
 
-- unit tests in the main package. You can run this with `cargo test`.
+- unit tests in the runtime code. You can run this with `cargo test -p zserio`.
+- unit tests for the compiler. You can run this with `cargo test -p zserio-cli`.
 - round trip tests. These test that serializing data to zserio and then
   deserializing it again results in the exact same data. You can run these
-  by running `cargo test` in the `tests/round-trip-tests` folder.
+  by running `cargo test -p round-trip-tests`.
 - `tests-compare-ref-impl-tests` compares `rust-zserio` with the reference
   Python zserio implementation.
 
 ### Verifying against zserio reference implementation
 
 To run the reference comparison test you must install the zserio compiler
-The simplest way to do this is using [pipx](https://pipx.pypa.io/stable/):
+The simplest way to do this is using [uv](https://docs.astral.sh/uv/)
 
-```shell
-pipx install zserio==2.11.0
+```sh
+uv tool install zserio==2.11.0
 ```
 
-You can now generate the test data using the Python code. Please note that
-Python 3.12 is currently not supported.
+You can now generate the test data using the Python code. *Please note that
+Python 3.12 is currently not supported.*
 
-```shell
+```sh
 cd tests/compare-ref-impl-tests/python
 poetry install
 poetry run python main.py
@@ -38,7 +39,7 @@ poetry run python main.py
 The test data can now be found in the `tests/artifacts` folder. Finally you can
 now run the Rust code to verify the rust behavior matches the Python behavior:
 
-```shell
+```sh
 cargo run -p compare-ref-impl-tests
 ```
 
@@ -47,19 +48,19 @@ cargo run -p compare-ref-impl-tests
 The easiest way to profile is to use
 [samply](https://github.com/mstange/samply). You can use `cargo` to install it:
 
-```shell
+```sh
 cargo install --locked samply
 ```
 
 Next step is to compile `rust-zserio` with profiling information:
 
-```shell
+```sh
 cargo build --profile profiling
 ```
 
 you can now run `rust-zserio`:
 
-```shell
+```sh
 samply record ./target/profiling/rust-zserio -o /tmp/sz tests/reference_modules
 ```
 

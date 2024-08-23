@@ -17,6 +17,7 @@ documentation = "https://docs.rs/rust-zserio"
 homepage = "https://github.com/Danaozhong/rust-zserio"
 repository = "https://github.com/Danaozhong/rust-zserio"
 license = "BSD-3-Clause"
+keywords = ["zserio", "serialization", "nds", "ndslive"]
 
 [profile.profiling]
 inherits = "release"
