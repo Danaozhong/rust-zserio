@@ -4,7 +4,7 @@ resolver = "2"
 members = [
     "crates/rust-zserio",
     "crates/zserio",
-    "crates/zserio-cli",
+    "crates/zserio-rs-build",
     "tests/reference-module-lib",
     "tests/round-trip-tests",
     "tests/compare-ref-impl-tests/rust",

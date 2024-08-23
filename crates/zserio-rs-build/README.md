@@ -7,10 +7,10 @@ support.
 
 ## Quick Start
 
-Install zserio-cli using:
+Install zserio-rs-build using:
 
 ```sh
-cargo install zserio-cli
+cargo install zserio-rs-build
 ```
 
 ## Generate zserio Bindings
@@ -18,7 +18,7 @@ cargo install zserio-cli
 The code generator is executed using the following command:
 
 ```sh
-zserio-cli =<code_root_path> -o=<output_directory> <path_to_zserio_files>
+zserio-rs-build =<code_root_path> -o=<output_directory> <path_to_zserio_files>
 ```
 
 This will generate the files needed to read/write `zserio`-encoded binary data.
@@ -32,4 +32,4 @@ containing the generated code:
 cargo add zserio
 ```
 
-The version of the `zserio` crate used must match the version of `zserio-cli` used.
+The version of the `zserio` crate used must match the version of `zserio-rs-build` used.
