@@ -1,4 +1,4 @@
-use rust_zserio::{generate_model, Model};
+use zserio_rs_build::{generate_model, Model};
 
 use std::path::Path;
 

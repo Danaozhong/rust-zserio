@@ -1,26 +1,26 @@
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use log::LevelFilter;
-use rust_zserio::{generate_model, Model};
 use simple_logger::SimpleLogger;
 use std::path::Path;
+use zserio_rs_build::{generate_model, Model};
 
-/// zserio generator for rust.
 #[derive(Parser, Debug)]
-#[command(version = None)]
+#[command(about, version)]
 struct Args {
     /// Output verbosity
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
 
     /// Directory where to generate the zserio interface files.
-    #[arg(short, long)]
+    #[arg(short, long, value_name="PATH", value_hint=ValueHint::DirPath)]
     out: String,
 
     /// Enforces a top-level crate path. Leave empty for no custom crate prefix.
-    #[arg(short, long, default_value_t=String::from(""))]
+    #[arg(short, long, value_name="CRATE_PATH", default_value_t=String::from(""))]
     root: String,
 
     /// Input directory where the zserio files are located.
+    #[arg(value_name="PATH", value_hint=ValueHint::DirPath)]
     zserio_path: String,
 }
 

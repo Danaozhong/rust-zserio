@@ -223,5 +223,6 @@ mod tests {
         assert_eq!(tg.convert_field_name("simple"), "simple");
         assert_eq!(tg.convert_field_name("numItems"), "num_items");
         assert_eq!(tg.convert_field_name("boValue1"), "bo_value_1");
+        assert_eq!(tg.convert_field_name("positions2D"), "positions_2_d");
     }
 }

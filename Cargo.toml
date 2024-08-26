@@ -1,8 +1,10 @@
 [workspace]
+resolver = "2"
 
 members = [
+    "crates/rust-zserio",
     "crates/zserio",
-    ".",
+    "crates/zserio-rs-build",
     "tests/reference-module-lib",
     "tests/round-trip-tests",
     "tests/compare-ref-impl-tests/rust",
@@ -16,34 +18,8 @@ documentation = "https://docs.rs/rust-zserio"
 homepage = "https://github.com/Danaozhong/rust-zserio"
 repository = "https://github.com/Danaozhong/rust-zserio"
 license = "BSD-3-Clause"
-
-[package]
-name = "rust-zserio"
-edition = "2021"
-authors = ["Clemens Zangl <clemens.zangl@gmail.com>"]
-exclude = [".pre-commit-config.yaml"]
-
-description = """
-Rust bindings for the zserio serialization protocol.
-"""
+keywords = ["zserio", "serialization", "nds", "ndslive"]
 
 [profile.profiling]
 inherits = "release"
 debug = true
-
-[dependencies]
-antlr-rust = "0.3.0-beta"
-clap = { version = "4.2.7", features = ["derive"] }
-codegen = "0.2.0"
-itertools = "0.11.0"
-log = "0.4.22"
-prettyplease = "0.2.20"
-stringcase = "0.3.0"
-syn = "2.0.74"
-walkdir = "2.3.2"
-zserio = { path = "crates/zserio" }
-
-[dependencies.simple_logger]
-version = "5.0.0"
-default-features = false
-features = ["colors", "stderr"]

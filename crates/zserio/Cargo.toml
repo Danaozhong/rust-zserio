@@ -1,7 +1,15 @@
 [package]
 name = "zserio"
-version = "0.1.0"
-edition = "2021"
+description = "Runtime support for zserio"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories = ["encoding"]
 
 [dependencies]
 bitreader = "0.3.8"

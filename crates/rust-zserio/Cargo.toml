@@ -1,0 +1,14 @@
+[package]
+name = "rust_zserio"
+description = "[OBSELETE] Rust zserio support"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+cargo-util = "0.2.13"
