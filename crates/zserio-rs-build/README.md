@@ -1,8 +1,8 @@
-# zserio-cli
+# zserio-rs-build
 
 A [zserio](http://zserio.org/) compiler for Rust. This provides the
-`zserio-cli` tool to generate Rust code for a zserio schema. The generated code
-will use the [zserio](https://crates.io/crates/zserio) crate for runtime
+`zserio-rs-build` tool to generate Rust code for a zserio schema. The generated
+code will use the [zserio](https://crates.io/crates/zserio) crate for runtime
 support.
 
 ## Quick Start

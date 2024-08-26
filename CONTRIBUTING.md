@@ -11,7 +11,8 @@ is not open source.
 `rust-zserio` comes with multiple sets of tests:
 
 - unit tests in the runtime code. You can run this with `cargo test -p zserio`.
-- unit tests for the compiler. You can run this with `cargo test -p zserio-cli`.
+- unit tests for the compiler. You can run this with `cargo test -p
+  zserio-rs-build`.
 - round trip tests. These test that serializing data to zserio and then
   deserializing it again results in the exact same data. You can run these
   by running `cargo run -p round-trip-tests`.
