@@ -140,6 +140,11 @@ pub fn generate_init_packed_context_for_field(
         return;
     }
 
+    // abort early if we would not generate any code.
+    if !field_details.native_type.is_marshaler && !field_details.is_packable {
+        return;
+    }
+
     if let Some(optional_clause) = &field_details.field.borrow().optional_clause {
         fn_gen.line(format!(
             "if {} {{",
