@@ -1,5 +1,6 @@
-//! [zserio](http://zserio.org/) serialization bindings for rust. `zserio` is a
-//! binary serialization language, similar to Protobuf. The key features are:
+//! [zserio](http://zserio.org/) serialization bindings for rust. `zserio` is a binary
+//! serialization language, similar to Protobuf. The key features are:
+//!
 //! - It features a rich schema.
 //! - Programming language agnostic.
 //! - Compact and easy to use.
@@ -27,18 +28,19 @@
 //! Above code is `zserio` code. Using the `zserio` serialization bindings, this
 //! code can be used to generate C++/Python/Java code to read/write
 //! `zserio`-encoded data. With this crate, it is now possible to read/write
-//! `zserio`-encoded binary data in rust. To compile a `zs` file with
-//! rust-zserio, first install rust-zserio:
+//! `zserio`-encoded binary data in rust. To generate Rust code for a zserio schema
+//! you must first install `zserio-rs-build`:
 //!
 //! ```sh
-//! cargo install rust-zserio
+//! cargo install zserio-rs-build
 //! ```
 //!
 //! Afterwards, you can run the code generator:
 //!
 //! ```sh
-//! rust-zserio --root=<code_root_path> -o=<output_directory> <path_to_zserio_files>
+//! rust-rs-build --root=<code_root_path> -o=<output_directory> <path_to_zserio_files>
 //! ```
+//!
 //! This will generate the interface files in rust, that allow reading/writing
 //! zserio-encoded data.
 //!
