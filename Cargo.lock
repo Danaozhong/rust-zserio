@@ -997,7 +997,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_zserio"
+name = "rust-zserio"
 version = "0.0.0"
 dependencies = [
  "cargo-util",

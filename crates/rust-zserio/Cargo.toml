@@ -1,5 +1,5 @@
 [package]
-name = "rust_zserio"
+name = "rust-zserio"
 description = "[OBSELETE] Rust zserio support"
 version.workspace = true
 edition.workspace = true
