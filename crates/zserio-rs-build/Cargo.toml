@@ -11,7 +11,7 @@ license.workspace = true
 keywords.workspace = true
 categories = [
     "encoding",
-    "copmilers",
+    "compilers",
     "command-line-utilities",
     "development-tools::build-utils",
 ]
