@@ -44,6 +44,7 @@ pub mod reference_modules {
         pub mod packed_arrays;
     }
     pub mod parameter_passing {
+        pub mod function_parameter;
         pub mod index_operator;
         pub mod parameter_passing;
     }
