@@ -5,7 +5,7 @@ use std::{io, result};
 use thiserror::Error;
 
 /// Result type for zserio errors.
-pub type Result<T> = result::Result<T, ZserioError>;
+pub type Result<T, E = ZserioError> = result::Result<T, E>;
 
 /// Error enumeration of zserio errors.
 #[derive(Debug, Error)]

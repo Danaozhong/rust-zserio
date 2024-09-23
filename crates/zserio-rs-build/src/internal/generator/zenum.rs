@@ -59,11 +59,13 @@ pub fn generate_enum(
         enum_value += 1;
     }
 
-    let enum_impl = gen_scope.new_impl(&rust_type_name);
-    // Generate a function to create a new instance of the enum from an integer type
-    let from_int_fn = enum_impl.new_fn("from_int");
+    let tryfrom_impl = gen_scope
+        .new_impl(&rust_type_name)
+        .impl_trait("TryFrom<i64>");
+    tryfrom_impl.associate_type("Error", "zserio::ZserioError");
+    let from_int_fn = tryfrom_impl.new_fn("try_from");
     from_int_fn.arg("v", "i64");
-    from_int_fn.ret("Result<Self>");
+    from_int_fn.ret("Result<Self, Self::Error>");
     from_int_fn.line("match v {");
 
     let mut enum_value = 0;
@@ -148,7 +150,7 @@ fn generate_zserio_read(
         0,
         false,
     );
-    zserio_read_fn.line(format!("*self = {rust_type_name}::from_int(v as i64)?;",));
+    zserio_read_fn.line(format!("*self = {rust_type_name}::try_from(v as i64)?;",));
     zserio_read_fn.line("Ok(())");
 
     let zserio_read_packed_fn = struct_impl.new_fn("zserio_read_packed");
@@ -170,7 +172,7 @@ fn generate_zserio_read(
         0,
         true,
     );
-    zserio_read_packed_fn.line(format!("*self = {rust_type_name}::from_int(v as i64)?;",));
+    zserio_read_packed_fn.line(format!("*self = {rust_type_name}::try_from(v as i64)?;",));
     zserio_read_packed_fn.line("Ok(())");
 }
 
