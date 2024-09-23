@@ -34,7 +34,9 @@ pub fn generate_enum(
     gen_enum.derive("Default");
     gen_enum.derive("Clone");
     gen_enum.derive("Copy");
+    gen_enum.derive("Hash");
     gen_enum.derive("PartialEq");
+    gen_enum.derive("Eq");
 
     let mut enum_value = 0;
     let mut first_option = true;
