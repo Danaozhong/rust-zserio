@@ -1,0 +1,22 @@
+version = 1
+requires-python = "==3.11.*"
+
+[[package]]
+name = "rust-zserio-compare-to-reference-implementation-test"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "zserio" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "zserio", specifier = "~=2.11" }]
+
+[[package]]
+name = "zserio"
+version = "2.14.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/74/ad685abc74b96710f0ca8cac0dfff02363f504ce742846ad8d31b4393b97/zserio-2.14.1.tar.gz", hash = "sha256:382ee0193c7c155f79198942298a1ab44469d72da1a2e2b0d33b9163709ad368", size = 7871 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/3e/96bd36b8faca10175983c75b511371ca98ad26620e2aab95bdce63da10e6/zserio-2.14.1-py3-none-any.whl", hash = "sha256:c5b31e5b418ef81419a089cfdac383946bb67f12db89fa8e7c054031d83f430d", size = 4721895 },
+]

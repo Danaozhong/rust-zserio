@@ -1,16 +1,6 @@
-[tool.poetry]
+[project]
 name = "rust-zserio-compare-to-reference-implementation-test"
 version = "0.1.0"
-description = ""
-authors = ["Clemens Zangl"]
 readme = "README.md"
-package-mode = false
-
-[tool.poetry.dependencies]
-python = "^3.10, <3.12"
-zserio = "~2.11"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.11, <3.12"
+dependencies = ["zserio~=2.11.0"]
