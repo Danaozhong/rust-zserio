@@ -52,13 +52,13 @@ impl<T> Array<T> {
 
             // Actually write the data.
             for (index, element) in data.iter().enumerate() {
-                align_array_element_writer(writer, index, index_offsets);
+                align_array_element_writer(writer, index, index_offsets)?;
                 self.array_trait
                     .write_packed(&mut packing_context_node, writer, element)?;
             }
         } else {
             for (index, element) in data.iter().enumerate() {
-                align_array_element_writer(writer, index, index_offsets);
+                align_array_element_writer(writer, index, index_offsets)?;
                 self.array_trait.write(writer, element)?;
             }
         }
@@ -83,7 +83,7 @@ impl<T> Array<T> {
                 // Create the packing context, and all child-contexts
                 let mut packing_context_node = self.array_trait.create_context();
                 for (index, data_item) in data.iter_mut().enumerate() {
-                    align_array_element_reader(reader, index, index_offsets);
+                    align_array_element_reader(reader, index, index_offsets)?;
                     self.array_trait.read_packed(
                         &mut packing_context_node,
                         reader,
@@ -93,7 +93,7 @@ impl<T> Array<T> {
                 }
             } else {
                 for (index, data_item) in data.iter_mut().enumerate() {
-                    align_array_element_reader(reader, index, index_offsets);
+                    align_array_element_reader(reader, index, index_offsets)?;
                     self.array_trait.read(reader, data_item, index)?;
                 }
             }
@@ -187,21 +187,23 @@ fn align_array_element_writer<T: OffsetTrait>(
     writer: &mut BitWriter,
     _index: usize,
     index_offsets: Option<&Vec<T>>,
-) {
+) -> Result<()> {
     // A small helper function to byte-align each array element, if desired, during writing.
     if index_offsets.is_some() {
-        align_writer(writer, 8);
+        align_writer(writer, 8)?;
     }
+    Ok(())
 }
 fn align_array_element_reader<T: OffsetTrait>(
     reader: &mut BitReader,
     _index: usize,
     index_offsets: Option<&Vec<T>>,
-) {
+) -> Result<()> {
     // A small helper function to byte-align each array element, if desired, during reading.
     if index_offsets.is_some() {
-        align_reader(reader, 8);
+        align_reader(reader, 8)?;
     }
+    Ok(())
 }
 
 fn align_array_element_bitsize<T: OffsetTrait>(
