@@ -142,7 +142,10 @@ pub fn encode_field(
 
     // Align the byte stream, if alignment is specified.
     if field.alignment != 0 {
-        function.line(format!("ztype::align_writer(writer, {});", field.alignment));
+        function.line(format!(
+            "ztype::align_writer(writer, {})?;",
+            field.alignment
+        ));
     }
 
     // Check if there is an offset set for this field.
@@ -158,7 +161,7 @@ pub fn encode_field(
         );
 
         if !use_indexed_offset {
-            function.line("ztype::align_writer(writer, 8);".to_string());
+            function.line("ztype::align_writer(writer, 8)?;".to_string());
         }
     }
 

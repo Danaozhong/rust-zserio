@@ -134,7 +134,10 @@ pub fn decode_field(
 
     // Align the byte stream, if alignment is specified.
     if field.alignment != 0 {
-        function.line(format!("ztype::align_reader(reader, {});", field.alignment));
+        function.line(format!(
+            "ztype::align_reader(reader, {})?;",
+            field.alignment
+        ));
     }
 
     // Check if there is an offset set for this field.
@@ -150,7 +153,7 @@ pub fn decode_field(
         );
 
         if !use_indexed_offset {
-            function.line("ztype::align_reader(reader, 8);");
+            function.line("ztype::align_reader(reader, 8)?;");
         }
     }
 
