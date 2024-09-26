@@ -34,19 +34,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "0.4.16"
+
       - name: Install dependencies
-        run: pip install "zserio==2.11.0"
+        run: uv tool install "zserio==2.11.0"
+
       - name: Generate python zserio bindings
         run: |
           cd tests
           ./gen_reference_modules.sh
+
       - name: Generate the artifacts using Python
         run: |
           cd tests/compare-ref-impl-tests/python
-          poetry install
-          poetry run python main.py
+          uv run main.py
+
       - name: Run the rust test cases to read the python artifacts
         run: cargo run -p compare-ref-impl-tests
 

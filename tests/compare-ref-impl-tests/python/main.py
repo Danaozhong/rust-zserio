@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.11,<3.12"
+# dependencies = [
+#     "zserio~=2.11.0",
+# ]
+# ///
 from packed_arrays_test import test_packed_arrays
 from offsets_test import test_offsets
 
