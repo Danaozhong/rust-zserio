@@ -1,5 +1,4 @@
 use crate::internal::ast::field::Field;
-
 use crate::internal::ast::type_reference::TypeReference;
 use crate::internal::compiler::fundamental_type::{
     get_fundamental_type, FundamentalZserioTypeReference,
@@ -55,6 +54,18 @@ impl FieldDetails {
             field_context_node_name,
             is_packable,
         }
+    }
+
+    /// Return the full rust type, with Option and Vec wrappers.
+    pub fn full_rust_type(&self) -> String {
+        let mut field_type = self.rust_type.clone();
+        if self.field.borrow().array.is_some() {
+            field_type = format!("Vec<{}>", &field_type);
+        }
+        if self.field.borrow().is_optional {
+            field_type = format!("Option<{}>", &field_type);
+        }
+        field_type
     }
 }
 
@@ -195,5 +206,64 @@ pub fn generate_init_packed_context_for_field(
     }
     if field_details.field.borrow().optional_clause.is_some() {
         fn_gen.line("}");
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::internal::ast::field::{Array, Field};
+    use crate::internal::ast::type_reference::TypeReference;
+    use crate::internal::compiler::fundamental_type::FundamentalZserioTypeReference;
+
+    #[test]
+    fn test_full_rust_type() {
+        let type_ref = TypeReference {
+            is_builtin: false,
+            package: String::new(),
+            name: "i32".into(),
+            bits: 32,
+            template_arguments: Vec::new(),
+            type_arguments: Vec::new(),
+            length_expression: None,
+        };
+
+        let field = FieldDetails {
+            rust_type: "i32".into(),
+            field: Rc::new(RefCell::new(Field {
+                name: "frop".into(),
+                comment: String::new(),
+                is_optional: false,
+                alignment: 0,
+                field_type: Box::new(type_ref.clone()),
+                initializer: None,
+                offset: None,
+                constraint: None,
+                optional_clause: None,
+                array: None,
+                is_offset_field: false,
+            })),
+            field_index: 0,
+            field_name: String::new(),
+            native_type: FundamentalZserioTypeReference {
+                fundamental_type: Box::new(type_ref),
+                is_marshaler: false,
+            },
+            rust_array_type_name: String::new(),
+            field_context_node_name: String::new(),
+            is_packable: false,
+        };
+        assert_eq!(field.full_rust_type(), "i32");
+        field.field.borrow_mut().is_optional = true;
+        assert_eq!(field.full_rust_type(), "Option<i32>");
+        field.field.borrow_mut().is_optional = false;
+        field.field.borrow_mut().array = Some(Array {
+            is_packed: false,
+            is_implicit: false,
+            array_length_expression: None,
+        });
+        assert_eq!(field.full_rust_type(), "Vec<i32>");
+        field.field.borrow_mut().is_optional = true;
+        assert_eq!(field.full_rust_type(), "Option<Vec<i32>>");
     }
 }
