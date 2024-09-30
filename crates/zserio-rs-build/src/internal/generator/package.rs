@@ -146,6 +146,7 @@ pub fn generate_package(
     mod_file_content += "#![allow(clippy::field_reassign_with_default)]\n";
     mod_file_content += "#![allow(clippy::needless_borrow)]\n";
     mod_file_content += "#![allow(clippy::format_in_format_args)]\n";
+    mod_file_content += "#![allow(clippy::needless_update)]\n";
     mod_file_content += "#![allow(clippy::double_parens)]\n";
     // In many places we cast the result of a generated expression, which could
     // result in casting to the same type or not using "###_type" notation for

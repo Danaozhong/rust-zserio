@@ -9,4 +9,4 @@ struct Parent {
   {
     return 1;
   }
-}
+};

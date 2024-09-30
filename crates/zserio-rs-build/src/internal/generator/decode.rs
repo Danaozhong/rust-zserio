@@ -124,12 +124,16 @@ pub fn decode_field(
     let raw_field_type = &field_details.rust_type;
     let mut field_type = raw_field_type.clone();
 
+    function.line(format!("// read {} field", field_details.field_name));
     // Check if the field uses an optional clause
     if let Some(optional_clause) = &field.optional_clause {
         function.line(format!(
             "if {} {{",
             generate_boolean_expression(&optional_clause.borrow(), type_generator, scope)
         ));
+    } else {
+        // We always create a block to scope local variables.
+        function.line("{");
     }
 
     // Align the byte stream, if alignment is specified.
@@ -158,13 +162,13 @@ pub fn decode_field(
     }
 
     if field.is_optional {
-        function.line("let present = reader.read_bool().unwrap();");
+        function.line("let present = reader.read_bool()?;");
         function.line("if present {");
 
         // In case the field is optional, create a local variable
         // to store the value temporarily.
         if field.array.is_some() {
-            field_type = format!("Vec<{}>", field_type.as_str());
+            field_type = format!("Vec<{field_type}>");
         }
 
         function.line(format!(
@@ -175,54 +179,23 @@ pub fn decode_field(
         rvalue_field_name = "optional_value".into();
     }
 
-    let array_type_name = array_type_name(&field.name);
-    if field.array.is_some() {
-        // Array fields need to be serialized using the array class, which takes
-        // care of the array delta compression.
-        function.line(format!(
-            "let {}_array_length = {}.zserio_read_array_length(reader)?;",
-            field_details.field_name, array_type_name,
-        ));
-        // initialize the array elements with the default value.
-        function.line(format!(
-            "{} = vec![Default::default(); {}_array_length];",
-            rvalue_field_name, field_details.field_name,
-        ));
-    }
-
-    // Pass the parameters.
-    if !field_details
+    let has_type_parameters = !field_details
         .native_type
         .fundamental_type
         .type_arguments
-        .is_empty()
-    {
+        .is_empty();
+    let mut delay_index_expression = false;
+
+    if !has_type_parameters {
+        function.line(format!(
+            "let initial_value: {} = Default::default();",
+            &raw_field_type
+        ));
+    } else {
         let type_parameters =
             get_type_parameter(scope, &field_details.native_type.fundamental_type);
 
-        // Check if parameters are passed to an array. If yes, a for loop is required.
-        let mut element_name = rvalue_field_name.clone();
-
-        if field.array.is_some() {
-            element_name = String::from("element");
-            let mut parameter_passing_uses_index_operator = false;
-            for type_param in &field_details.native_type.fundamental_type.type_arguments {
-                if does_expression_contains_index_operator(&type_param.borrow()) {
-                    parameter_passing_uses_index_operator = true;
-                    break;
-                }
-            }
-            // Depending on if the @index operator is used, the for loop need an index variable,
-            // to be able to assign the parameters to the correct index.
-            if parameter_passing_uses_index_operator {
-                function.line(format!(
-                    "for (param_index, element) in {}.iter_mut().enumerate() {{",
-                    rvalue_field_name
-                ));
-            } else {
-                function.line(format!("for element in &mut {} {{", rvalue_field_name));
-            }
-        }
+        function.line(format!("let initial_value = {raw_field_type} {{"));
 
         for (param_index, type_argument_rc) in field_details
             .native_type
@@ -232,6 +205,14 @@ pub fn decode_field(
             .enumerate()
         {
             let type_argument = type_argument_rc.borrow();
+            // Index expression can not be set on an initial element that we clone to all
+            // vector items. We skip these here, and fill them in later with a for-loop
+            // over all elements.
+            if field.array.is_some() && does_expression_contains_index_operator(&type_argument) {
+                delay_index_expression = true;
+                continue;
+            }
+
             let type_parameter = &type_parameters[param_index];
             let mut requires_cloning = String::from("");
             if !type_argument.fully_resolved {
@@ -256,24 +237,91 @@ pub fn decode_field(
             }
 
             function.line(format!(
-                "{}.{} = {};",
-                element_name,
+                "{}: {},",
                 type_generator.convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
         }
 
-        if field.array.is_some() {
-            // Close the for-loop used to pass the parameters to the array elements.
-            function.line("}");
+        function.line(" .. Default::default() };".to_string());
+    }
+
+    let array_type_name = array_type_name(&field.name);
+    if field.array.is_some() {
+        // Array fields need to be serialized using the array class, which takes
+        // care of the array delta compression.
+        function.line(format!(
+            "let {}_array_length = {}.zserio_read_array_length(reader)?;",
+            field_details.field_name, array_type_name,
+        ));
+        // initialize the array elements with the default value.
+        function.line(format!(
+            "{} = vec![initial_value; {}_array_length];",
+            rvalue_field_name, field_details.field_name,
+        ));
+    } else {
+        function.line(format!("{rvalue_field_name} = initial_value;"));
+    }
+
+    if delay_index_expression {
+        let type_parameters =
+            get_type_parameter(scope, &field_details.native_type.fundamental_type);
+
+        function.line(format!(
+            "for (param_index, element) in {}.iter_mut().enumerate() {{",
+            rvalue_field_name
+        ));
+
+        for (param_index, type_argument_rc) in field_details
+            .native_type
+            .fundamental_type
+            .type_arguments
+            .iter()
+            .enumerate()
+        {
+            let type_argument = type_argument_rc.borrow();
+            if !does_expression_contains_index_operator(&type_argument) {
+                continue;
+            }
+
+            let type_parameter = &type_parameters[param_index];
+            let mut requires_cloning = String::from("");
+            if !type_argument.fully_resolved {
+                requires_cloning = ".clone()".into();
+            }
+            let mut rvalue = format!(
+                "{}{}",
+                generate_expression(&type_argument, type_generator, scope),
+                requires_cloning
+            );
+
+            if expression_requires_cast(
+                &type_parameter.borrow().zserio_type,
+                type_generator,
+                &type_argument,
+            ) {
+                rvalue = format!(
+                    "{} as {}",
+                    rvalue,
+                    type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+                );
+            }
+
+            function.line(format!(
+                "element.{} = {};",
+                type_generator.convert_field_name(&type_parameter.borrow().name),
+                rvalue,
+            ));
         }
+
+        function.line("}");
     }
 
     if field.array.is_some() {
-        let mut index_offset = String::from("None::<&Vec<u32>>");
-        if use_indexed_offset {
-            index_offset = format!("Some(&{gen_offset_expression})");
-        }
+        let index_offset = match use_indexed_offset {
+            false => String::from("None::<&Vec<u32>>"),
+            true => format!("Some(&{gen_offset_expression})"),
+        };
         function.line(format!(
             "{}.zserio_read(reader, &mut {}, {})?;",
             array_type_name, rvalue_field_name, index_offset,
@@ -298,8 +346,6 @@ pub fn decode_field(
         ));
         function.line("}"); // close the "if present {"
     }
-    // Close the optional clause.
-    if field.optional_clause.is_some() {
-        function.line("}");
-    }
+
+    function.line("}");
 }
