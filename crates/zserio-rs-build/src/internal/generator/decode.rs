@@ -12,6 +12,8 @@ use codegen::Function;
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
+use super::pass_parameters::number_of_fields;
+
 #[allow(clippy::too_many_arguments)]
 pub fn decode_type(
     scope: &ModelScope,
@@ -194,6 +196,8 @@ pub fn decode_field(
     } else {
         let type_parameters =
             get_type_parameter(scope, &field_details.native_type.fundamental_type);
+        let mut fields_remaining =
+            number_of_fields(scope, &field_details.native_type.fundamental_type);
 
         function.line(format!("let initial_value = {raw_field_type} {{"));
 
@@ -241,9 +245,13 @@ pub fn decode_field(
                 type_generator.convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
+            fields_remaining -= 1;
         }
 
-        function.line(" .. Default::default() };".to_string());
+        if fields_remaining > 0 {
+            function.line(" ..Default::default()");
+        }
+        function.line(" };");
     }
 
     let array_type_name = array_type_name(&field.name);
