@@ -20,6 +20,26 @@ pub fn get_type_parameter(
     };
 }
 
+/// Return the number of fields in the rust struct that is generated for this type.
+pub fn number_of_fields(scope: &ModelScope, type_ref: &TypeReference) -> usize {
+    let symbol = scope.get_symbol(type_ref);
+    return match symbol.symbol {
+        Symbol::Choice(zchoice) => {
+            let zchoice = zchoice.borrow();
+            zchoice.cases.len() + zchoice.type_parameters.len()
+        }
+        Symbol::Struct(zstruct) => {
+            let zstruct = zstruct.borrow();
+            zstruct.fields.len() + zstruct.type_parameters.len()
+        }
+        Symbol::Union(zunion) => {
+            let zunion = zunion.borrow();
+            zunion.fields.len() + zunion.type_parameters.len()
+        }
+        _ => 0,
+    };
+}
+
 /// This function checks if an expression (or any sub-expression) contain an @index operator.
 pub fn does_expression_contains_index_operator(expression: &Expression) -> bool {
     let mut expressions_to_check = vec![expression];

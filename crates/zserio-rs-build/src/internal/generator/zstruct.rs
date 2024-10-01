@@ -14,15 +14,8 @@ use codegen::Struct;
 use std::path::Path;
 
 pub fn generate_struct_member_for_field(gen_struct: &mut Struct, field: &FieldDetails) {
-    let mut field_type = field.rust_type.clone();
-    if field.field.borrow().array.is_some() {
-        field_type = format!("Vec<{}>", &field_type);
-    }
-    if field.field.borrow().is_optional {
-        field_type = format!("Option<{}>", &field_type);
-    }
     gen_struct
-        .new_field(&field.field_name, &field_type)
+        .new_field(&field.field_name, field.full_rust_type())
         .vis("pub");
 }
 
