@@ -147,6 +147,11 @@ pub fn generate_package(
     mod_file_content += "#![allow(clippy::needless_borrow)]\n";
     mod_file_content += "#![allow(clippy::format_in_format_args)]\n";
     mod_file_content += "#![allow(clippy::double_parens)]\n";
+    mod_file_content += "#![allow(clippy::neg_multiply)]\n";
+    mod_file_content += "#![allow(clippy::needless_bool)]\n";
+    mod_file_content += "#![allow(clippy::identity_op)]\n";
+    mod_file_content += "#![allow(clippy::from_str_radix_10)]\n";
+    mod_file_content += "#![allow(clippy::bind_instead_of_map)]\n";
     // In many places we cast the result of a generated expression, which could
     // result in casting to the same type or not using "###_type" notation for
     // numeric literals.
