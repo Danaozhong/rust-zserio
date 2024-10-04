@@ -17,7 +17,7 @@ pub fn generate_constant(
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = type_generator.to_rust_module_name(&zconst.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&zconst.name);
 
     add_standard_imports(codegen_scope);
 
@@ -52,12 +52,6 @@ pub fn generate_constant(
     )
     .as_str();
 
-    write_to_file(
-        type_generator,
-        &file_content,
-        path,
-        package_name,
-        &rust_module_name,
-    );
+    write_to_file(&file_content, path, package_name, &rust_module_name);
     rust_module_name
 }

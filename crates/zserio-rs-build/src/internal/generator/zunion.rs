@@ -26,7 +26,7 @@ pub fn generate_struct_member_for_field(
         field_type = format!("Option<{}>", field_type.as_str());
     }
     let gen_field =
-        gen_struct.new_field(type_generator.convert_field_name(&field.name), &field_type);
+        gen_struct.new_field(TypeGenerator::convert_field_name(&field.name), &field_type);
     gen_field.vis("pub");
 }
 
@@ -38,8 +38,8 @@ pub fn generate_union(
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = type_generator.to_rust_module_name(&zunion.name);
-    let rust_type_name = type_generator.to_rust_type_name(&zunion.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&zunion.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zunion.name);
 
     // add the imports
     add_standard_imports(codegen_scope);
@@ -100,7 +100,7 @@ pub fn generate_union(
         // painful in rust due to the lifetime checks.
         // Because I am lazy, this implementation will just copy values over.
         let gen_param_field = gen_union.new_field(
-            type_generator.convert_field_name(&param.as_ref().borrow().name),
+            TypeGenerator::convert_field_name(&param.as_ref().borrow().name),
             param_type,
         );
         gen_param_field.vis("pub");
@@ -146,7 +146,6 @@ pub fn generate_union(
     }
 
     write_to_file(
-        type_generator,
         &codegen_scope.to_string(),
         path,
         package_name,
@@ -163,7 +162,7 @@ pub fn generate_union_match_construct(
     packed: bool,
     f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut Function, &FieldDetails, bool),
 ) {
-    let rust_type_name = type_generator.to_rust_type_name(&zunion.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zunion.name);
     let selector_type_name = format!("{}Selector", &rust_type_name);
 
     code_gen_fn.line("match &self.union_selector {");
@@ -201,7 +200,7 @@ fn generate_zserio_read(
     struct_impl: &mut codegen::Impl,
     union: &ZUnion,
 ) {
-    let rust_type_name = type_generator.to_rust_type_name(&union.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&union.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");

@@ -16,5 +16,5 @@ pub fn generate_model(model: &mut Model, package_directory: &Path, root_package:
     }
 
     // Generate the overall mod file.
-    generate_top_level_mod_file(&mut type_generator, model, package_directory, root_package);
+    generate_top_level_mod_file(model, package_directory, root_package);
 }

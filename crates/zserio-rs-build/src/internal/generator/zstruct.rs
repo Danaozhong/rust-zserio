@@ -27,8 +27,8 @@ pub fn generate_struct(
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = type_generator.to_rust_module_name(&zstruct.name);
-    let rust_type_name = type_generator.to_rust_type_name(&zstruct.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&zstruct.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zstruct.name);
 
     // For each field, convert the names and types to the rust equivalents
     let mut field_details = vec![];
@@ -61,7 +61,7 @@ pub fn generate_struct(
         // painful in rust due to the lifetime checks.
         // Because I am lazy, this implementation will just copy values over.
         let gen_param_field = gen_struct.new_field(
-            type_generator.convert_field_name(&param.as_ref().borrow().name),
+            TypeGenerator::convert_field_name(&param.as_ref().borrow().name),
             param_type,
         );
         gen_param_field.vis("pub");
@@ -114,7 +114,6 @@ pub fn generate_struct(
     }
 
     write_to_file(
-        type_generator,
         &codegen_scope.to_string(),
         path,
         package_name,
