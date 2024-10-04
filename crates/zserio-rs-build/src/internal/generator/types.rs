@@ -1,8 +1,6 @@
 use crate::internal::ast::type_reference::TypeReference;
 use stringcase::Caser;
 
-const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct", "self"];
-
 pub struct TypeGenerator {
     pub root_package_name: String,
 }
@@ -77,11 +75,14 @@ impl TypeGenerator {
     }
 }
 
-pub fn remove_reserved_identifier(name: &str) -> String {
-    if RESERVED_RUST_KEYWORDS.contains(&name.to_lowercase().as_str()) {
-        return format!("z_{}", name);
+#[inline]
+fn remove_reserved_identifier(name: &str) -> &str {
+    match name.to_ascii_lowercase().as_str() {
+        "type" => "z_type",
+        "struct" => "z_struct",
+        "self" => "z_self",
+        _ => name,
     }
-    name.into()
 }
 
 /// Translates a zserio name to a rust constant name.
