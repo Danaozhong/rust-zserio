@@ -242,7 +242,7 @@ pub fn decode_field(
 
             function.line(format!(
                 "{}: {},",
-                type_generator.convert_field_name(&type_parameter.borrow().name),
+                TypeGenerator::convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
             fields_remaining -= 1;
@@ -317,7 +317,7 @@ pub fn decode_field(
 
             function.line(format!(
                 "element.{} = {};",
-                type_generator.convert_field_name(&type_parameter.borrow().name),
+                TypeGenerator::convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
         }
@@ -350,7 +350,7 @@ pub fn decode_field(
     if field.is_optional {
         function.line(format!(
             "self.{} = Option::from(optional_value);",
-            type_generator.convert_field_name(&field.name)
+            TypeGenerator::convert_field_name(&field.name)
         ));
         function.line("}"); // close the "if present {"
     }

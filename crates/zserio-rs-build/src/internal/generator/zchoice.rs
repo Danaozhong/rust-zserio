@@ -24,8 +24,8 @@ pub fn generate_choice(
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = type_generator.to_rust_module_name(&zchoice.name);
-    let rust_type_name = type_generator.to_rust_type_name(&zchoice.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&zchoice.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zchoice.name);
 
     let mut field_details = vec![];
     let mut field_idx = 0;
@@ -71,7 +71,7 @@ pub fn generate_choice(
         // painful in rust due to the lifetime checks.
         // Because I am lazy, this implementation will just copy values over.
         let gen_param_field = gen_choice.new_field(
-            type_generator.convert_field_name(&param.as_ref().borrow().name),
+            TypeGenerator::convert_field_name(&param.as_ref().borrow().name),
             param_type,
         );
         gen_param_field.vis("pub");
@@ -123,7 +123,6 @@ pub fn generate_choice(
     }
 
     write_to_file(
-        type_generator,
         &codegen_scope.to_string(),
         path,
         package_name,
@@ -141,7 +140,7 @@ pub fn generate_choice_match_construct(
     f: &dyn Fn(&ModelScope, &mut TypeGenerator, &mut Function, &FieldDetails, bool),
 ) {
     let selector_name =
-        type_generator.convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
+        TypeGenerator::convert_field_name(&zchoice.selector_expression.as_ref().borrow().text);
     let mut context_node_index = 0;
 
     code_gen_fn.line(format!("match self.{} {{", selector_name));

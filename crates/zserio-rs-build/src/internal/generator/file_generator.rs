@@ -4,19 +4,13 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-pub fn write_to_file(
-    type_generator: &mut TypeGenerator,
-    content: &str,
-    root_path: &Path,
-    zserio_pkg_name: &str,
-    file_name: &str,
-) {
+pub fn write_to_file(content: &str, root_path: &Path, zserio_pkg_name: &str, file_name: &str) {
     let syntax_tree = syn::parse_str(content).expect("can not parse code");
     let formatted_code = prettyplease::unparse(&syntax_tree);
 
     let mut file_path = root_path.to_owned();
     for dir in String::from(zserio_pkg_name).split('.') {
-        file_path = file_path.join(type_generator.to_rust_module_name(dir));
+        file_path = file_path.join(TypeGenerator::to_rust_module_name(dir));
     }
     fs::create_dir_all(file_path.as_path()).expect("mkdir failed");
     let full_path = file_path.join(String::from(file_name) + ".rs");

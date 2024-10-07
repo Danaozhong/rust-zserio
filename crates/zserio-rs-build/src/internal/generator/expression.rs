@@ -208,7 +208,7 @@ fn generate_dot_expression(
             let expr_symbol = op1.symbol.as_ref().unwrap();
             let enum_expression = format!(
                 "{}::{}",
-                type_generator.custom_type_to_rust_type(&expr_symbol.name),
+                TypeGenerator::custom_type_to_rust_type(&expr_symbol.name),
                 convert_to_enum_field_name(&op2.text)
             );
             type_generator.get_full_module_path(&expr_symbol.package, &enum_expression)
@@ -217,7 +217,7 @@ fn generate_dot_expression(
             let bitmask_symbol = op1.symbol.as_ref().unwrap();
             let bitmask_expression = format!(
                 "{}::{}",
-                type_generator.custom_type_to_rust_type(&bitmask_symbol.name),
+                TypeGenerator::custom_type_to_rust_type(&bitmask_symbol.name),
                 convert_to_enum_field_name(&op2.text)
             );
             type_generator.get_full_module_path(&bitmask_symbol.package, &bitmask_expression)
@@ -226,7 +226,7 @@ fn generate_dot_expression(
             let left_operand = generate_expression(op1, type_generator, scope);
             let right_side = match op2.flag {
                 ExpressionFlag::IsDotExpressionRightOperand => {
-                    type_generator.convert_field_name(&op2.text)
+                    TypeGenerator::convert_field_name(&op2.text)
                 }
                 _ => panic!("failed to generate right side of field dot expression"),
             };
@@ -302,31 +302,31 @@ fn generate_identifier_expression(
         Symbol::Field(f) => {
             return format!(
                 "self.{}",
-                type_generator.convert_field_name(&f.borrow().name),
+                TypeGenerator::convert_field_name(&f.borrow().name),
             );
         }
         Symbol::Parameter(p) => {
             return format!(
                 "self.{}",
-                type_generator.convert_field_name(&p.borrow().name)
+                TypeGenerator::convert_field_name(&p.borrow().name)
             )
         }
         Symbol::Function(z_function) => {
             return format!(
                 "self.{}",
-                type_generator.convert_field_name(&z_function.borrow().name)
+                TypeGenerator::convert_field_name(&z_function.borrow().name)
             )
         }
         _ => (),
     }
 
     let rust_symbol_name = match &symbol_ref.symbol {
-        Symbol::Struct(s) => type_generator.custom_type_to_rust_type(&s.borrow().name),
-        Symbol::Choice(c) => type_generator.custom_type_to_rust_type(&c.borrow().name),
-        Symbol::Union(u) => type_generator.custom_type_to_rust_type(&u.borrow().name),
-        Symbol::Enum(e) => type_generator.custom_type_to_rust_type(&e.borrow().name),
-        Symbol::Bitmask(bitmask) => type_generator.custom_type_to_rust_type(&bitmask.borrow().name),
-        Symbol::Const(zconst) => type_generator.constant_type_to_rust_type(&zconst.borrow().name),
+        Symbol::Struct(s) => TypeGenerator::custom_type_to_rust_type(&s.borrow().name),
+        Symbol::Choice(c) => TypeGenerator::custom_type_to_rust_type(&c.borrow().name),
+        Symbol::Union(u) => TypeGenerator::custom_type_to_rust_type(&u.borrow().name),
+        Symbol::Enum(e) => TypeGenerator::custom_type_to_rust_type(&e.borrow().name),
+        Symbol::Bitmask(bitmask) => TypeGenerator::custom_type_to_rust_type(&bitmask.borrow().name),
+        Symbol::Const(zconst) => TypeGenerator::constant_type_to_rust_type(&zconst.borrow().name),
         _ => panic!("unsupported identifier type {:?}", expression.symbol),
     };
     type_generator.get_full_module_path(&symbol_ref.package, &rust_symbol_name)

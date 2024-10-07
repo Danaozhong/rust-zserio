@@ -20,8 +20,8 @@ pub fn generate_bitmask(
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = type_generator.to_rust_module_name(&zbitmask.name);
-    let rust_type_name = type_generator.to_rust_type_name(&zbitmask.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&zbitmask.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zbitmask.name);
     let fundamental_type = get_fundamental_type(&zbitmask.zserio_type, scope);
     let bitmask_rust_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
 
@@ -84,13 +84,7 @@ pub fn generate_bitmask(
     ));
 
     file_content += bitmask_scope.to_string().as_str();
-    write_to_file(
-        type_generator,
-        &file_content,
-        path,
-        package_name,
-        &rust_module_name,
-    );
+    write_to_file(&file_content, path, package_name, &rust_module_name);
     rust_module_name
 }
 

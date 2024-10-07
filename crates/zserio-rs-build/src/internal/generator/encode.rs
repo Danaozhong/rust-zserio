@@ -255,7 +255,7 @@ pub fn encode_field(
             function.line(format!(
                 "assert!({}.{} == {});",
                 &element_name,
-                type_generator.convert_field_name(&type_parameter.borrow().name),
+                TypeGenerator::convert_field_name(&type_parameter.borrow().name),
                 rvalue,
             ));
         }

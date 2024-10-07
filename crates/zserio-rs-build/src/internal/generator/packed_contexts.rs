@@ -32,7 +32,7 @@ impl FieldDetails {
         type_generator: &mut TypeGenerator,
     ) -> Self {
         let field = &field_rc.borrow();
-        let field_name = type_generator.convert_field_name(&field.name);
+        let field_name = TypeGenerator::convert_field_name(&field.name);
         let field_context_node_name = format!("field_{}_node", &field_name);
 
         // confirm if the field can be packed. even in packed mode, some fields

@@ -14,15 +14,14 @@ pub fn generate_subtype(
 ) -> String {
     add_standard_imports(codegen_scope);
 
-    let rust_module_name = type_generator.to_rust_module_name(&subtype.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&subtype.name);
     let type_alias_scope = codegen_scope.new_type_alias(
-        type_generator.to_rust_type_name(&subtype.name),
+        TypeGenerator::to_rust_type_name(&subtype.name),
         type_generator.ztype_to_rust_type(&subtype.zserio_type),
     );
     type_alias_scope.vis("pub");
 
     write_to_file(
-        type_generator,
         &codegen_scope.to_string(),
         path,
         package_name,

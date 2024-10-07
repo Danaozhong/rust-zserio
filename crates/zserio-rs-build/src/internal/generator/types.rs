@@ -1,77 +1,45 @@
 use crate::internal::ast::type_reference::TypeReference;
-use std::{collections::HashMap, result::Result};
 use stringcase::Caser;
-
-const RESERVED_RUST_KEYWORDS: &[&str] = &["type", "struct", "self"];
 
 pub struct TypeGenerator {
     pub root_package_name: String,
-
-    // rust is super-slow in converting strings (e.g.
-    // upper/lower/camel/snake case), we keep track of
-    // all conversions already done, and simply reuse them
-    package_convert_cache: HashMap<String, String>,
-    field_name_cache: HashMap<String, String>,
-    module_name_cache: HashMap<String, String>,
-    type_name_cache: HashMap<String, String>,
 }
 
 impl TypeGenerator {
     pub fn new(root_package_name: String) -> Self {
-        Self {
-            root_package_name,
-            package_convert_cache: HashMap::new(),
-            field_name_cache: HashMap::new(),
-            module_name_cache: HashMap::new(),
-            type_name_cache: HashMap::new(),
-        }
+        Self { root_package_name }
     }
 
     pub fn zserio_package_to_rust_module(&mut self, package: &str) -> String {
         assert!(!package.is_empty(), "package type has not been resolved");
-
-        // Try to read from cache, if it already exists
-        if let Some(converted_package) = self.package_convert_cache.get(package) {
-            return converted_package.clone();
-        }
 
         let mut root_package = String::from("crate");
         if !self.root_package_name.is_empty() {
             root_package = format!("crate::{}", &self.root_package_name);
         }
         for module in package.split('.') {
-            root_package = format!("{}::{}", root_package, self.to_rust_module_name(module));
+            root_package = format!("{}::{}", root_package, Self::to_rust_module_name(module));
         }
-        // Keep the converted string in cache
-        self.package_convert_cache
-            .insert(package.to_owned(), root_package.clone());
         root_package
     }
 
-    pub fn convert_field_name(&mut self, name: &str) -> String {
-        if let Some(converted_field_name) = self.field_name_cache.get(name) {
-            return converted_field_name.clone();
-        }
-        let converted_field_name =
-            remove_reserved_identifier(name).to_snake_case_with_nums_as_word();
-        self.field_name_cache
-            .insert(name.to_owned(), converted_field_name.clone());
-        converted_field_name
+    pub fn convert_field_name(name: &str) -> String {
+        remove_reserved_identifier(name).to_snake_case_with_nums_as_word()
     }
 
     pub fn ztype_to_rust_type(&mut self, ztype: &TypeReference) -> String {
-        if ztype.is_builtin {
-            // the type is a zserio built-in type, such as int32, string, bool
-            return zserio_to_rust_type(&ztype.name)
-                .unwrap_or_else(|_| panic!("type mapping failed {:?}", &ztype.name));
+        match ztype.is_builtin {
+            true => zserio_to_rust_type(&ztype.name)
+                .unwrap_or_else(|_| panic!("type mapping failed {:?}", &ztype.name)),
+            false => {
+                assert!(!ztype.package.is_empty(), "package must be resolved");
+                format!(
+                    "{}::{}",
+                    self.zserio_package_to_rust_module(&ztype.package),
+                    Self::custom_type_to_rust_type(&ztype.name)
+                )
+            }
         }
-        // the type is a custom type, defined in some zserio file.
-        assert!(!ztype.package.is_empty(), "package must be resolved");
-        format!(
-            "{}::{}",
-            self.zserio_package_to_rust_module(&ztype.package),
-            self.custom_type_to_rust_type(&ztype.name)
-        )
     }
 
     pub fn get_full_module_path(&mut self, package: &str, rust_symbol_name: &str) -> String {
@@ -82,52 +50,39 @@ impl TypeGenerator {
         )
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    pub fn to_rust_module_name(&mut self, name: &str) -> String {
-        // Try to read from cache, if it already exists
-        if let Some(converted_module_name) = self.module_name_cache.get(name) {
-            return converted_module_name.clone();
-        }
-
-        let rust_module_name = remove_reserved_identifier(name).to_snake_case_with_nums_as_word();
-        self.module_name_cache
-            .insert(name.to_owned(), rust_module_name.clone());
-        rust_module_name
+    pub fn to_rust_module_name(name: &str) -> String {
+        remove_reserved_identifier(name).to_snake_case_with_nums_as_word()
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    pub fn to_rust_type_name(&mut self, name: &str) -> String {
-        if let Some(converted_rust_type_name) = self.type_name_cache.get(name) {
-            return converted_rust_type_name.clone();
-        }
-        let rust_type_name = remove_reserved_identifier(name).to_pascal_case();
-        self.type_name_cache
-            .insert(name.to_owned(), rust_type_name.clone());
-        rust_type_name
+    pub fn to_rust_type_name(name: &str) -> String {
+        remove_reserved_identifier(name).to_pascal_case()
     }
 
-    pub fn custom_type_to_rust_type(&mut self, name: &str) -> String {
+    pub fn custom_type_to_rust_type(name: &str) -> String {
         format!(
             "{}::{}",
-            self.to_rust_module_name(name),
-            self.to_rust_type_name(name)
+            Self::to_rust_module_name(name),
+            Self::to_rust_type_name(name)
         )
     }
 
-    pub fn constant_type_to_rust_type(&mut self, name: &str) -> String {
+    pub fn constant_type_to_rust_type(name: &str) -> String {
         format!(
             "{}::{}",
-            self.to_rust_module_name(name),
+            Self::to_rust_module_name(name),
             to_rust_constant_name(name)
         )
     }
 }
 
-pub fn remove_reserved_identifier(name: &str) -> String {
-    if RESERVED_RUST_KEYWORDS.contains(&name.to_lowercase().as_str()) {
-        return format!("z_{}", name);
+#[inline]
+fn remove_reserved_identifier(name: &str) -> &str {
+    match name.to_ascii_lowercase().as_str() {
+        "type" => "z_type",
+        "struct" => "z_struct",
+        "self" => "z_self",
+        _ => name,
     }
-    name.into()
 }
 
 /// Translates a zserio name to a rust constant name.
@@ -219,10 +174,12 @@ mod tests {
 
     #[test]
     fn test_convert_field_name() {
-        let mut tg = TypeGenerator::new("tests".into());
-        assert_eq!(tg.convert_field_name("simple"), "simple");
-        assert_eq!(tg.convert_field_name("numItems"), "num_items");
-        assert_eq!(tg.convert_field_name("boValue1"), "bo_value_1");
-        assert_eq!(tg.convert_field_name("positions2D"), "positions_2_d");
+        assert_eq!(TypeGenerator::convert_field_name("simple"), "simple");
+        assert_eq!(TypeGenerator::convert_field_name("numItems"), "num_items");
+        assert_eq!(TypeGenerator::convert_field_name("boValue1"), "bo_value_1");
+        assert_eq!(
+            TypeGenerator::convert_field_name("positions2D"),
+            "positions_2_d"
+        );
     }
 }

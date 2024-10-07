@@ -20,8 +20,8 @@ pub fn generate_enum(
     path: &Path,
     package_name: &str,
 ) -> String {
-    let rust_module_name = type_generator.to_rust_module_name(&zenum.name);
-    let rust_type_name = type_generator.to_rust_type_name(&zenum.name);
+    let rust_module_name = TypeGenerator::to_rust_module_name(&zenum.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zenum.name);
     let fundamental_type = get_fundamental_type(&zenum.enum_type, scope);
     let rust_type_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
 
@@ -116,7 +116,6 @@ pub fn generate_enum(
     ));
 
     write_to_file(
-        type_generator,
         &gen_scope.to_string(),
         path,
         package_name,
@@ -132,7 +131,7 @@ fn generate_zserio_read(
     zenum: &ZEnum,
     fundamental_type: &FundamentalZserioTypeReference,
 ) {
-    let rust_type_name = type_generator.to_rust_type_name(&zenum.name);
+    let rust_type_name = TypeGenerator::to_rust_type_name(&zenum.name);
     let zserio_read_fn = struct_impl.new_fn("zserio_read");
     zserio_read_fn.arg_mut_self();
     zserio_read_fn.arg("reader", "&mut BitReader");

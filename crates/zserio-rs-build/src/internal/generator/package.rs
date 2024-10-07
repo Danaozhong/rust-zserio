@@ -170,11 +170,5 @@ pub fn generate_package(
         mod_file_content += format!("pub use {module_name}::*;\n").as_str();
     }
 
-    write_to_file(
-        type_generator,
-        &mod_file_content,
-        package_directory,
-        package_name,
-        "mod",
-    );
+    write_to_file(&mod_file_content, package_directory, package_name, "mod");
 }
