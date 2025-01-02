@@ -48,7 +48,12 @@ fn generate_mod_section(
     file_content: &mut String,
     mod_name: &str,
     module_tree_node: &Rc<RefCell<ZserioModuleTreeNode>>,
+    skip_rustfmt: bool,
 ) {
+    if skip_rustfmt {
+        *file_content += "#[rustfmt::skip]\n";
+    }
+
     if module_tree_node.borrow().children.is_empty() {
         *file_content += format!("pub mod {};\n", mod_name).as_str();
         return;
@@ -64,7 +69,7 @@ fn generate_mod_section(
         .iter()
         .sorted_by_key(|x| x.0)
     {
-        generate_mod_section(file_content, child_name, child_node);
+        generate_mod_section(file_content, child_name, child_node, false);
     }
 
     if !mod_name.is_empty() {
@@ -86,7 +91,7 @@ pub fn generate_top_level_mod_file(model: &Model, package_directory: &Path, root
 
     // Generate the mod.rs file content.
     let mut mod_file_content = String::from("");
-    generate_mod_section(&mut mod_file_content, "", &module_tree_root);
+    generate_mod_section(&mut mod_file_content, "", &module_tree_root, true);
 
     // Generate a "mod.rs" file, if the zserio libraries are generated into a
     // subdirectory. If the library is generated on the top level, the "lib.rs"
