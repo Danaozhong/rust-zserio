@@ -12,18 +12,18 @@ pub fn get_type_parameter(
     type_ref: &TypeReference,
 ) -> Vec<Rc<RefCell<Parameter>>> {
     let symbol = scope.get_symbol(type_ref);
-    return match symbol.symbol {
+    match symbol.symbol {
         Symbol::Choice(zchoice) => zchoice.borrow().type_parameters.clone(),
         Symbol::Struct(zstruct) => zstruct.borrow().type_parameters.clone(),
         Symbol::Union(zunion) => zunion.borrow().type_parameters.clone(),
         _ => panic!("type cannot be parameterized"),
-    };
+    }
 }
 
 /// Return the number of fields in the rust struct that is generated for this type.
 pub fn number_of_fields(scope: &ModelScope, type_ref: &TypeReference) -> usize {
     let symbol = scope.get_symbol(type_ref);
-    return match symbol.symbol {
+    match symbol.symbol {
         Symbol::Choice(zchoice) => {
             let zchoice = zchoice.borrow();
             zchoice.cases.len() + zchoice.type_parameters.len()
@@ -37,7 +37,7 @@ pub fn number_of_fields(scope: &ModelScope, type_ref: &TypeReference) -> usize {
             zunion.fields.len() + zunion.type_parameters.len()
         }
         _ => 0,
-    };
+    }
 }
 
 /// This function checks if an expression (or any sub-expression) contain an @index operator.

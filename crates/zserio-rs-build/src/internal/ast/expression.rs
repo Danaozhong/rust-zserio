@@ -626,7 +626,7 @@ fn symbol_to_expression_type(
     symbol_reference: &SymbolReference,
     scope: &mut ModelScope,
 ) -> (ExpressionType, Option<TypeReference>) {
-    return match &symbol_reference.symbol {
+    match &symbol_reference.symbol {
         Symbol::Const(z_const) => {
             type_reference_to_expression_type(&z_const.as_ref().borrow().zserio_type, scope)
         }
@@ -651,7 +651,7 @@ fn symbol_to_expression_type(
             type_reference_to_expression_type(&subtype.as_ref().borrow().zserio_type, scope)
         }
         Symbol::Function(z_function) => (ExpressionType::Function(z_function.clone()), None),
-    };
+    }
 }
 
 fn type_reference_to_expression_type(

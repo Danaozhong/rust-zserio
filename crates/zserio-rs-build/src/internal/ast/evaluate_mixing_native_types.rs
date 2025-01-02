@@ -36,7 +36,7 @@ fn get_integer_rank(integer_type: &TypeReference) -> u8 {
     if integer_type.bits != 0 {
         return integer_type.bits;
     }
-    return match integer_type.name.as_str() {
+    match integer_type.name.as_str() {
         "int8" => 8,
         "int16" => 16,
         "int32" => 32,
@@ -54,7 +54,7 @@ fn get_integer_rank(integer_type: &TypeReference) -> u8 {
         "varsize" => 31,
         "varuint" => 64,
         _ => panic!("unexpected integer type {:?}", integer_type),
-    };
+    }
 }
 
 pub fn is_signed(int_type_name: &str) -> bool {
