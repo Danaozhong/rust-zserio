@@ -203,7 +203,7 @@ fn generate_dot_expression(
     let op1 = expression.operand1.as_ref().unwrap();
     let op2 = expression.operand2.as_ref().unwrap();
 
-    return match &op1.result_type {
+    match &op1.result_type {
         ExpressionType::Enum(_) => {
             let expr_symbol = op1.symbol.as_ref().unwrap();
             let enum_expression = format!(
@@ -233,7 +233,7 @@ fn generate_dot_expression(
             format!("{}.{}", &left_operand, right_side,)
         }
         _ => panic!("unsupported dot expression {:?}", op1),
-    };
+    }
 }
 
 fn generate_isset_expression(
