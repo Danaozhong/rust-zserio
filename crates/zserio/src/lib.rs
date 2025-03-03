@@ -63,6 +63,8 @@ pub use numbits::*;
 pub use ztype::ZserioPackableObject;
 
 pub mod doctest;
+#[doc(hidden)]
+pub mod vendor;
 
 use bitreader::BitReader;
 use rust_bitwriter::BitWriter;
