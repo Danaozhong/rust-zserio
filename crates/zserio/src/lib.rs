@@ -118,9 +118,12 @@ pub fn to_writer<W: std::io::Write, T: ZserioPackableObject>(
 
 /// Deserialize an instance of `T` from data.
 ///
+/// This function does not support [parametrized
+/// types](https://zserio.org/doc/ZserioLanguageOverview.html#parameterized-types).
+///
 /// # Example
 ///
-/// Read a smart layer tile from a byte slice.
+/// Read a DrinkOrder from a byte slice.
 ///
 /// ```
 /// # use zserio::doctest::DrinkOrder;
@@ -145,9 +148,12 @@ pub fn from_bytes<T: ZserioPackableObject>(data: &[u8]) -> self::error::Result<T
 /// *The stream will be fully consumed by this function.* Any extra data is
 /// ignored.
 ///
+/// This function does not support [parametrized
+/// types](https://zserio.org/doc/ZserioLanguageOverview.html#parameterized-types).
+///
 /// # Example
 ///
-/// Read a smart layer tile from a file.
+/// Read a DrinkOrder from a file.
 ///
 /// ```
 /// # use zserio::doctest::DrinkOrder;
@@ -174,7 +180,10 @@ pub fn from_reader<R: std::io::Read, T: ZserioPackableObject>(
 ///
 /// # Example
 ///
-/// Read a smart layer tile from a file.
+/// Read a zserio object from a file.
+///
+/// This function does not support [parametrized
+/// types](https://zserio.org/doc/ZserioLanguageOverview.html#parameterized-types).
 ///
 /// ```
 /// # use zserio::doctest::DrinkOrder;
