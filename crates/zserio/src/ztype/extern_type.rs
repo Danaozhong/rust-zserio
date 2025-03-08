@@ -1,5 +1,6 @@
 use crate::error::Result;
 use crate::ztype::reader::read_bytes;
+use crate::ztype::traits::ZserioPackableObject;
 use crate::ztype::writer::write_bytes;
 use crate::ztype::{read_varsize, varsize_bitsize, write_varsize};
 use crate::ZserioError;
@@ -10,6 +11,25 @@ use rust_bitwriter::BitWriter;
 pub struct ExternType {
     pub bit_size: u32,
     pub data_blob: Vec<u8>,
+}
+
+impl ExternType {
+    /// Create a new ExternType instance with data for a zserio object.
+    pub fn from_object<T: ZserioPackableObject>(data: &T) -> Result<Self> {
+        let bit_size: u32 = data
+            .zserio_bitsize(0)?
+            .try_into()
+            .or(Err(ZserioError::DataDoesNotFit))?;
+        let data_blob = crate::to_bytes(data)?;
+        debug_assert_eq!(
+            TryInto::<u32>::try_into(data_blob.len()).or(Err(ZserioError::DataDoesNotFit))?,
+            (bit_size + 7) / 8
+        );
+        Ok(Self {
+            bit_size,
+            data_blob,
+        })
+    }
 }
 
 /// Reads an zserio extern type from a bit stream.
