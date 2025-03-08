@@ -1,8 +1,8 @@
 use codegen::Scope;
 
 pub fn add_standard_imports(scope: &mut Scope) {
-    scope.import("rust_bitwriter", "BitWriter");
-    scope.import("bitreader", "BitReader");
+    scope.import("zserio::vendor", "BitWriter");
+    scope.import("zserio::vendor", "BitReader");
     scope.import("zserio", "Result");
     scope.import("zserio", "ZserioPackableObject");
     scope.import("zserio", "ztype");

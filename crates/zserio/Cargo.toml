@@ -12,6 +12,7 @@ keywords.workspace = true
 categories = ["encoding"]
 
 [dependencies]
+bitmask-enum = "2.2.5"
 bitreader = "0.3.8"
 duplicate = "1.0.0"
 half = "2.4.1"

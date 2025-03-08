@@ -26,7 +26,7 @@ pub fn generate_bitmask(
     let bitmask_rust_type = type_generator.ztype_to_rust_type(&fundamental_type.fundamental_type);
 
     add_standard_imports(gen_scope);
-    gen_scope.import("bitmask_enum", "bitmask");
+    gen_scope.import("zserio::vendor", "bitmask");
 
     let mut file_content = gen_scope.to_string();
     file_content += "\n\n";
