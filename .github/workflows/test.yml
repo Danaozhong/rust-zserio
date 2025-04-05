@@ -38,10 +38,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.5.13"
+          version: "0.6.x"
 
-      - name: Install dependencies
-        run: uv tool install "zserio==2.11.0"
+      - name: Install zserio
+        run: uv tool install "zserio==2.16.0"
 
       - name: Generate python zserio bindings
         run: |

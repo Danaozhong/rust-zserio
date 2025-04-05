@@ -1,7 +1,7 @@
 # /// script
-# requires-python = ">=3.11,<3.12"
+# requires-python = ">=3.11"
 # dependencies = [
-#     "zserio~=2.11.0",
+#     "zserio~=2.16.0",
 # ]
 # ///
 from packed_arrays_test import test_packed_arrays
