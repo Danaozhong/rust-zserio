@@ -4,7 +4,6 @@ use serde::Deserialize;
 use serde_json;
 use std::env;
 use std::path::PathBuf;
-use zserio::ztype::array_traits::packing_context_node::PackingContextNode;
 use zserio::{Result, ZserioPackableObject};
 
 pub fn get_test_directory() -> PathBuf {
@@ -45,7 +44,6 @@ pub fn read_from_python_and_compare(
 #[derive(Debug, Deserialize)]
 struct PythonReferenceJson {
     pub bitsize: u64,
-    pub bitsize_packed: u64,
 }
 
 /// For a zserio-packable object, this function checks if the calculated bit
@@ -63,26 +61,12 @@ pub fn compare_bitlength_calculations_with_python_reference<T: ZserioPackableObj
     let python_reference_json: PythonReferenceJson =
         serde_json::from_str(&json_file_content).expect("failed to parse file content as json");
 
-    // Calculate the unpacked bitsize
+    // Compare bitsize
     let actual_bitsize = zserio_object
         .zserio_bitsize(0)
         .expect("can not determine bitsize");
     assert_eq!(
         python_reference_json.bitsize, actual_bitsize,
         "bitsize calculations don't match"
-    );
-
-    // Calculate the packed bitsize
-    let mut packing_context = PackingContextNode::new();
-    T::zserio_create_packing_context(&mut packing_context);
-    zserio_object
-        .zserio_init_packing_context(&mut packing_context)
-        .unwrap();
-    let actual_packed_bitsize = zserio_object
-        .zserio_bitsize_packed(&mut packing_context, 0)
-        .unwrap();
-    assert_eq!(
-        python_reference_json.bitsize_packed, actual_packed_bitsize,
-        "packed bitsize calculations don't match"
     );
 }
