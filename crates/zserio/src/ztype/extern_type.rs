@@ -23,7 +23,7 @@ impl ExternType {
         let data_blob = crate::to_bytes(data)?;
         debug_assert_eq!(
             TryInto::<u32>::try_into(data_blob.len()).or(Err(ZserioError::DataDoesNotFit))?,
-            (bit_size + 7) / 8
+            bit_size.div_ceil(8)
         );
         Ok(Self {
             bit_size,

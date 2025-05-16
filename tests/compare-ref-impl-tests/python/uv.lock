@@ -1,5 +1,6 @@
 version = 1
-requires-python = "==3.11.*"
+revision = 1
+requires-python = ">=3.11"
 
 [[package]]
 name = "rust-zserio-compare-to-reference-implementation-test"
@@ -10,13 +11,13 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "zserio", specifier = "~=2.11" }]
+requires-dist = [{ name = "zserio", specifier = "~=2.16.0" }]
 
 [[package]]
 name = "zserio"
-version = "2.14.1"
+version = "2.16.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2c/74/ad685abc74b96710f0ca8cac0dfff02363f504ce742846ad8d31b4393b97/zserio-2.14.1.tar.gz", hash = "sha256:382ee0193c7c155f79198942298a1ab44469d72da1a2e2b0d33b9163709ad368", size = 7871 }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/5a/3c7aad6eef7e5294a55036549b4155c0b6e114fae0df05b849aeb5dc711e/zserio-2.16.0.tar.gz", hash = "sha256:892968e06b56b3631c9a2cb494383cd5dd0bcfb13f8910af25cb597057d52764", size = 7865 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/3e/96bd36b8faca10175983c75b511371ca98ad26620e2aab95bdce63da10e6/zserio-2.14.1-py3-none-any.whl", hash = "sha256:c5b31e5b418ef81419a089cfdac383946bb67f12db89fa8e7c054031d83f430d", size = 4721895 },
+    { url = "https://files.pythonhosted.org/packages/67/a5/ac2576849a47e749b3f3cab76fca63c3f8e73598efde877c997ef458e8d7/zserio-2.16.0-py3-none-any.whl", hash = "sha256:d4a86261e4fab7cc942d49dd2526a6b1924ac89a14ceb360446032b64a1c77ff", size = 4728054 },
 ]
