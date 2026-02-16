@@ -14,7 +14,7 @@ categories = ["encoding"]
 [dependencies]
 bitmask-enum = "2.2.5"
 bitreader = "0.3.8"
-duplicate = "1.0.0"
+duplicate = "2.0.1"
 half = "2.4.1"
 num = "0.4.3"
 rust-bitwriter = "0.0.1"
