@@ -27,14 +27,6 @@ impl Default for DeltaContext {
     }
 }
 
-fn abs_difference(x: u64, y: u64) -> u64 {
-    if x < y {
-        y - x
-    } else {
-        x - y
-    }
-}
-
 impl DeltaContext {
     pub fn new() -> DeltaContext {
         DeltaContext {
@@ -59,7 +51,7 @@ impl DeltaContext {
             self.first_element_size = self.unpacked_size;
         } else if self.max_bit_number <= MAX_BIT_NUMBER_LIMIT {
             self.is_packed = true;
-            let delta = abs_difference(array_trait.to_u64(element), self.previous_element);
+            let delta = self.previous_element.abs_diff(array_trait.to_u64(element));
             let max_bit_number = bit_length(delta);
             if max_bit_number > self.max_bit_number {
                 self.max_bit_number = max_bit_number;
