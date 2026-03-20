@@ -23,7 +23,7 @@ impl array_trait::ArrayTrait<bool> for BooleanArrayTrait {
         Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut bool, _index: usize) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut bool) -> Result<()> {
         *value = reader.read_bool()?;
         Ok(())
     }
@@ -75,13 +75,13 @@ impl array_trait::ArrayTrait<bool> for BooleanArrayTrait {
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
         value: &mut bool,
-        index: usize,
+        _index: usize,
     ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index)
+            .read(self, reader, value)
     }
 
     fn write_packed(

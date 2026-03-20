@@ -63,7 +63,7 @@ pub fn decode_type(
         } else if packed {
             // packed decoding
             function.line(format!(
-                "context_node.children[{}].context.as_mut().unwrap().read(&{}, reader, &mut {}, 0)?;",
+                "context_node.children[{}].context.as_mut().unwrap().read(&{}, reader, &mut {})?;",
                 field_index,
                 initialize_array_trait(scope, type_generator, fund_type),
                 rvalue_field_name,

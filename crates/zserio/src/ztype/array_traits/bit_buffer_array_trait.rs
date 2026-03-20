@@ -24,12 +24,7 @@ impl array_trait::ArrayTrait<ztype::ExternType> for BitBufferArrayTrait {
         Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(
-        &self,
-        reader: &mut BitReader,
-        value: &mut ztype::ExternType,
-        _index: usize,
-    ) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut ztype::ExternType) -> Result<()> {
         *value = ztype::read_extern_type(reader)?;
         Ok(())
     }
@@ -85,13 +80,13 @@ impl array_trait::ArrayTrait<ztype::ExternType> for BitBufferArrayTrait {
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
         value: &mut ztype::ExternType,
-        index: usize,
+        _index: usize,
     ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index)
+            .read(self, reader, value)
     }
 
     fn write_packed(
