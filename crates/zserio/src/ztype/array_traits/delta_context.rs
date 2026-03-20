@@ -92,7 +92,6 @@ impl DeltaContext {
         array_traits: &dyn ArrayTrait<T>,
         reader: &mut BitReader,
         value: &mut T,
-        _index: usize,
     ) -> Result<()> {
         if !self.processing_started {
             self.processing_started = true;
@@ -179,7 +178,7 @@ impl DeltaContext {
         reader: &mut BitReader,
         value: &mut T,
     ) -> Result<()> {
-        array_traits.read(reader, value, 0)?; // TODO need to check if the index is needed
+        array_traits.read(reader, value)?;
         self.previous_element = array_traits.to_u64(value);
         Ok(())
     }

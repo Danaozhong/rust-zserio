@@ -24,12 +24,7 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(
-        &self,
-        reader: &mut BitReader,
-        value: &mut ztype::BytesType,
-        _index: usize,
-    ) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut ztype::BytesType) -> Result<()> {
         *value = ztype::read_bytes_type(reader)?;
         Ok(())
     }
@@ -85,13 +80,13 @@ impl array_trait::ArrayTrait<ztype::BytesType> for ByteBufferArrayTrait {
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
         value: &mut ztype::BytesType,
-        index: usize,
+        _index: usize,
     ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index)
+            .read(self, reader, value)
     }
 
     fn write_packed(

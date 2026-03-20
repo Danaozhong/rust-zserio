@@ -27,7 +27,7 @@ where
         Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut T, _index: usize) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut T) -> Result<()> {
         value.zserio_read(reader)
     }
 

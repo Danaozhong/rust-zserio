@@ -30,7 +30,7 @@ impl array_trait::ArrayTrait<name> for BitFieldArrayTrait {
         Ok(bit_position + self.bitsize_of(bit_position, &0)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut name, _index: usize) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut name) -> Result<()> {
         *value = read_signed_bits(reader, self.bitsize_of(0, &0)? as u8)? as name;
         Ok(())
     }
@@ -82,13 +82,13 @@ impl array_trait::ArrayTrait<name> for BitFieldArrayTrait {
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
         value: &mut name,
-        index: usize,
+        _index: usize,
     ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index)
+            .read(self, reader, value)
     }
 
     fn write_packed(

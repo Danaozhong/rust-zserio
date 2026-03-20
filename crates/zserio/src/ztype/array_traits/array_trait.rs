@@ -8,7 +8,7 @@ pub trait ArrayTrait<T> {
     fn needs_bitsizeof_position(&self) -> bool;
     fn bitsize_of(&self, bit_position: u64, value: &T) -> Result<u64>;
     fn initialize_offsets(&self, bit_position: u64, value: &T) -> Result<u64>;
-    fn read(&self, reader: &mut BitReader, value: &mut T, index: usize) -> Result<()>;
+    fn read(&self, reader: &mut BitReader, value: &mut T) -> Result<()>;
     fn write(&self, writer: &mut BitWriter, value: &T) -> Result<()>;
     fn to_u64(&self, value: &T) -> u64;
     #[allow(clippy::wrong_self_convention)]

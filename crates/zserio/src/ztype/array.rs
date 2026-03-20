@@ -94,7 +94,7 @@ impl<T> Array<T> {
             } else {
                 for (index, data_item) in data.iter_mut().enumerate() {
                     align_array_element_reader(reader, index, index_offsets)?;
-                    self.array_trait.read(reader, data_item, index)?;
+                    self.array_trait.read(reader, data_item)?;
                 }
             }
         }

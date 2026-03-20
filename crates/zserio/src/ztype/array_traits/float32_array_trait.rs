@@ -24,7 +24,7 @@ impl array_trait::ArrayTrait<f32> for Float32ArrayTrait {
         Ok(bit_position + self.bitsize_of(bit_position, value)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut f32, _index: usize) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut f32) -> Result<()> {
         *value = ztype::read_float32(reader)?;
         Ok(())
     }
@@ -76,13 +76,13 @@ impl array_trait::ArrayTrait<f32> for Float32ArrayTrait {
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
         value: &mut f32,
-        index: usize,
+        _index: usize,
     ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index)
+            .read(self, reader, value)
     }
 
     fn write_packed(

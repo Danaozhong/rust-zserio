@@ -30,7 +30,7 @@ impl array_trait::ArrayTrait<name> for UnsignedBitFieldArrayTrait {
         Ok(bit_position + self.bitsize_of(bit_position, &0u8)?)
     }
 
-    fn read(&self, reader: &mut BitReader, value: &mut name, _index: usize) -> Result<()> {
+    fn read(&self, reader: &mut BitReader, value: &mut name) -> Result<()> {
         *value = read_unsigned_bits(reader, self.bitsize_of(0, &0u8)? as u8)? as name;
         Ok(())
     }
@@ -82,13 +82,13 @@ impl array_trait::ArrayTrait<name> for UnsignedBitFieldArrayTrait {
         context_node: &mut PackingContextNode,
         reader: &mut BitReader,
         value: &mut name,
-        index: usize,
+        _index: usize,
     ) -> Result<()> {
         context_node
             .context
             .as_mut()
             .unwrap()
-            .read(self, reader, value, index)
+            .read(self, reader, value)
     }
 
     fn write_packed(
