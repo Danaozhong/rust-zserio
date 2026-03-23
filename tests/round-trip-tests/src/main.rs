@@ -1,5 +1,6 @@
 pub mod alignment_test;
 pub mod ambiguous_types_test;
+pub mod array_bounds_test;
 pub mod bitmask_isset_test;
 pub mod bitmask_test;
 pub mod constants_test;
@@ -30,6 +31,9 @@ use reference_module_lib::reference_modules::type_lookup_test::ztype::z_type_str
 
 use crate::alignment_test::{test_alignment, test_alignment_roundtrip};
 use crate::ambiguous_types_test::test_ambiguous_types;
+use crate::array_bounds_test::{
+    test_array_bounds_check_allows_valid_stream, test_array_bounds_check_rejects_oversized_length,
+};
 use crate::bitmask_isset_test::{test_bitmask_isset_operator, test_bitmask_isset_round_trip};
 use crate::bitmask_test::{test_bitmask_values_with_zero, test_bitmasks};
 use crate::constants_test::test_constants;
@@ -86,6 +90,8 @@ fn main() {
     test_valueof_operator();
     test_debug_trait();
     test_offsets();
+    test_array_bounds_check_rejects_oversized_length();
+    test_array_bounds_check_allows_valid_stream();
 }
 
 fn test_structure() -> Result<()> {

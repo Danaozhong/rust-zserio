@@ -12,7 +12,7 @@ use codegen::Function;
 
 use crate::internal::generator::array::{array_type_name, initialize_array_trait};
 
-use super::pass_parameters::number_of_fields;
+use super::pass_parameters::{number_of_data_fields, number_of_fields};
 
 #[allow(clippy::too_many_arguments)]
 pub fn decode_type(
@@ -188,153 +188,239 @@ pub fn decode_field(
         .is_empty();
     let mut delay_index_expression = false;
 
+    let array_type_name = array_type_name(&field.name);
+
     if !has_type_parameters {
-        function.line(format!(
-            "let initial_value: {} = Default::default();",
-            &raw_field_type
-        ));
+        if field.array.is_none() {
+            function.line(format!(
+                "let initial_value: {} = Default::default();",
+                &raw_field_type
+            ));
+        }
     } else {
-        let type_parameters =
-            get_type_parameter(scope, &field_details.native_type.fundamental_type);
-        let mut fields_remaining =
-            number_of_fields(scope, &field_details.native_type.fundamental_type);
-
-        function.line(format!("let initial_value = {raw_field_type} {{"));
-
-        for (param_index, type_argument_rc) in field_details
+        // First, detect whether any type argument uses the index operator — this must be
+        // done even for arrays where we do not emit an `initial_value`.
+        for type_argument_rc in field_details
             .native_type
             .fundamental_type
             .type_arguments
             .iter()
-            .enumerate()
         {
             let type_argument = type_argument_rc.borrow();
-            // Index expression can not be set on an initial element that we clone to all
-            // vector items. We skip these here, and fill them in later with a for-loop
-            // over all elements.
             if field.array.is_some() && does_expression_contains_index_operator(&type_argument) {
                 delay_index_expression = true;
-                continue;
+                break;
             }
+        }
 
-            let type_parameter = &type_parameters[param_index];
-            let mut requires_cloning = String::from("");
-            if !type_argument.fully_resolved {
-                requires_cloning = ".clone()".into();
-            }
-            let mut rvalue = format!(
-                "{}{}",
-                generate_expression(&type_argument, type_generator, scope),
-                requires_cloning
-            );
+        // Emit `initial_value` only for non-array fields with type parameters.  For arrays,
+        // the push-based reader creates each element via `T::default()` and then patches the
+        // index-independent parameters in the delay_index_expression loop — so no prototype
+        // is needed and emitting it would produce an unused-variable warning.
+        if field.array.is_none() {
+            let type_parameters =
+                get_type_parameter(scope, &field_details.native_type.fundamental_type);
+            let fields_remaining =
+                number_of_fields(scope, &field_details.native_type.fundamental_type);
 
-            if expression_requires_cast(
-                &type_parameter.borrow().zserio_type,
-                type_generator,
-                &type_argument,
-            ) {
-                rvalue = format!(
-                    "{} as {}",
-                    rvalue,
-                    type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+            function.line(format!("let initial_value = {raw_field_type} {{"));
+
+            for (param_index, type_argument_rc) in field_details
+                .native_type
+                .fundamental_type
+                .type_arguments
+                .iter()
+                .enumerate()
+            {
+                let type_argument = type_argument_rc.borrow();
+
+                let type_parameter = &type_parameters[param_index];
+                let mut requires_cloning = String::from("");
+                if !type_argument.fully_resolved {
+                    requires_cloning = ".clone()".into();
+                }
+                let mut rvalue = format!(
+                    "{}{}",
+                    generate_expression(&type_argument, type_generator, scope),
+                    requires_cloning
                 );
+
+                if expression_requires_cast(
+                    &type_parameter.borrow().zserio_type,
+                    type_generator,
+                    &type_argument,
+                ) {
+                    rvalue = format!(
+                        "{} as {}",
+                        rvalue,
+                        type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+                    );
+                }
+
+                function.line(format!(
+                    "{}: {},",
+                    TypeGenerator::convert_field_name(&type_parameter.borrow().name),
+                    rvalue,
+                ));
             }
 
-            function.line(format!(
-                "{}: {},",
-                TypeGenerator::convert_field_name(&type_parameter.borrow().name),
-                rvalue,
-            ));
-            fields_remaining -= 1;
+            if fields_remaining > 0 {
+                function.line(" ..Default::default()");
+            }
+            function.line(" };");
         }
-
-        if fields_remaining > 0 {
-            function.line(" ..Default::default()");
-        }
-        function.line(" };");
     }
 
-    let array_type_name = array_type_name(&field.name);
     if field.array.is_some() {
-        // Array fields need to be serialized using the array class, which takes
-        // care of the array delta compression.
+        // Array fields need to be decoded using the array class, which takes care of
+        // array delta compression and proper element alignment.
         function.line(format!(
             "let {}_array_length = {}.zserio_read_array_length(reader)?;",
             field_details.field_name, array_type_name,
         ));
-        // initialize the array elements with the default value.
-        function.line(format!(
-            "{} = vec![initial_value; {}_array_length];",
-            rvalue_field_name, field_details.field_name,
-        ));
-    } else {
-        function.line(format!("{rvalue_field_name} = initial_value;"));
-    }
 
-    if delay_index_expression {
-        let type_parameters =
-            get_type_parameter(scope, &field_details.native_type.fundamental_type);
-
-        function.line(format!(
-            "for (param_index, element) in {}.iter_mut().enumerate() {{",
-            rvalue_field_name
-        ));
-
-        for (param_index, type_argument_rc) in field_details
-            .native_type
-            .fundamental_type
-            .type_arguments
-            .iter()
-            .enumerate()
-        {
-            let type_argument = type_argument_rc.borrow();
-            if !does_expression_contains_index_operator(&type_argument) {
-                continue;
-            }
-
-            let type_parameter = &type_parameters[param_index];
-            let mut requires_cloning = String::from("");
-            if !type_argument.fully_resolved {
-                requires_cloning = ".clone()".into();
-            }
-            let mut rvalue = format!(
-                "{}{}",
-                generate_expression(&type_argument, type_generator, scope),
-                requires_cloning
-            );
-
-            if expression_requires_cast(
-                &type_parameter.borrow().zserio_type,
-                type_generator,
-                &type_argument,
-            ) {
-                rvalue = format!(
-                    "{} as {}",
-                    rvalue,
-                    type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
-                );
-            }
-
-            function.line(format!(
-                "element.{} = {};",
-                TypeGenerator::convert_field_name(&type_parameter.borrow().name),
-                rvalue,
-            ));
-        }
-
-        function.line("}");
-    }
-
-    if field.array.is_some() {
         let index_offset = match use_indexed_offset {
             false => String::from("None::<&Vec<u32>>"),
             true => format!("Some(&{gen_offset_expression})"),
         };
-        function.line(format!(
-            "{}.zserio_read(reader, &mut {}, {})?;",
-            array_type_name, rvalue_field_name, index_offset,
-        ));
+
+        if !has_type_parameters {
+            // Simple case: no type parameters. Use the push-based Array::zserio_read which
+            // caps the initial allocation and is OOM-safe.
+            function.line(format!(
+                "{}.zserio_read(reader, &mut {}, {}_array_length, {})?;",
+                array_type_name, rvalue_field_name, field_details.field_name, index_offset,
+            ));
+        } else {
+            // Parametrized case: each element must have its type parameters set before being
+            // decoded.  We emit an inline push-based loop that:
+            //  1. Caps the initial Vec reservation (OOM protection).
+            //  2. For each element: builds an initialized item, then decodes it, then pushes.
+            //
+            // We use Array::read_one_element so packed/non-packed is handled uniformly.
+            function.line(format!("{}.clear();", rvalue_field_name,));
+            function.line(format!(
+                "{}.reserve({}_array_length.min(zserio::get_array_alloc_chunk()));",
+                rvalue_field_name, field_details.field_name,
+            ));
+            function.line(format!(
+                "let mut {}_packing_context = {}.array_trait.create_context();",
+                array_type_name, array_type_name,
+            ));
+            function.line(format!(
+                "for param_index in 0..{}_array_length {{",
+                field_details.field_name,
+            ));
+
+            // Emit item initializer: struct literal with all non-index type params,
+            // plus ..Default::default() for remaining fields.
+            let type_parameters =
+                get_type_parameter(scope, &field_details.native_type.fundamental_type);
+            // We need ..Default::default() only when the struct has data fields that are not
+            // explicitly set in the literal, or when some type-parameter args are index-dependent
+            // and will be patched after construction. Using number_of_fields here (which counts
+            // both data fields and type parameters) would give false positives for structs whose
+            // only fields are type parameters (all set explicitly), triggering clippy::needless_update.
+            let data_fields =
+                number_of_data_fields(scope, &field_details.native_type.fundamental_type);
+
+            function.line(format!("let mut zs_item = {raw_field_type} {{"));
+            for (param_index, type_argument_rc) in field_details
+                .native_type
+                .fundamental_type
+                .type_arguments
+                .iter()
+                .enumerate()
+            {
+                let type_argument = type_argument_rc.borrow();
+                // Skip index-dependent args here; they will be set after item creation.
+                if does_expression_contains_index_operator(&type_argument) {
+                    continue;
+                }
+                let type_parameter = &type_parameters[param_index];
+                let mut requires_cloning = String::from("");
+                if !type_argument.fully_resolved {
+                    requires_cloning = ".clone()".into();
+                }
+                let mut rvalue = format!(
+                    "{}{}",
+                    generate_expression(&type_argument, type_generator, scope),
+                    requires_cloning
+                );
+                if expression_requires_cast(
+                    &type_parameter.borrow().zserio_type,
+                    type_generator,
+                    &type_argument,
+                ) {
+                    rvalue = format!(
+                        "{} as {}",
+                        rvalue,
+                        type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+                    );
+                }
+                function.line(format!(
+                    "{}: {},",
+                    TypeGenerator::convert_field_name(&type_parameter.borrow().name),
+                    rvalue,
+                ));
+            }
+            if data_fields > 0 || delay_index_expression {
+                function.line(" ..Default::default()");
+            }
+            function.line("};");
+
+            // Set any index-dependent type parameters.
+            if delay_index_expression {
+                for (param_index, type_argument_rc) in field_details
+                    .native_type
+                    .fundamental_type
+                    .type_arguments
+                    .iter()
+                    .enumerate()
+                {
+                    let type_argument = type_argument_rc.borrow();
+                    if !does_expression_contains_index_operator(&type_argument) {
+                        continue;
+                    }
+                    let type_parameter = &type_parameters[param_index];
+                    let mut requires_cloning = String::from("");
+                    if !type_argument.fully_resolved {
+                        requires_cloning = ".clone()".into();
+                    }
+                    let mut rvalue = format!(
+                        "{}{}",
+                        generate_expression(&type_argument, type_generator, scope),
+                        requires_cloning
+                    );
+                    if expression_requires_cast(
+                        &type_parameter.borrow().zserio_type,
+                        type_generator,
+                        &type_argument,
+                    ) {
+                        rvalue = format!(
+                            "{} as {}",
+                            rvalue,
+                            type_generator.ztype_to_rust_type(&type_parameter.borrow().zserio_type)
+                        );
+                    }
+                    function.line(format!(
+                        "zs_item.{} = {};",
+                        TypeGenerator::convert_field_name(&type_parameter.borrow().name),
+                        rvalue,
+                    ));
+                }
+            }
+
+            // Decode the element (packed/non-packed handled by read_one_element).
+            function.line(format!(
+                "{}.read_one_element(reader, &mut {}_packing_context, &mut zs_item, param_index, {})?;",
+                array_type_name, array_type_name, index_offset,
+            ));
+            function.line(format!("{}.push(zs_item);", rvalue_field_name));
+            function.line("}"); // close for param_index
+        }
     } else {
+        function.line(format!("{rvalue_field_name} = initial_value;"));
         decode_type(
             scope,
             type_generator,

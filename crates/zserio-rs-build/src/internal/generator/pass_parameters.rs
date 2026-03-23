@@ -40,6 +40,19 @@ pub fn number_of_fields(scope: &ModelScope, type_ref: &TypeReference) -> usize {
     }
 }
 
+/// Return only the number of *data* fields (excluding type parameters) of the rust struct
+/// generated for this type. This is used to decide whether `..Default::default()` is needed
+/// in a struct literal that has already set all type-parameter fields explicitly.
+pub fn number_of_data_fields(scope: &ModelScope, type_ref: &TypeReference) -> usize {
+    let symbol = scope.get_symbol(type_ref);
+    match symbol.symbol {
+        Symbol::Choice(zchoice) => zchoice.borrow().cases.len(),
+        Symbol::Struct(zstruct) => zstruct.borrow().fields.len(),
+        Symbol::Union(zunion) => zunion.borrow().fields.len(),
+        _ => 0,
+    }
+}
+
 /// This function checks if an expression (or any sub-expression) contain an @index operator.
 pub fn does_expression_contains_index_operator(expression: &Expression) -> bool {
     let mut expressions_to_check = vec![expression];
