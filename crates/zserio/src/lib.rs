@@ -60,6 +60,8 @@ pub mod ztype;
 
 pub use error::*;
 pub use numbits::*;
+pub use ztype::get_array_alloc_chunk;
+pub use ztype::set_array_alloc_chunk;
 pub use ztype::ZserioPackableObject;
 
 pub mod doctest;
